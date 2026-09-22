@@ -1,0 +1,94 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "licenses": {
+      ".read": false,
+      "$licenseKey": {
+        ".read": true,
+        ".write": false,
+
+        "hasPin": {
+          ".write": "root.child('licenses').child($licenseKey).exists() && !data.exists()"
+        },
+        "pinHash": {
+          ".write": "root.child('licenses').child($licenseKey).exists() && !data.exists()"
+        },
+        "pinSalt": {
+          ".write": "root.child('licenses').child($licenseKey).exists() && !data.exists()"
+        },
+        "failedAttempts": {
+          ".write": "root.child('licenses').child($licenseKey).exists()"
+        },
+        "lockedUntil": {
+          ".write": "root.child('licenses').child($licenseKey).exists()"
+        },
+        "userName": {
+          ".write": "root.child('licenses').child($licenseKey).exists()"
+        },
+        "userPhone": {
+          ".write": "root.child('licenses').child($licenseKey).exists()"
+        },
+        "pendingNotification": {
+          ".write": "root.child('licenses').child($licenseKey).exists()"
+        },
+
+        "status": {
+          ".write": false
+        },
+        "expiresAt": {
+          ".write": false
+        },
+        "durationDays": {
+          ".write": false
+        },
+        "planId": {
+          ".write": false
+        },
+        "planName": {
+          ".write": false
+        },
+        "planPrice": {
+          ".write": false
+        },
+        "activatedAt": {
+          ".write": false
+        },
+        "createdAt": {
+          ".write": false
+        },
+        "key": {
+          ".write": false
+        },
+        "phone": {
+          ".write": false
+        },
+        "notes": {
+          ".write": false
+        },
+
+        ".indexOn": ["status", "expiresAt"]
+      }
+    },
+    "users_data": {
+      ".read": false,
+      "$licenseKey": {
+        ".read": "root.child('licenses').child($licenseKey).exists() && root.child('licenses').child($licenseKey).child('status').val() != 'blocked'",
+        ".write": "root.child('licenses').child($licenseKey).exists() && root.child('licenses').child($licenseKey).child('status').val() != 'blocked'",
+        "products": {
+          ".indexOn": ["name", "barcode", "category"]
+        }
+      }
+    },
+    "sales": {
+      ".read": false,
+      "$licenseKey": {
+        ".read": "root.child('licenses').child($licenseKey).exists() && root.child('licenses').child($licenseKey).child('status').val() != 'blocked'",
+        ".write": "root.child('licenses').child($licenseKey).exists() && root.child('licenses').child($licenseKey).child('status').val() != 'blocked'",
+        "invoices": {
+          ".indexOn": ["date", "timestamp"]
+        }
+      }
+    }
+  }
+}

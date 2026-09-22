@@ -1827,23 +1827,58 @@
 <div class="auth-overlay" id="authOverlay">
     <div class="auth-box">
         <div class="auth-icon"><i class="fa-solid fa-shield-halved"></i></div>
-        <h2>تفعيل واستخدام النظام</h2>
-        <p>يرجى إدخال بياناتك وكلمة السر / كود التفعيل المستلم للمتابعة ومزامنة حسابك.</p>
+        <h2 id="authModalTitle">تفعيل واستخدام النظام</h2>
+        <p id="authModalSubtitle">أدخل كود التفعيل ورمز PIN الماستر للمتابعة ومزامنة حسابك.</p>
+        
         <form id="authForm" novalidate>
             <div class="auth-fg">
-                <label>الاسم الكامل</label>
-                <input type="text" id="authName" required autocomplete="name">
+                <label>كود التفعيل / الترخيص *</label>
+                <input type="text" id="authKey" required dir="ltr" 
+                       placeholder="HARPY-XXXX-XXXX"
+                       style="text-align:center;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;" 
+                       autocomplete="off">
             </div>
+
+            <!-- حقول تظهر تلقائياً فقط عند أول تفعيل للحساب الجديد -->
+            <div id="firstTimeFields" style="display:none;">
+                <div class="auth-fg">
+                    <label>الاسم الكامل *</label>
+                    <input type="text" id="authName" autocomplete="name" placeholder="اسم التاجر أو المتجر">
+                </div>
+                <div class="auth-fg">
+                    <label>رقم الموبايل *</label>
+                    <input type="tel" id="authPhone" dir="ltr" style="text-align:right;" autocomplete="tel" placeholder="01xxxxxxxxx">
+                </div>
+            </div>
+
             <div class="auth-fg">
-                <label>رقم الموبايل</label>
-                <input type="tel" id="authPhone" required dir="ltr" style="text-align:right;" autocomplete="tel">
+                <label id="pinLabel">رمز PIN الماستر (6 أرقام) *</label>
+                <div style="position:relative;">
+                    <input type="password" id="authPin" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+                           placeholder="••••••" dir="ltr"
+                           style="text-align:center;font-size:1.3rem;font-weight:900;letter-spacing:6px;" autocomplete="off">
+                    <button type="button" id="togglePinVisibilityBtn" title="إظهار / إخفاء الرمز"
+                            style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px;font-size:1rem;">
+                        <i class="fa-solid fa-eye" id="pinEyeIcon"></i>
+                    </button>
+                </div>
             </div>
-            <div class="auth-fg">
-                <label>كلمة السر / كود التفعيل</label>
-                <input type="text" id="authKey" required dir="ltr" style="text-align:center;font-weight:800;letter-spacing:1px;" autocomplete="off">
+
+            <!-- تأكيد رمز الـ PIN عند التفعيل لأول مرة -->
+            <div class="auth-fg" id="pinConfirmGroup" style="display:none;">
+                <label>تأكيد رمز PIN (أعد كتابة الـ 6 أرقام) *</label>
+                <input type="password" id="authPinConfirm" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+                       placeholder="••••••" dir="ltr"
+                       style="text-align:center;font-size:1.3rem;font-weight:900;letter-spacing:6px;" autocomplete="off">
             </div>
+
+            <!-- شريط تنبيه القفل المؤقت ومحاولات الدخول المتبقية -->
+            <div id="lockoutAlert" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:8px 12px;border-radius:8px;font-size:0.82rem;font-weight:700;margin-bottom:12px;text-align:center;">
+                <i class="fa-solid fa-clock-rotate-left"></i> <span id="lockoutMessage"></span>
+            </div>
+
             <button type="submit" class="auth-btn" id="authBtn">
-                <i class="fa-solid fa-right-to-bracket"></i> دخول وتفعيل الحساب
+                <i class="fa-solid fa-right-to-bracket"></i> <span id="authBtnText">دخول إلى النظام</span>
             </button>
         </form>
     </div>
@@ -2431,106 +2466,365 @@ function updateCardStockBadge(productId) {
     }
 }
 
+/* ============================================================
+   نظام تشفير رمز PIN الماستر والقفل المؤقت (Web Crypto API + Anti-Brute-Force)
+   ============================================================ */
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 60 * 1000; // 60 ثانية
+let currentLockoutUntil = null;
+let lockoutTimerInterval = null;
+
+async function hashPin(pin, salt) {
+    const encoder = new TextEncoder();
+    const pinBuffer = encoder.encode(pin);
+    const saltBuffer = encoder.encode(`harpy_salt_${salt}`);
+    
+    // استيراد الـ PIN كمادة مفتاح لتغذية خوارزمية PBKDF2
+    const baseKey = await crypto.subtle.importKey(
+        'raw',
+        pinBuffer,
+        { name: 'PBKDF2' },
+        false,
+        ['deriveBits']
+    );
+
+    // اشتقاق 256 بت باستخدام PBKDF2 + SHA-256 مع 100,000 دورة تكرار لمنع هجمات التخمين Offline
+    const derivedBits = await crypto.subtle.deriveBits(
+        {
+            name: 'PBKDF2',
+            salt: saltBuffer,
+            iterations: 100000,
+            hash: 'SHA-256'
+        },
+        baseKey,
+        256
+    );
+
+    const hashArray = Array.from(new Uint8Array(derivedBits));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* إدارة عداد القفل المؤقت في الذاكرة اعتماداً كلياً على Firebase السحابي كمصدر وحيد للحقيقة */
+function startLockoutTimer(lockedUntil) {
+    currentLockoutUntil = lockedUntil;
+    const alertBox = $('lockoutAlert');
+    const msgSpan  = $('lockoutMessage');
+    const btn      = $('authBtn');
+
+    if (lockoutTimerInterval) clearInterval(lockoutTimerInterval);
+
+    function tick() {
+        const remainingSec = Math.ceil((currentLockoutUntil - Date.now()) / 1000);
+        if (remainingSec <= 0) {
+            stopLockoutTimer();
+        } else {
+            if (alertBox) alertBox.style.display = 'block';
+            if (msgSpan) msgSpan.textContent = `تم قفل الدخول مؤقتاً لحماية الحساب! يرجى الانتظار ${remainingSec} ثانية للمحاولة مجدداً.`;
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-lock"></i> الحساب مقفل (${remainingSec} ث)`;
+            }
+        }
+    }
+
+    tick();
+    lockoutTimerInterval = setInterval(tick, 1000);
+}
+
+function stopLockoutTimer() {
+    if (lockoutTimerInterval) {
+        clearInterval(lockoutTimerInterval);
+        lockoutTimerInterval = null;
+    }
+    currentLockoutUntil = null;
+    const alertBox = $('lockoutAlert');
+    const btn      = $('authBtn');
+    if (alertBox) alertBox.style.display = 'none';
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> <span id="authBtnText">دخول إلى النظام</span>';
+    }
+}
+
+function isCurrentlyLocked() {
+    return currentLockoutUntil !== null && Date.now() < currentLockoutUntil;
+}
+
+// زر إظهار / إخفاء الرمز
+const togglePinBtn = $('togglePinVisibilityBtn');
+if (togglePinBtn) {
+    togglePinBtn.addEventListener('click', () => {
+        const pinInput = $('authPin');
+        const eyeIcon = $('pinEyeIcon');
+        if (!pinInput || !eyeIcon) return;
+        if (pinInput.type === 'password') {
+            pinInput.type = 'text';
+            eyeIcon.className = 'fa-solid fa-eye-slash';
+        } else {
+            pinInput.type = 'password';
+            eyeIcon.className = 'fa-solid fa-eye';
+        }
+    });
+}
+
+// فحص ديناميكي لحالة الكود (أول تفعيل أم دخول لاحق)
+let keyCheckTimeout = null;
+async function checkLicenseStatus(keyVal) {
+    const cleanKey = keyVal.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+    const firstTimeFields = $('firstTimeFields');
+    const pinConfirmGroup = $('pinConfirmGroup');
+    const btnText = $('authBtnText');
+    const pinLabel = $('pinLabel');
+    const modalSubtitle = $('authModalSubtitle');
+
+    if (!cleanKey || cleanKey.length < 5 || !db) {
+        if (firstTimeFields) firstTimeFields.style.display = 'none';
+        if (pinConfirmGroup) pinConfirmGroup.style.display = 'none';
+        if (btnText) btnText.textContent = 'دخول إلى النظام';
+        if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر (6 أرقام) *';
+        if (modalSubtitle) modalSubtitle.textContent = 'أدخل كود التفعيل ورمز PIN الماستر للمتابعة ومزامنة حسابك.';
+        return null;
+    }
+
+    try {
+        const snap = await db.ref(`licenses/${cleanKey}`).once('value');
+        const lic = snap.val();
+
+        if (lic) {
+            if (lic.lockedUntil && Date.now() < lic.lockedUntil) {
+                startLockoutTimer(lic.lockedUntil);
+            } else if (currentLockoutUntil && Date.now() >= currentLockoutUntil) {
+                stopLockoutTimer();
+            }
+
+            const isFirstTime = !lic.hasPin && !lic.pinHash;
+            if (isFirstTime) {
+                if (firstTimeFields) firstTimeFields.style.display = 'block';
+                if (pinConfirmGroup) pinConfirmGroup.style.display = 'block';
+                if (btnText) btnText.textContent = 'إنشاء الرمز وتفعيل الحساب';
+                if (pinLabel) pinLabel.textContent = 'أنشئ رمز PIN الماستر (6 أرقام) *';
+                if (modalSubtitle) modalSubtitle.textContent = 'تفعيل حساب جديد: يرجى إدخال بياناتك وإنشاء رمز PIN الخاص بك.';
+            } else {
+                if (firstTimeFields) firstTimeFields.style.display = 'none';
+                if (pinConfirmGroup) pinConfirmGroup.style.display = 'none';
+                if (btnText) btnText.textContent = 'دخول إلى النظام';
+                if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر (6 أرقام) *';
+                if (modalSubtitle) modalSubtitle.textContent = `مرحباً بك يا ${lic.userName || 'التاجر'}، أدخل رمز PIN للدخول.`;
+            }
+        }
+        return lic;
+    } catch {
+        return null;
+    }
+}
+
+const authKeyInput = $('authKey');
+if (authKeyInput) {
+    authKeyInput.addEventListener('input', () => {
+        clearTimeout(keyCheckTimeout);
+        keyCheckTimeout = setTimeout(() => {
+            checkLicenseStatus(authKeyInput.value);
+        }, 400);
+    });
+    authKeyInput.addEventListener('blur', () => {
+        checkLicenseStatus(authKeyInput.value);
+    });
+}
+
 /* معالجة نموذج تسجيل الدخول والتفعيل */
 authForm.addEventListener('submit', async e => {
     e.preventDefault();
-    const name  = $('authName').value.trim();
-    const phone = $('authPhone').value.trim();
-    const key   = $('authKey').value.trim().toUpperCase();
-    const btn   = $('authBtn');
+    if (isCurrentlyLocked()) {
+        const remainingSec = Math.ceil((currentLockoutUntil - Date.now()) / 1000);
+        toast(`تم قفل الدخول مؤقتاً! يرجى الانتظار ${remainingSec} ثانية للمحاولة مجدداً.`, 'error');
+        return;
+    }
 
-    const err = validateAuthInputs(name, phone, key);
-    if (err) {
-        toast(err, 'warning');
+    const key        = $('authKey').value.trim().toUpperCase();
+    const cleanKey   = key.replace(/[^A-Z0-9_-]/g, '');
+    const pin        = $('authPin').value.trim();
+    const pinConfirm = $('authPinConfirm') ? $('authPinConfirm').value.trim() : '';
+    const nameInput  = $('authName') ? $('authName').value.trim() : '';
+    const phoneInput = $('authPhone') ? $('authPhone').value.trim() : '';
+    const btn        = $('authBtn');
+
+    if (!cleanKey || cleanKey.length < 5) {
+        toast('يرجى إدخال كود التفعيل بشكل صحيح', 'warning');
+        return;
+    }
+
+    if (!/^\d{6}$/.test(pin)) {
+        toast('رمز PIN يجب أن يتكون من 6 أرقام رقمية فقط!', 'warning');
         return;
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحقق من الترخيص...';
-
-    const cleanKey = key.replace(/[^A-Z0-9_-]/g, '');
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحقق من الحساب...';
 
     if (db) {
         try {
+            // قراءة طازجة وفورية (Fresh) من Firebase قبل أي معالجة لمطابقة الـ PIN أو فحص القفل
             const snap = await db.ref(`licenses/${cleanKey}`).once('value');
             const lic = snap.val();
 
             if (!lic) {
-                toast('كود التفعيل / كلمة السر غير صحيحة!', 'error');
+                toast('كود التفعيل غير مسجل بالنظام!', 'error');
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول وتفعيل الحساب';
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
                 return;
             }
 
             if (lic.status === 'blocked') {
-                toast('هذا الحساب تم إيقافه من قبل الإدارة!', 'error');
+                toast('هذا الحساب تم إيقافه وتجميده من قبل الإدارة!', 'error');
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول وتفعيل الحساب';
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
                 return;
             }
 
-            // فحص تاريخ انتهاء الاشتراك
-            if (lic.expiresAt) {
-                const expDate = new Date(lic.expiresAt).getTime();
-                if (Date.now() > expDate) {
-                    toast('انتهت صلاحية هذا الاشتراك، يرجى التواصل مع الإدارة للتجديد.', 'error');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول وتفعيل الحساب';
-                    return;
-                }
+            if (lic.expiresAt && Date.now() > new Date(lic.expiresAt).getTime()) {
+                toast('انتهت صلاحية هذا الاشتراك، يرجى التواصل مع الإدارة للتجديد.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
+                return;
             }
 
-            const isFirstTime = !lic.activatedAt;
-            let expirationDateStr = lic.expiresAt;
+            // فحص القفل المؤقت السحابي القادم من Firebase
+            if (lic.lockedUntil && Date.now() < lic.lockedUntil) {
+                startLockoutTimer(lic.lockedUntil);
+                toast('تم قفل الدخول مؤقتاً لحماية الحساب بعد تكرار المحاولات الخاطئة!', 'error');
+                return;
+            }
+
+            const isFirstTime = !lic.hasPin && !lic.pinHash;
 
             if (isFirstTime) {
-                const now = new Date();
-                const duration = lic.durationDays || 30;
-                const expDate = new Date(now.getTime() + duration * 24 * 60 * 60 * 1000);
-                expirationDateStr = expDate.toISOString();
+                // حالة التفعيل لأول مرة: التحقق من الاسم والهاتف وتطابق الـ PIN
+                if (!nameInput || nameInput.length < 2) {
+                    toast('يرجى كتابة اسمك الكامل أو اسم المتجر', 'warning');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> إنشاء الرمز وتفعيل الحساب';
+                    return;
+                }
+                if (!phoneInput || phoneInput.replace(/\D/g, '').length < 8) {
+                    toast('يرجى إدخال رقم هاتف صحيح', 'warning');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> إنشاء الرمز وتفعيل الحساب';
+                    return;
+                }
+                if (pin !== pinConfirm) {
+                    toast('تأكيد رمز PIN غير متطابق مع الرمز المدخل!', 'warning');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> إنشاء الرمز وتفعيل الحساب';
+                    return;
+                }
+
+                const salt = cleanKey;
+                const pinHash = await hashPin(pin, salt);
 
                 await db.ref(`licenses/${cleanKey}`).update({
-                    activatedAt: now.toISOString(),
-                    expiresAt: expirationDateStr,
-                    userName: name,
-                    userPhone: phone,
-                    pendingNotification: true // إرسال تنبيه للمدير عبر السيرفر الآمن
+                    userName: nameInput,
+                    userPhone: phoneInput,
+                    hasPin: true,
+                    pinHash: pinHash,
+                    pinSalt: salt,
+                    failedAttempts: 0,
+                    lockedUntil: null,
+                    pendingNotification: true
                 });
+
+                stopLockoutTimer();
+                currentUserSession = {
+                    name: nameInput,
+                    phone: phoneInput,
+                    key: cleanKey,
+                    expiresAt: lic.expiresAt,
+                    sessionExpiresAt: Date.now() + SESSION_LIFETIME_MS
+                };
+                localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
+                authOverlay.classList.remove('open');
+                toast(`مرحباً بك يا ${nameInput} 👋 تم تأمين الحساب بـ PIN`, 'success');
+                initUserProductsSync();
+                startLicenseWatcher(cleanKey);
+                updateUserUI();
+
+            } else {
+                // حالة الدخول اللاحق: مطابقة الـ PIN
+                const salt = lic.pinSalt || cleanKey;
+                const enteredHash = await hashPin(pin, salt);
+
+                if (enteredHash !== lic.pinHash) {
+                    // تسجيل المحاولة الفاشلة سحابياً فقط في Firebase (المصدر الوحيد للحقيقة)
+                    const newAttempts = (lic.failedAttempts || 0) + 1;
+                    let newLockedUntil = null;
+                    const isLocked = newAttempts >= MAX_ATTEMPTS;
+
+                    if (isLocked) {
+                        newLockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+                    }
+
+                    await db.ref(`licenses/${cleanKey}`).update({
+                        failedAttempts: isLocked ? 0 : newAttempts,
+                        lockedUntil: newLockedUntil
+                    });
+
+                    if (isLocked) {
+                        startLockoutTimer(newLockedUntil);
+                        toast('تم قفل الدخول مؤقتاً لمدة 60 ثانية بعد 5 محاولات خاطئة متتالية!', 'error');
+                    } else {
+                        const remaining = MAX_ATTEMPTS - newAttempts;
+                        toast(`رمز PIN غير صحيح! متبقي ${remaining} محاولات قبل القفل المؤقت.`, 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> <span id="authBtnText">دخول إلى النظام</span>';
+                    }
+                    return;
+                }
+
+                // الـ PIN صحيح 100%: تصفير المحاولات الفاشلة سحابياً في Firebase
+                if (lic.failedAttempts || lic.lockedUntil) {
+                    await db.ref(`licenses/${cleanKey}`).update({
+                        failedAttempts: 0,
+                        lockedUntil: null
+                    });
+                }
+                stopLockoutTimer();
+
+                const userName = lic.userName || 'التاجر';
+                const userPhone = lic.userPhone || lic.phone || '';
+                currentUserSession = {
+                    name: userName,
+                    phone: userPhone,
+                    key: cleanKey,
+                    expiresAt: lic.expiresAt,
+                    sessionExpiresAt: Date.now() + SESSION_LIFETIME_MS
+                };
+                localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
+                authOverlay.classList.remove('open');
+                toast(`مرحباً بك مجدداً يا ${userName} 👋`, 'success');
+                initUserProductsSync();
+                startLicenseWatcher(cleanKey);
+                updateUserUI();
             }
 
-            currentUserSession = {
-                name,
-                phone,
-                key: cleanKey,
-                expiresAt: expirationDateStr,
-                sessionExpiresAt: Date.now() + SESSION_LIFETIME_MS
-            };
-            localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
-            authOverlay.classList.remove('open');
-            toast(`مرحباً بك يا ${name} 👋`, 'success');
-            initUserProductsSync();
-            startLicenseWatcher(cleanKey);
-            updateUserUI();
         } catch (err) {
-            toast('حدث خطأ أثناء الاتصال بالسيرفر، تحقق من اتصال الإنترنت', 'error');
             console.error(err);
+            toast('حدث خطأ أثناء الاتصال بالسيرفر، تحقق من اتصال الإنترنت', 'error');
         }
     } else {
-        // في حالة عدم ضبط فايربيس بعد، السماح بالدخول للتجربة
+        // وضع بدون فايربيس (تجربة محلية)
         currentUserSession = {
-            name,
-            phone,
+            name: nameInput || 'مستخدم تجريبي',
+            phone: phoneInput || '',
             key: cleanKey || 'DEMO-USER',
             sessionExpiresAt: Date.now() + SESSION_LIFETIME_MS
         };
         localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
         authOverlay.classList.remove('open');
-        toast(`مرحباً بك يا ${name} (وضع التجربة)`, 'info');
+        toast(`مرحباً (وضع التجربة)`, 'info');
         updateUserUI();
     }
 
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول وتفعيل الحساب';
+    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
 });
 
 /* مراقبة فورية لحالة الترخيص في الخلفية (إيقاف أو انتهاء الاشتراك) */
