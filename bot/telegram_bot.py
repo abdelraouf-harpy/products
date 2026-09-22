@@ -23,11 +23,30 @@ if sys.platform == 'win32':
         pass
 
 # ============================================================
-# الإعدادات الأساسية والأمان
+# الإعدادات الأساسية والأمان (تحميل متغيرات البيئة تلقائياً)
 # ============================================================
-BOT_TOKEN = "8909766324:AAGaVL7Xd1JEHReOeLOWnHz7uU77GN3jRaA"
-ADMIN_CHAT_ID = "1604040086"
-FIREBASE_DB_URL = "https://product-manager-5731f-default-rtdb.firebaseio.com/"
+def load_env_file():
+    """تحميل المتغيرات من ملف .env المحلي إن وجد تلقائياً دون الحاجة لمكتبات خارجية"""
+    env_file = os.path.join(os.path.dirname(__file__), ".env")
+    if os.path.isfile(env_file):
+        try:
+            with open(env_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        key, val = line.split("=", 1)
+                        key = key.strip()
+                        val = val.strip().strip("'\"")
+                        if key and key not in os.environ:
+                            os.environ[key] = val
+        except Exception as e:
+            print("[Warning - .env load]:", e)
+
+load_env_file()
+
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID", "1604040086")
+FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL", "https://product-manager-5731f-default-rtdb.firebaseio.com/")
 FIREBASE_SECRET = os.getenv("FIREBASE_SECRET", "")  # سر قاعدة بيانات Firebase لتخطي قيود الأمان بصلاحية الأدمن
 
 if not FIREBASE_DB_URL.endswith('/'):
@@ -741,4 +760,5 @@ if __name__ == "__main__":
     if bot:
         bot.infinity_polling()
     else:
-        print("⚠️ يرجى التأكد من BOT_TOKEN.")
+        print("❌ تنبيه: لم يتم بدء تشغيل البوت لأن BOT_TOKEN غير محدد!")
+        print("💡 يرجى كتابة التوكن الجديد في ملف .env داخل مجلد bot أو تعيينه كمتغير بيئة BOT_TOKEN.")
