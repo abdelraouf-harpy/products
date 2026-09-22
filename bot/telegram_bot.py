@@ -61,7 +61,16 @@ def get_fb_url(path):
         return f"{url}{sep}auth={FIREBASE_SECRET}"
     return url
 
-bot = telebot.TeleBot(BOT_TOKEN) if BOT_TOKEN else None
+if not BOT_TOKEN:
+    print("=" * 60)
+    print("❌ خطأ تشغيل: لم يتم العثور على BOT_TOKEN!")
+    print("💡 يرجى إنشاء ملف .env داخل مجلد bot وكتابة التوكن الجديد:")
+    print("   BOT_TOKEN=توكن_تليجرام_الجديد")
+    print("   FIREBASE_SECRET=سر_قاعدة_البيانات")
+    print("=" * 60)
+    sys.exit(1)
+
+bot = telebot.TeleBot(BOT_TOKEN)
 
 # خطط وباقات الاشتراكات المعتمدة
 PLANS = {
@@ -757,8 +766,4 @@ if __name__ == "__main__":
     print(f"👑 حساب المدير المعتمد: {ADMIN_CHAT_ID}")
     print("💰 تم ضبط باقات الأسعار المعتمدة (200 / 900 / 1800 / 4500 ج.م)")
     print("=" * 60)
-    if bot:
-        bot.infinity_polling()
-    else:
-        print("❌ تنبيه: لم يتم بدء تشغيل البوت لأن BOT_TOKEN غير محدد!")
-        print("💡 يرجى كتابة التوكن الجديد في ملف .env داخل مجلد bot أو تعيينه كمتغير بيئة BOT_TOKEN.")
+    bot.infinity_polling()
