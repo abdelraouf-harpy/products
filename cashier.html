@@ -985,7 +985,6 @@ try {
 /* ============================================================
    Constants & State
    ============================================================ */
-const CART_KEY        = 'harpy_cart_v1';
 const SESSION_KEY     = 'harpy_auth_session';
 const SESSION_LIFE_MS = 14 * 24 * 60 * 60 * 1000;
 const PLACEHOLDER     = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNFMkU4RjAiLz48cGF0aCBkPSJNODUgNzVIMTE1VjEyNUg4NVY3NVoiIGZpbGw9IiM5NEEzQjgiLz48cGF0aCBkPSJNNzUgMTI1SDEyNVYxMzVINzVWMTI1WiIgZmlsbD0iIzk0QTNCOCIvPjwvc3ZnPg==';
@@ -994,6 +993,53 @@ let currentSession = null;
 let allProducts    = [];
 let payMethod      = 'cash';
 let currentInvoice = null; // الفاتورة المعروضة حالياً للطباعة
+
+/* ============================================================
+   Multi-Tenant Storage Helper & Safe Migration
+   عزل التخزين المحلي لكل مستأجر وترحيل البيانات القديمة تلقائياً
+   ============================================================ */
+function getTenantKey() {
+    const session = (typeof currentSession !== 'undefined' && currentSession)
+        ? currentSession
+        : ((typeof currentUserSession !== 'undefined' && currentUserSession) ? currentUserSession : null);
+    if (!session || !session.key) return 'global';
+    return session.key.trim().toUpperCase();
+}
+
+function getProdsStorageKey() {
+    const tenant = getTenantKey();
+    return tenant === 'global' ? 'prods_v4' : `prods_${tenant}`;
+}
+
+function getCartStorageKey() {
+    const tenant = getTenantKey();
+    return tenant === 'global' ? 'harpy_cart_v1' : `cart_${tenant}`;
+}
+
+function migrateTenantData(licenseKey) {
+    if (!licenseKey) return;
+    const cleanKey = licenseKey.trim().toUpperCase();
+    const newProdsKey = `prods_${cleanKey}`;
+    const newCartKey  = `cart_${cleanKey}`;
+
+    try {
+        const legacyProds = localStorage.getItem('prods_v4');
+        if (legacyProds && !localStorage.getItem(newProdsKey)) {
+            localStorage.setItem(newProdsKey, legacyProds);
+            localStorage.removeItem('prods_v4');
+            console.log(`[Storage Migration] Migrated prods_v4 to ${newProdsKey}`);
+        }
+
+        const legacyCart = localStorage.getItem('harpy_cart_v1');
+        if (legacyCart && !localStorage.getItem(newCartKey)) {
+            localStorage.setItem(newCartKey, legacyCart);
+            localStorage.removeItem('harpy_cart_v1');
+            console.log(`[Storage Migration] Migrated harpy_cart_v1 to ${newCartKey}`);
+        }
+    } catch (e) {
+        console.warn('[Storage Migration Warning]:', e);
+    }
+}
 
 const fmt = (n) => Number(n||0).toLocaleString('ar-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const $ = id => document.getElementById(id);
@@ -1206,6 +1252,7 @@ async function checkAuth() {
     if (!currentSession) {
         $('authOverlay').classList.add('open');
     } else {
+        migrateTenantData(currentSession.key);
         $('authOverlay').classList.remove('open');
         // عرض السلة فوراً من localStorage (لا يحتاج Firebase)
         renderCart();
@@ -1323,6 +1370,7 @@ $('authForm').addEventListener('submit', async e => {
                     sessionExpiresAt: Date.now() + SESSION_LIFE_MS
                 };
                 localStorage.setItem(SESSION_KEY, JSON.stringify(currentSession));
+                migrateTenantData(cleanKey);
                 $('authOverlay').classList.remove('open');
                 toast(`مرحباً بك يا ${nameInput} 👋 تم تأمين الحساب بـ PIN`, 'success');
                 loadProducts();
@@ -1377,6 +1425,7 @@ $('authForm').addEventListener('submit', async e => {
                     sessionExpiresAt: Date.now() + SESSION_LIFE_MS
                 };
                 localStorage.setItem(SESSION_KEY, JSON.stringify(currentSession));
+                migrateTenantData(cleanKey);
                 $('authOverlay').classList.remove('open');
                 toast(`مرحباً بك مجدداً يا ${userName} 👋`, 'success');
                 loadProducts();
@@ -1394,6 +1443,7 @@ $('authForm').addEventListener('submit', async e => {
             sessionExpiresAt: Date.now() + SESSION_LIFE_MS
         };
         localStorage.setItem(SESSION_KEY, JSON.stringify(currentSession));
+        migrateTenantData(currentSession.key);
         $('authOverlay').classList.remove('open');
         toast(`مرحباً (وضع التجربة)`, 'info');
         loadProducts();
@@ -1425,10 +1475,10 @@ function loadProducts() {
    Cart Management
    ============================================================ */
 function getCart() {
-    try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
+    try { return JSON.parse(localStorage.getItem(getCartStorageKey())) || []; }
     catch { return []; }
 }
-function saveCart(cart) { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
+function saveCart(cart) { localStorage.setItem(getCartStorageKey(), JSON.stringify(cart)); }
 
 function clearCart() {
     if (!confirm('هل تريد مسح السلة كاملاً؟')) return;
@@ -1648,7 +1698,8 @@ async function completeCheckout() {
 
         // 3. تحديث الكميات محلياً في localStorage فوراً
         try {
-            let localProds = JSON.parse(localStorage.getItem('prods_v4')) || [];
+            const prodsKey = getProdsStorageKey();
+            let localProds = JSON.parse(localStorage.getItem(prodsKey)) || [];
             for (const item of cart) {
                 const p = localProds.find(x => x.id === item.id);
                 if (p) {
@@ -1656,7 +1707,7 @@ async function completeCheckout() {
                     p.qty = Math.max(0, curQ - item.qty);
                 }
             }
-            localStorage.setItem('prods_v4', JSON.stringify(localProds));
+            localStorage.setItem(prodsKey, JSON.stringify(localProds));
         } catch (e) {}
 
         // 4. مسح السلة وعرض الفاتورة
@@ -1869,6 +1920,19 @@ initTheme();
 renderCart();
 updateSummary();
 checkAuth();
+
+window.addEventListener('storage', e => {
+    const curCartKey = getCartStorageKey();
+    if (e.key === curCartKey) {
+        renderCart();
+        updateSummary();
+    }
+});
+
+window.addEventListener('pageshow', () => {
+    renderCart();
+    updateSummary();
+});
 
 // Close invoice modal on overlay click
 $('invModal').addEventListener('click', e => {

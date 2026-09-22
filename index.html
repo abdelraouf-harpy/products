@@ -2388,6 +2388,58 @@ try {
     currentUserSession = null;
 }
 
+/* ============================================================
+   Multi-Tenant Storage Helper & Safe Migration
+   عزل التخزين المحلي لكل مستأجر وترحيل البيانات القديمة تلقائياً
+   ============================================================ */
+function getTenantKey() {
+    const session = (typeof currentUserSession !== 'undefined' && currentUserSession) 
+        ? currentUserSession 
+        : ((typeof currentSession !== 'undefined' && currentSession) ? currentSession : null);
+    if (!session || !session.key) return 'global';
+    return session.key.trim().toUpperCase();
+}
+
+function getProdsStorageKey() {
+    const tenant = getTenantKey();
+    return tenant === 'global' ? 'prods_v4' : `prods_${tenant}`;
+}
+
+function getCartStorageKey() {
+    const tenant = getTenantKey();
+    return tenant === 'global' ? 'harpy_cart_v1' : `cart_${tenant}`;
+}
+
+function migrateTenantData(licenseKey) {
+    if (!licenseKey) return;
+    const cleanKey = licenseKey.trim().toUpperCase();
+    const newProdsKey = `prods_${cleanKey}`;
+    const newCartKey  = `cart_${cleanKey}`;
+
+    try {
+        const legacyProds = localStorage.getItem('prods_v4');
+        if (legacyProds && !localStorage.getItem(newProdsKey)) {
+            localStorage.setItem(newProdsKey, legacyProds);
+            localStorage.removeItem('prods_v4');
+            console.log(`[Storage Migration] Migrated prods_v4 to ${newProdsKey}`);
+        }
+
+        const legacyCart = localStorage.getItem('harpy_cart_v1');
+        if (legacyCart && !localStorage.getItem(newCartKey)) {
+            localStorage.setItem(newCartKey, legacyCart);
+            localStorage.removeItem('harpy_cart_v1');
+            console.log(`[Storage Migration] Migrated harpy_cart_v1 to ${newCartKey}`);
+        }
+    } catch (e) {
+        console.warn('[Storage Migration Warning]:', e);
+    }
+}
+
+// ترحيل فوري للبيانات إذا وُجدت جلسة سابقة صالحة
+if (currentUserSession && currentUserSession.key) {
+    migrateTenantData(currentUserSession.key);
+}
+
 let products = [];
 let catFilter  = 'الكل';
 let sortBy     = 'newest';
@@ -2741,6 +2793,7 @@ authForm.addEventListener('submit', async e => {
                     sessionExpiresAt: Date.now() + SESSION_LIFETIME_MS
                 };
                 localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
+                migrateTenantData(cleanKey);
                 authOverlay.classList.remove('open');
                 toast(`مرحباً بك يا ${nameInput} 👋 تم تأمين الحساب بـ PIN`, 'success');
                 initUserProductsSync();
@@ -2798,6 +2851,7 @@ authForm.addEventListener('submit', async e => {
                     sessionExpiresAt: Date.now() + SESSION_LIFETIME_MS
                 };
                 localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
+                migrateTenantData(cleanKey);
                 authOverlay.classList.remove('open');
                 toast(`مرحباً بك مجدداً يا ${userName} 👋`, 'success');
                 initUserProductsSync();
@@ -2818,6 +2872,7 @@ authForm.addEventListener('submit', async e => {
             sessionExpiresAt: Date.now() + SESSION_LIFETIME_MS
         };
         localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
+        migrateTenantData(currentUserSession.key);
         authOverlay.classList.remove('open');
         toast(`مرحباً (وضع التجربة)`, 'info');
         updateUserUI();
@@ -2919,7 +2974,7 @@ function logout(confirmPrompt = true) {
 function initUserProductsSync() {
     // 1. عرض فوري من الذاكرة المحلية (0ms) لمنع وميض الشاشة عند الريفريش
     try {
-        products = JSON.parse(localStorage.getItem('prods_v4')) || [];
+        products = JSON.parse(localStorage.getItem(getProdsStorageKey())) || [];
         products = products.map(p => {
             if (p && (p.qty === null || p.qty === undefined || p.qty === '' || isNaN(p.qty))) {
                 p.qty = 1;
@@ -2964,7 +3019,7 @@ function initUserProductsSync() {
             return p;
         });
         
-        localStorage.setItem('prods_v4', JSON.stringify(products));
+        localStorage.setItem(getProdsStorageKey(), JSON.stringify(products));
         renderProducts();
         updateStats();
         updateCatTabs();
@@ -2979,7 +3034,7 @@ async function saveProductToCloud(prod) {
     } else {
         products.unshift(prod);
     }
-    localStorage.setItem('prods_v4', JSON.stringify(products));
+    localStorage.setItem(getProdsStorageKey(), JSON.stringify(products));
 
     if (db && currentUserSession && currentUserSession.key) {
         await db.ref(`users_data/${currentUserSession.key}/products/${prod.id}`).set(prod);
@@ -2989,7 +3044,7 @@ async function saveProductToCloud(prod) {
 // حذف منتج محدد سحابياً ومحلياً
 async function deleteProductFromCloud(prodId) {
     products = products.filter(p => p.id !== prodId);
-    localStorage.setItem('prods_v4', JSON.stringify(products));
+    localStorage.setItem(getProdsStorageKey(), JSON.stringify(products));
 
     if (db && currentUserSession && currentUserSession.key) {
         await db.ref(`users_data/${currentUserSession.key}/products/${prodId}`).remove();
@@ -3726,7 +3781,7 @@ window.importData = async function(ev) {
             if (!arr || !arr.length) { toast('الملف غير صالح أو فارغ', 'error'); return; }
             
             products = arr;
-            localStorage.setItem('prods_v4', JSON.stringify(products));
+            localStorage.setItem(getProdsStorageKey(), JSON.stringify(products));
             
             // حفظ كل المنتجات المستوردة سحابياً دفعة واحدة بصيغة Map
             if (db && currentUserSession && currentUserSession.key) {
@@ -3749,15 +3804,13 @@ window.importData = async function(ev) {
 /* ============================================================
    نظام السلة — Cart Management
    ============================================================ */
-const CART_KEY = 'harpy_cart_v1';
-
 function getCart() {
-    try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
+    try { return JSON.parse(localStorage.getItem(getCartStorageKey())) || []; }
     catch { return []; }
 }
 
 function saveCart(cart) {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    localStorage.setItem(getCartStorageKey(), JSON.stringify(cart));
 }
 
 function addToCart(product) {
@@ -3923,7 +3976,7 @@ async function init() {
 
 window.addEventListener('pageshow', () => {
     try {
-        const savedProds = JSON.parse(localStorage.getItem('prods_v4'));
+        const savedProds = JSON.parse(localStorage.getItem(getProdsStorageKey()));
         if (savedProds && Array.isArray(savedProds)) {
             products = savedProds;
         }
@@ -3934,9 +3987,11 @@ window.addEventListener('pageshow', () => {
 });
 
 window.addEventListener('storage', e => {
-    if (e.key === CART_KEY || e.key === 'prods_v4') {
+    const curCartKey = getCartStorageKey();
+    const curProdsKey = getProdsStorageKey();
+    if (e.key === curCartKey || e.key === curProdsKey) {
         try {
-            if (e.key === 'prods_v4') products = JSON.parse(localStorage.getItem('prods_v4')) || products;
+            if (e.key === curProdsKey) products = JSON.parse(localStorage.getItem(curProdsKey)) || products;
         } catch {}
         renderProducts();
         updateFloatCart();
