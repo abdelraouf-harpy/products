@@ -26,25 +26,36 @@ if sys.platform == 'win32':
 # الإعدادات الأساسية والأمان (تحميل متغيرات البيئة تلقائياً)
 # ============================================================
 def load_env_file():
-    """تحميل المتغيرات من ملف .env المحلي إن وجد تلقائياً دون الحاجة لمكتبات خارجية"""
+    """تحميل المتغيرات من ملف .env المحلي إن وجد تلقائياً بدعم جميع الترميزات (UTF-8, UTF-8-BOM, UTF-16)"""
     env_file = os.path.join(os.path.dirname(__file__), ".env")
-    if os.path.isfile(env_file):
+    if not os.path.isfile(env_file):
+        return
+    
+    encodings = ["utf-8-sig", "utf-8", "utf-16", "cp1256"]
+    content = None
+    for enc in encodings:
         try:
-            with open(env_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith("#") and "=" in line:
-                        key, val = line.split("=", 1)
-                        key = key.strip()
-                        val = val.strip().strip("'\"")
-                        if key and key not in os.environ:
-                            os.environ[key] = val
-        except Exception as e:
-            print("[Warning - .env load]:", e)
+            with open(env_file, "r", encoding=enc) as f:
+                content = f.read()
+            break
+        except (UnicodeDecodeError, Exception):
+            continue
+
+    if not content:
+        return
+
+    for line in content.splitlines():
+        line = line.strip().lstrip('\ufeff')
+        if line and not line.startswith("#") and "=" in line:
+            key, val = line.split("=", 1)
+            key = key.strip().lstrip('\ufeff')
+            val = val.strip().strip("'\"")
+            if key and key not in os.environ:
+                os.environ[key] = val
 
 load_env_file()
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID", "1604040086")
 FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL", "https://product-manager-5731f-default-rtdb.firebaseio.com/")
 FIREBASE_SECRET = os.getenv("FIREBASE_SECRET", "")  # سر قاعدة بيانات Firebase لتخطي قيود الأمان بصلاحية الأدمن
@@ -761,9 +772,9 @@ def send_system_stats(chat_id):
     bot.send_message(chat_id, stats_text, parse_mode="Markdown")
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("🚀 تم تشغيل بوت تليجرام التفاعلي بنجاح!")
-    print(f"👑 حساب المدير المعتمد: {ADMIN_CHAT_ID}")
-    print("💰 تم ضبط باقات الأسعار المعتمدة (200 / 900 / 1800 / 4500 ج.م)")
-    print("=" * 60)
+    print("=" * 60, flush=True)
+    print("🚀 تم تشغيل بوت تليجرام التفاعلي بنجاح!", flush=True)
+    print(f"👑 حساب المدير المعتمد: {ADMIN_CHAT_ID}", flush=True)
+    print("💰 تم ضبط باقات الأسعار المعتمدة (200 / 900 / 1800 / 4500 ج.م)", flush=True)
+    print("=" * 60, flush=True)
     bot.infinity_polling()
