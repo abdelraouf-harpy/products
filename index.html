@@ -24,6 +24,10 @@
             --border:        #e2e8f0;
             --success:       #10b981;
             --success-bg:    #ecfdf5;
+            --green:         #10b981;
+            --green-hover:   #059669;
+            --green-dark:    #047857;
+            --green-bg:      #ecfdf5;
             --danger:        #ef4444;
             --danger-bg:     #fef2f2;
             --warning:       #f59e0b;
@@ -46,6 +50,7 @@
             --shadow:    0 4px 14px rgba(0,0,0,0.35);
             --shadow-lg: 0 10px 30px rgba(0,0,0,0.6);
             --success-bg:#06231a;
+            --green-bg:  #06231a;
             --danger-bg: #2d0e0e;
         }
 
@@ -1022,30 +1027,67 @@
         [data-theme="dark"] .cart-btn { background: #064e3b; color: #34d399; }
         [data-theme="dark"] .cart-btn.in-cart, [data-theme="dark"] .cart-btn:hover { background: #059669; color: #fff; }
 
-        /* Card Interactive Stepper */
-        .card-cart-wrap { flex: 1.2; display: flex; }
+        /* Card Interactive Stepper & Action Rows */
+        .card-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            margin-top: 8px;
+            width: 100%;
+        }
+        .card-tools {
+            display: flex;
+            gap: 6px;
+            width: 100%;
+        }
+        .card-tools .act-btn {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .card-cart-wrap {
+            width: 100%;
+            display: flex;
+        }
+        .card-cart-wrap .cart-btn {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
         .card-cart-stepper {
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: linear-gradient(135deg, #059669, #047857);
+            background: linear-gradient(135deg, #10b981, #059669);
             color: #fff;
-            border-radius: 8px;
-            padding: 3px 5px;
+            border-radius: 9px;
+            padding: 3px 6px;
             min-height: 36px;
-            gap: 4px;
-            box-shadow: 0 2px 8px rgba(5,150,105,0.25);
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(16,185,129,0.3);
         }
         .c-step-btn {
-            width: 28px;
-            height: 28px;
-            background: rgba(255,255,255,0.25);
+            width: 32px;
+            height: 30px;
+            background: rgba(255,255,255,0.22);
             border: none;
             border-radius: 6px;
             color: #fff;
             font-weight: 900;
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1053,13 +1095,14 @@
             transition: background 0.15s ease;
             line-height: 1;
         }
-        .c-step-btn:hover { background: rgba(255,255,255,0.45); }
+        .c-step-btn:hover:not(:disabled) { background: rgba(255,255,255,0.4); }
         .c-step-qty {
-            font-size: 0.78rem;
+            font-size: 0.85rem;
             font-weight: 800;
             white-space: nowrap;
             text-align: center;
             flex: 1;
+            color: #fff;
         }
 
         /* Form Delete Button inside Sidebar */
@@ -1102,8 +1145,6 @@
 
         .prod-desc:hover { color: var(--text); }
         .prod-desc.expanded { display: block; -webkit-line-clamp: unset; overflow: visible; }
-
-        .card-actions { display: flex; gap: 7px; margin-top: 6px; }
 
         .act-btn {
             flex: 1;
@@ -2069,33 +2110,38 @@
             display: none !important;
         }
 
-        /* ── Cashier POS Workspace Layout ── */
+        /* ── Cashier POS Workspace Layout (Commercial 2-Column Register) ── */
         .cashier-wrap {
-            max-width: 1440px;
+            max-width: 1520px;
             margin: 0 auto;
-            padding: 16px;
+            padding: 18px 20px;
             display: grid;
-            grid-template-columns: 1fr 390px;
-            gap: 18px;
+            grid-template-columns: 1fr 420px;
+            gap: 20px;
             box-sizing: border-box;
             width: 100%;
+            align-items: start;
         }
-        @media (max-width: 960px) {
-            .cashier-wrap { grid-template-columns: 100%; padding: 12px 10px; }
+        @media (max-width: 1080px) {
+            .cashier-wrap { grid-template-columns: 1fr 380px; gap: 14px; padding: 12px; }
+        }
+        @media (max-width: 880px) {
+            .cashier-wrap { grid-template-columns: 100%; padding: 10px 8px; }
             .header-nav .nav-tab span { display: none; }
             .header-nav .nav-tab { padding: 8px 10px; }
         }
 
         .c-card {
             background: var(--card);
-            border-radius: var(--radius);
+            border-radius: 16px;
             box-shadow: var(--shadow);
             border: 1px solid var(--border);
             overflow: hidden;
             margin-bottom: 16px;
+            transition: box-shadow 0.2s ease;
         }
         .c-card-head {
-            padding: 12px 18px;
+            padding: 13px 18px;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
@@ -2104,128 +2150,222 @@
             background: var(--bg);
         }
         .c-card-head h2 {
-            font-size: 0.98rem;
+            font-size: 1rem;
             font-weight: 800;
             display: flex;
             align-items: center;
             gap: 8px;
+            color: var(--text);
+            margin: 0;
         }
         .c-card-body { padding: 16px 18px; }
 
+        /* Quick Barcode & Search Bar */
         .cart-search-bar {
             display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 10px;
+            margin-bottom: 14px;
         }
         .cart-search-bar input {
             flex: 1;
             background: var(--bg);
             border: 1.5px solid var(--border);
-            border-radius: 10px;
-            padding: 10px 14px;
+            border-radius: 12px;
+            padding: 11px 16px;
             font-family: inherit;
-            font-size: 0.9rem;
+            font-size: 0.92rem;
             font-weight: 700;
             color: var(--text);
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.2s ease;
         }
-        .cart-search-bar input:focus { border-color: var(--primary); }
+        .cart-search-bar input:focus {
+            border-color: var(--primary);
+            background: var(--card);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        }
+        .cart-search-bar button {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 0 18px;
+            font-family: inherit;
+            font-weight: 800;
+            font-size: 0.88rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 3px 10px rgba(67, 97, 238, 0.3);
+            transition: all 0.2s ease;
+        }
+        .cart-search-bar button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 14px rgba(67, 97, 238, 0.4);
+        }
 
         /* Quick Touch Category Bar & Items Grid */
         .pos-cat-bar {
             display: flex;
-            gap: 6px;
+            gap: 8px;
             overflow-x: auto;
             padding-bottom: 8px;
-            margin-bottom: 12px;
-            scrollbar-width: none;
+            margin-bottom: 14px;
+            scrollbar-width: thin;
         }
-        .pos-cat-bar::-webkit-scrollbar { display: none; }
-        .pos-cat-pill {
+        .pos-cat-bar::-webkit-scrollbar { height: 4px; }
+        .pos-cat-bar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .pos-cat-btn {
             background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 5px 12px;
-            font-size: 0.78rem;
-            font-weight: 700;
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 6px 15px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 800;
             color: var(--muted);
             cursor: pointer;
             white-space: nowrap;
-            transition: all 0.15s;
+            transition: all 0.2s ease;
         }
-        .pos-cat-pill:hover, .pos-cat-pill.active {
-            background: var(--primary);
-            color: #fff;
+        .pos-cat-btn:hover {
             border-color: var(--primary);
+            color: var(--primary);
+            background: var(--card);
+        }
+        .pos-cat-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 3px 10px rgba(67, 97, 238, 0.35);
         }
 
         .pos-touch-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
-            gap: 8px;
-            max-height: 240px;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+            max-height: calc(100vh - 260px);
+            min-height: 440px;
             overflow-y: auto;
-            margin-bottom: 14px;
-            padding-bottom: 4px;
+            padding: 2px 2px 10px 2px;
         }
         .pos-touch-card {
-            background: var(--bg);
+            background: var(--card);
             border: 1.5px solid var(--border);
-            border-radius: 10px;
-            padding: 8px 6px;
-            text-align: center;
+            border-radius: 14px;
+            overflow: hidden;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 4px;
             position: relative;
+            box-shadow: var(--shadow-sm);
+            user-select: none;
         }
         .pos-touch-card:hover {
             border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
         }
-        .pos-touch-card img {
-            width: 36px;
-            height: 36px;
-            border-radius: 6px;
+        .pos-touch-card:active {
+            transform: scale(0.97);
+        }
+        .pos-touch-card.out-of-stock {
+            opacity: 0.55;
+            filter: grayscale(0.7);
+        }
+        .pos-touch-thumb {
+            width: 100%;
+            height: 105px;
+            position: relative;
+            background: var(--bg);
+            overflow: hidden;
+        }
+        .pos-touch-thumb img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .pos-touch-card:hover .pos-touch-thumb img {
+            transform: scale(1.06);
+        }
+        .pos-touch-price {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            background: rgba(16, 185, 129, 0.95);
+            color: #fff;
+            font-size: 0.78rem;
+            font-weight: 900;
+            padding: 2px 7px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+        }
+        .pos-touch-badge {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 900;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 5px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+        }
+        .pos-touch-info {
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-grow: 1;
             background: var(--card);
         }
-        .pos-touch-card .ptc-name {
-            font-size: 0.75rem;
+        .pos-touch-name {
+            font-size: 0.82rem;
             font-weight: 800;
             color: var(--text);
-            line-height: 1.2;
+            line-height: 1.3;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            width: 100%;
+            margin-bottom: 4px;
         }
-        .pos-touch-card .ptc-price {
-            font-size: 0.76rem;
-            font-weight: 900;
-            color: var(--green);
+        .pos-touch-stock {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--muted);
+        }
+        .pos-touch-stock.low {
+            color: #f59e0b;
+            font-weight: 800;
         }
 
-        /* Cart Items List */
+        /* Cart Items List in Ticket Panel */
         .cart-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
-            min-height: 130px;
-            max-height: 380px;
+            min-height: 120px;
+            max-height: 260px;
             overflow-y: auto;
+            margin-bottom: 12px;
+            padding-right: 2px;
         }
         .cart-empty {
             text-align: center;
-            padding: 35px 20px;
+            padding: 30px 16px;
             color: var(--muted);
         }
-        .cart-empty i { font-size: 2.5rem; display: block; margin-bottom: 8px; color: var(--border); }
+        .cart-empty i { font-size: 2.2rem; display: block; margin-bottom: 8px; color: var(--border); }
         .cart-item {
             display: flex;
             align-items: center;
@@ -2234,12 +2374,16 @@
             border-radius: 10px;
             padding: 8px 10px;
             border: 1px solid var(--border);
-            transition: border-color 0.2s;
+            transition: all 0.2s ease;
         }
-        .cart-item:hover { border-color: var(--primary); }
+        .cart-item:hover {
+            border-color: var(--primary);
+            background: var(--card);
+        }
         .cart-item-img {
-            width: 44px; height: 44px;
-            border-radius: 6px;
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
             object-fit: cover;
             background: var(--border);
             flex-shrink: 0;
@@ -2251,47 +2395,68 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-        }
-        .cart-item-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
-        .cart-qty-controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-        .qty-btn {
-            width: 26px; height: 26px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--card);
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 900;
             color: var(--text);
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.15s;
         }
-        .qty-btn:hover { border-color: var(--primary); color: var(--primary); }
-        .qty-num { font-size: 0.9rem; font-weight: 900; min-width: 20px; text-align: center; }
-        .cart-del-btn {
-            width: 28px; height: 28px;
+        .cart-item-meta { font-size: 0.74rem; color: var(--muted); margin-top: 2px; }
+        .cart-qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--card);
+            padding: 2px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .qty-btn {
+            width: 24px;
+            height: 24px;
             border: none;
             border-radius: 6px;
+            background: var(--bg);
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 900;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .qty-btn:hover { background: var(--primary); color: #fff; }
+        .qty-num {
+            font-size: 0.88rem;
+            font-weight: 900;
+            min-width: 20px;
+            text-align: center;
+            color: var(--text);
+        }
+        .cart-del-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 8px;
             background: var(--danger-bg);
             color: var(--danger);
             cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 0.82rem;
             transition: all 0.15s;
             flex-shrink: 0;
         }
         .cart-del-btn:hover { background: var(--danger); color: #fff; }
 
-        /* Invoice Panel & Checkout */
+        /* Payment Methods & Quick Cash */
         .pay-methods { display: flex; gap: 8px; }
         .pay-method-btn {
             flex: 1;
-            padding: 8px 6px;
+            padding: 9px 8px;
             border: 1.5px solid var(--border);
-            border-radius: 9px;
+            border-radius: 10px;
             cursor: pointer;
             text-align: center;
-            font-size: 0.84rem;
+            font-size: 0.86rem;
             font-weight: 800;
             color: var(--muted);
             background: var(--bg);
@@ -2299,7 +2464,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 7px;
         }
         .pay-method-btn.active {
             border-color: var(--primary);
@@ -2319,7 +2484,7 @@
             border: 1.5px solid var(--border);
             border-radius: 8px;
             padding: 6px 2px;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 800;
             color: var(--text);
             cursor: pointer;
@@ -2329,6 +2494,7 @@
         .qc-btn:hover {
             border-color: var(--primary);
             color: var(--primary);
+            background: var(--card);
         }
 
         .change-due-box {
@@ -2345,12 +2511,13 @@
             font-weight: 800;
         }
 
+        /* Order Summary Box */
         .summary-box {
             background: var(--bg);
             border-radius: 12px;
             border: 1.5px solid var(--border);
             overflow: hidden;
-            margin-top: 8px;
+            margin-top: 10px;
         }
         .summary-row {
             display: flex;
@@ -2362,71 +2529,251 @@
         }
         .summary-row:last-child { border-bottom: none; }
         .summary-row.total {
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             font-weight: 900;
-            background: linear-gradient(135deg, var(--green), #047857);
-            color: #fff;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+            color: #ffffff !important;
+        }
+        .summary-row.total .summary-label,
+        .summary-row.total .summary-val {
+            color: #ffffff !important;
+            font-weight: 900;
         }
         .summary-row.profit-row { color: var(--success); font-weight: 800; }
         .summary-label { color: var(--muted); font-weight: 700; }
-        .summary-row.total .summary-label { color: rgba(255,255,255,0.9); }
         .summary-val { font-weight: 800; }
 
+        /* The Hero Checkout CTA Button */
         .checkout-btn {
             width: 100%;
-            padding: 13px;
-            background: linear-gradient(135deg, var(--green), #047857);
-            color: #fff;
+            padding: 15px 18px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            color: #ffffff !important;
             border: none;
-            border-radius: 11px;
+            border-radius: 12px;
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 900;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            box-shadow: 0 4px 14px rgba(5,150,105,0.3);
-            margin-top: 10px;
+            gap: 10px;
+            box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4);
+            margin-top: 12px;
         }
-        .checkout-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(5,150,105,0.4); }
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5);
+            background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        }
+        .checkout-btn:active { transform: translateY(0); }
+        .checkout-btn i { font-size: 1.2rem; }
 
         .clear-cart-btn {
             background: none;
             border: 1.5px solid var(--danger);
             color: var(--danger);
             border-radius: 8px;
-            padding: 4px 10px;
+            padding: 5px 12px;
             font-family: inherit;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 800;
             cursor: pointer;
             transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
         .clear-cart-btn:hover { background: var(--danger); color: #fff; }
 
-        /* ── Invoices View Table ── */
+        /* Hide float cart inside POS */
+        #view-pos.active ~ #floatCartBtn,
+        body[data-active-view="pos"] #floatCartBtn {
+            display: none !important;
+        }
+
+        /* ── Modern Invoices View (SaaS KPI & Data Table) ── */
         .invoices-view-container {
             max-width: 1440px;
             margin: 0 auto;
-            padding: 16px;
+            padding: 20px;
             width: 100%;
             box-sizing: border-box;
         }
+
+        /* Top 4 KPI Metrics */
+        .invoices-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            flex-shrink: 0;
+        }
+        .kpi-data {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+        .kpi-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--muted);
+        }
+        .kpi-val {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--text);
+            line-height: 1.2;
+        }
+        .kpi-sub {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--muted);
+        }
+
+        /* Invoices Filter Bar */
         .invoices-filter-bar {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 12px 16px;
+            border-radius: 14px;
+            padding: 14px 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
+            gap: 14px;
             flex-wrap: wrap;
             margin-bottom: 16px;
             box-shadow: var(--shadow-sm);
+        }
+        .inv-filter-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+        .inv-filter-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .inv-search {
+            width: 260px;
+            min-width: 200px;
+        }
+        .inv-date-presets, .inv-status-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg);
+            padding: 3px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .inv-preset-btn, .inv-status-btn {
+            background: none;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 7px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .inv-preset-btn:hover, .inv-status-btn:hover {
+            color: var(--text);
+        }
+        .inv-preset-btn.active, .inv-status-btn.active {
+            background: var(--card);
+            color: var(--primary);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+        .inv-excel-btn {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            color: #fff !important;
+            border: none !important;
+            border-radius: 10px !important;
+            padding: 8px 16px !important;
+            font-size: 0.84rem !important;
+            font-weight: 800 !important;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3) !important;
+        }
+
+        /* Invoices Modern Table & Badges */
+        .history-table-wrap {
+            overflow-x: auto;
+            width: 100%;
+        }
+        .history-table-wrap table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            text-align: right;
+        }
+        .history-table-wrap th {
+            background: var(--bg);
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 800;
+            padding: 12px 14px;
+            border-bottom: 1.5px solid var(--border);
+            white-space: nowrap;
+        }
+        .history-table-wrap td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+            vertical-align: middle;
+            transition: background 0.15s ease;
+        }
+        .history-table-wrap tr:hover td {
+            background: rgba(67, 97, 238, 0.02);
+        }
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-size: 0.74rem;
+            font-weight: 800;
+        }
+        .badge-status.completed {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+        .badge-status.refunded {
+            background: var(--danger-bg);
+            color: var(--danger);
         }
 
         /* ── Settings View ── */
@@ -2728,54 +3075,58 @@
         </div>
 
         <div class="cashier-wrap">
-            <!-- Left: Cart & Quick Touch Products -->
+            <!-- Right (in RTL): Catalog, Barcode Search & Touch Grid -->
             <div>
                 <div class="c-card">
                     <div class="c-card-head">
-                        <h2><i class="fa-solid fa-cart-shopping" style="color:var(--primary);"></i> سلة المشتريات</h2>
+                        <h2><i class="fa-solid fa-boxes-stacked" style="color:var(--primary);"></i> كتالوج الأصناف ونقطة البيع</h2>
                         <div style="display:flex;align-items:center;gap:8px;">
-                            <button type="button" class="tbl-act-btn" id="parkCurrentBtn" onclick="parkCurrentInvoice()" title="تعليق الفاتورة مؤقتاً لخدمة عميل آخر">
-                                <i class="fa-solid fa-pause"></i> تعليق الفاتورة
-                            </button>
-                            <button type="button" class="tbl-act-btn" id="openParkedBtn" onclick="openParkedInvoicesModal()" title="استئناف الفواتير المعلقة" style="position:relative;">
-                                <i class="fa-solid fa-clock-rotate-left"></i> المعلقة
-                                <span class="nav-badge" id="parkedBadge" style="display:none;background:#f59e0b;color:#fff;">0</span>
-                            </button>
-                            <button type="button" class="clear-cart-btn" onclick="clearCart()">
-                                <i class="fa-solid fa-trash-can"></i> مسح
-                            </button>
+                            <span id="posCurrentTime" style="font-size:0.8rem;color:var(--muted);font-weight:700;"></span>
                         </div>
                     </div>
                     <div class="c-card-body">
                         <!-- Quick Search & Barcode -->
                         <div class="cart-search-bar">
-                            <input type="text" id="quickSearch" placeholder="🔍 امسح الباركود أو اكتب اسم الصنف / الرقم التسلسلي (Enter للإضافة)..." autocomplete="off">
+                            <input type="text" id="quickSearch" placeholder="🔍 امسح الباركود أو اكتب اسم الصنف / الرقم التسلسلي (اضغط Enter للإضافة)..." autocomplete="off">
                             <button type="button" onclick="searchAndAdd()"><i class="fa-solid fa-plus"></i> إضافة</button>
                         </div>
 
                         <!-- Touch Quick Categories & Items Selector -->
                         <div class="pos-cat-bar" id="posCatBar"></div>
                         <div class="pos-touch-grid" id="posTouchGrid"></div>
-
-                        <!-- Cart Items List -->
-                        <div class="cart-list" id="cartList"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right: Invoice Panel -->
+            <!-- Left (in RTL): Invoice Ticket, Cart Items, Payment & Checkout -->
             <div class="invoice-panel">
                 <div class="c-card">
                     <div class="c-card-head">
-                        <h2><i class="fa-solid fa-file-invoice-dollar" style="color:var(--green);"></i> تفاصيل الفاتورة والدفع</h2>
-                        <span id="posCurrentTime" style="font-size:0.78rem;color:var(--muted);font-weight:700;"></span>
+                        <h2><i class="fa-solid fa-receipt" style="color:var(--green);"></i> تذكرة الفاتورة والدفع</h2>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <button type="button" class="tbl-act-btn" id="parkCurrentBtn" onclick="parkCurrentInvoice()" title="تعليق الفاتورة مؤقتاً لخدمة عميل آخر">
+                                <i class="fa-solid fa-pause"></i> تعليق
+                            </button>
+                            <button type="button" class="tbl-act-btn" id="openParkedBtn" onclick="openParkedInvoicesModal()" title="استئناف الفواتير المعلقة" style="position:relative;">
+                                <i class="fa-solid fa-clock-rotate-left"></i> المعلقة
+                                <span class="nav-badge" id="parkedBadge" style="display:none;background:#f59e0b;color:#fff;">0</span>
+                            </button>
+                            <button type="button" class="clear-cart-btn" onclick="clearCart()" title="مسح السلة">
+                                <i class="fa-solid fa-trash-can"></i> مسح
+                            </button>
+                        </div>
                     </div>
                     <div class="c-card-body">
                         <!-- Customer Name -->
-                        <div class="fg" style="margin-bottom:10px;">
-                            <label><i class="fa-solid fa-user"></i> اسم العميل (اختياري)</label>
-                            <input type="text" id="customerName" placeholder="عميل نقدي" autocomplete="off">
+                        <div class="fg" style="margin-bottom:8px;">
+                            <input type="text" id="customerName" placeholder="👤 اسم العميل (اختياري - عميل نقدي)..." autocomplete="off" style="font-size:0.86rem;padding:8px 12px;border-radius:10px;">
                         </div>
+
+                        <!-- Cart Items List (Inside Ticket) -->
+                        <label style="font-size:0.82rem;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                            <i class="fa-solid fa-cart-shopping" style="color:var(--primary);"></i> أصناف الفاتورة الحالية:
+                        </label>
+                        <div class="cart-list" id="cartList"></div>
 
                         <!-- Payment Method -->
                         <div class="fg" style="margin-bottom:10px;">
@@ -2804,12 +3155,12 @@
                             </div>
                             <div class="change-due-box" id="changeDueBox" style="display:none;">
                                 <span>الباقي للعميل (الفكة):</span>
-                                <strong id="changeDueAmount" style="font-size:1.1rem;color:var(--green);">0.00 ج.م</strong>
+                                <strong id="changeDueAmount" style="font-size:1.15rem;color:var(--green);font-weight:900;">0.00 ج.م</strong>
                             </div>
                         </div>
 
                         <!-- Discount -->
-                        <div class="fg" style="margin-bottom:10px;">
+                        <div class="fg" style="margin-bottom:8px;">
                             <label><i class="fa-solid fa-tags"></i> الخصم</label>
                             <div class="discount-row">
                                 <div class="fg" style="margin-bottom:0;">
@@ -2844,9 +3195,9 @@
                             </div>
                         </div>
 
-                        <!-- Checkout Button -->
+                        <!-- Checkout Hero Button -->
                         <button type="button" class="checkout-btn" id="checkoutBtn" onclick="completeCheckout()">
-                            <i class="fa-solid fa-check-circle"></i>
+                            <i class="fa-solid fa-circle-check"></i>
                             <span>إتمام البيع وطباعة الفاتورة</span>
                         </button>
                     </div>
@@ -3078,40 +3429,98 @@
     <!-- ==================== VIEW 3: INVOICES HISTORY ==================== -->
     <div id="view-invoices" class="app-view">
         <div class="invoices-view-container">
+            <!-- 4 Top KPI Summary Metric Cards -->
+            <div class="invoices-kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e0e7ff;color:#4361ee;">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                    <div class="kpi-data">
+                        <span class="kpi-label">إجمالي الفواتير</span>
+                        <strong class="kpi-val" id="invKpiTotalCount">0</strong>
+                        <span class="kpi-sub" id="invKpiCompletedCount">0 مكتملة</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#ecfdf5;color:#10b981;">
+                        <i class="fa-solid fa-sack-dollar"></i>
+                    </div>
+                    <div class="kpi-data">
+                        <span class="kpi-label">إجمالي المبيعات الناجحة</span>
+                        <strong class="kpi-val" id="invKpiTotalSales">0.00 ج.م</strong>
+                        <span class="kpi-sub" id="invKpiAvgTicket">متوسط الفاتورة: 0.00 ج.م</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card owner-only">
+                    <div class="kpi-icon" style="background:#fef3c7;color:#d97706;">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div class="kpi-data">
+                        <span class="kpi-label">صافي الأرباح المحققة</span>
+                        <strong class="kpi-val" id="invKpiTotalProfit" style="color:#059669;">0.00 ج.م</strong>
+                        <span class="kpi-sub" id="invKpiProfitMargin">هامش الربح: 0%</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fee2e2;color:#ef4444;">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </div>
+                    <div class="kpi-data">
+                        <span class="kpi-label">المرتجعات</span>
+                        <strong class="kpi-val" id="invKpiRefundCount" style="color:#ef4444;">0 فاتورة</strong>
+                        <span class="kpi-sub" id="invKpiRefundTotal">المسترد: 0.00 ج.م</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modern SaaS Filter Bar -->
             <div class="invoices-filter-bar">
-                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                    <div class="search-box" style="width:280px;">
+                <div class="inv-filter-right">
+                    <div class="search-box inv-search">
                         <i class="fa-solid fa-magnifying-glass s-icon"></i>
                         <input type="text" id="invoiceSearchInput" placeholder="بحث برقم الفاتورة أو العميل..." oninput="filterInvoicesTable()">
                     </div>
-                    <input type="date" id="invoicesDateFilter" class="report-date-input" onchange="filterInvoicesTable()">
-                    <button type="button" class="tbl-act-btn" onclick="clearInvoiceFilter()">عرض الكل</button>
+                    <div class="inv-date-presets">
+                        <button type="button" class="inv-preset-btn active" id="invPresetAll" onclick="setInvoiceDateRange('all')">الكل</button>
+                        <button type="button" class="inv-preset-btn" id="invPresetToday" onclick="setInvoiceDateRange('today')">اليوم</button>
+                        <button type="button" class="inv-preset-btn" id="invPresetWeek" onclick="setInvoiceDateRange('week')">هذا الأسبوع</button>
+                        <button type="button" class="inv-preset-btn" id="invPresetMonth" onclick="setInvoiceDateRange('month')">هذا الشهر</button>
+                    </div>
+                    <input type="date" id="invoicesDateFilter" class="report-date-input" onchange="onCustomInvoiceDateChange()" title="تاريخ مخصص">
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <span id="invoicesListCount" style="font-size:0.85rem;font-weight:800;color:var(--muted);"></span>
-                    <button type="button" class="tbl-act-btn" onclick="exportSalesToExcel()" style="background:#10b981;color:#fff;border-color:#10b981;padding:7px 14px;font-weight:800;">
+                <div class="inv-filter-left">
+                    <div class="inv-status-tabs">
+                        <button type="button" class="inv-status-btn active" id="invStatusAll" onclick="setInvoiceStatusFilter('all')">الكل</button>
+                        <button type="button" class="inv-status-btn" id="invStatusCompleted" onclick="setInvoiceStatusFilter('completed')">مكتملة</button>
+                        <button type="button" class="inv-status-btn" id="invStatusRefunded" onclick="setInvoiceStatusFilter('refunded')">مسترجعة</button>
+                    </div>
+                    <button type="button" class="tbl-act-btn inv-excel-btn" onclick="exportSalesToExcel()">
                         <i class="fa-solid fa-file-excel"></i> تصدير Excel
                     </button>
                 </div>
             </div>
 
+            <!-- Invoices Data Table Card -->
             <div class="c-card" style="padding:0;overflow:hidden;">
                 <div class="history-table-wrap">
                     <table>
                         <thead>
                             <tr>
-                                <th>رقم الفاتورة</th>
+                                <th>رقم الفاتورة والحالة</th>
                                 <th>التاريخ والوقت</th>
                                 <th>العميل</th>
-                                <th>الأصناف</th>
-                                <th>الإجمالي</th>
+                                <th>الأصناف المباعة</th>
+                                <th>إجمالي الفاتورة</th>
                                 <th>طريقة الدفع</th>
                                 <th class="profit-sensitive">صافي الربح</th>
                                 <th style="text-align:center;">إجراءات</th>
                             </tr>
                         </thead>
                         <tbody id="invoicesViewTbody">
-                            <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted);font-weight:700;">لا توجد فواتير بعد</td></tr>
+                            <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);font-weight:700;">لا توجد فواتير بعد</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -4763,10 +5172,14 @@ function makeCard(p) {
         editProduct(p.id);
     });
 
-    actions.appendChild(barcodeBtn);
-    actions.appendChild(editBtn);
+    const toolsRow = document.createElement('div');
+    toolsRow.className = 'card-tools';
+    toolsRow.appendChild(barcodeBtn);
+    toolsRow.appendChild(editBtn);
 
-    // حاوية السلة التفاعلية (+ / -)
+    actions.appendChild(toolsRow);
+
+    // حاوية السلة التفاعلية (+ / -) بعرض الكارت الكامل لمنع أي اقتطاع
     const cartWrap = document.createElement('div');
     cartWrap.className = 'card-cart-wrap';
     renderCardCartUI(cartWrap, p);
@@ -5517,7 +5930,8 @@ function updateFloatCart() {
         }
     }
     if (!btn || !badge) return;
-    if (total > 0) {
+    // إخفاء الزر العائم تماماً داخل شاشة الكاشير لعدم حجب عناصر الشاشة
+    if (total > 0 && currentView !== 'pos') {
         badge.textContent = total;
         btn.classList.remove('hidden');
     } else {
@@ -6257,6 +6671,9 @@ function switchView(viewName) {
     document.querySelectorAll('.nav-tab').forEach(el => {
         el.classList.toggle('active', el.id === `tab-${viewName}`);
     });
+
+    document.body.setAttribute('data-active-view', viewName);
+    updateFloatCart();
 
     if (viewName === 'pos') {
         renderCart();
@@ -7164,13 +7581,14 @@ function dismissReconciliation(idx) {
    الوحدة الموحدة: شاشة سجل الفواتير والمبيعات (Invoices View)
    ============================================================ */
 let allInvoicesCache = [];
+let invSelectedDateRange = 'all';
+let invSelectedStatus = 'all';
 
 async function loadInvoicesView() {
     const tbody = $('invoicesViewTbody');
-    const countEl = $('invoicesListCount');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted);font-weight:700;"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل الفواتير...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);font-weight:700;"><i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem;color:var(--primary);margin-bottom:8px;display:block;"></i> جاري تحميل سجل الفواتير...</td></tr>';
 
     const tenant = getTenantKey();
     let invoices = [];
@@ -7189,76 +7607,96 @@ async function loadInvoicesView() {
     }
 
     allInvoicesCache = invoices;
-    if (countEl) countEl.textContent = invoices.length ? `${invoices.length} فاتورة` : '';
-    renderInvoicesTable(invoices);
+    updateInvoicesKPIs(invoices);
+    filterInvoicesTable();
 }
 
-function renderInvoicesTable(invoices) {
-    const tbody = $('invoicesViewTbody');
-    if (!tbody) return;
+function updateInvoicesKPIs(invoices) {
+    const totalCount = invoices.length;
+    const completed = invoices.filter(i => i.status !== 'refunded');
+    const refunded = invoices.filter(i => i.status === 'refunded');
 
-    if (!invoices.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted);font-weight:700;">لا توجد فواتير مطابقة</td></tr>';
-        return;
+    const totalSales = completed.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
+    const avgTicket = completed.length ? (totalSales / completed.length) : 0;
+    const totalProfit = completed.reduce((s, i) => s + (parseFloat(i.totalProfit) || 0), 0);
+    const profitMargin = totalSales > 0 ? ((totalProfit / totalSales) * 100) : 0;
+    const refundTotal = refunded.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
+
+    if ($('invKpiTotalCount')) $('invKpiTotalCount').textContent = totalCount;
+    if ($('invKpiCompletedCount')) $('invKpiCompletedCount').textContent = `${completed.length} مكتملة`;
+    if ($('invKpiTotalSales')) $('invKpiTotalSales').textContent = `${fmt(totalSales)} ج.م`;
+    if ($('invKpiAvgTicket')) $('invKpiAvgTicket').textContent = `متوسط الفاتورة: ${fmt(avgTicket)} ج.م`;
+    if ($('invKpiTotalProfit')) $('invKpiTotalProfit').textContent = `+${fmt(totalProfit)} ج.م`;
+    if ($('invKpiProfitMargin')) $('invKpiProfitMargin').textContent = `هامش الربح: ${profitMargin.toFixed(1)}%`;
+    if ($('invKpiRefundCount')) $('invKpiRefundCount').textContent = `${refunded.length} فاتورة`;
+    if ($('invKpiRefundTotal')) $('invKpiRefundTotal').textContent = `المسترد: ${fmt(refundTotal)} ج.م`;
+}
+
+function setInvoiceDateRange(range) {
+    invSelectedDateRange = range;
+    document.querySelectorAll('.inv-preset-btn').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-range') === range);
+    });
+    if ($('invoicesDateFilter')) $('invoicesDateFilter').value = '';
+    filterInvoicesTable();
+}
+
+function onCustomInvoiceDateChange() {
+    const val = $('invoicesDateFilter')?.value;
+    if (val) {
+        invSelectedDateRange = 'custom';
+        document.querySelectorAll('.inv-preset-btn').forEach(b => b.classList.remove('active'));
     }
+    filterInvoicesTable();
+}
 
-    tbody.innerHTML = invoices.map(inv => {
-        const isRefunded = inv.status === 'refunded';
-        const d = new Date(inv.date);
-        const dateStr = d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-        const pay = inv.paymentMethod === 'cash'
-            ? '<span class="badge badge-cash"><i class="fa-solid fa-money-bills"></i> كاش</span>'
-            : '<span class="badge badge-visa"><i class="fa-solid fa-credit-card"></i> فيزا</span>';
-        const statusBadge = isRefunded 
-            ? '<span class="badge" style="background:var(--danger-bg);color:var(--danger);font-size:0.7rem;margin-right:4px;"><i class="fa-solid fa-rotate-left"></i> مسترجعة</span>'
-            : '';
-        const itemsSummary = (inv.items || []).slice(0, 2).map(i => `${i.name} ×${i.qty}`).join('، ') + (inv.items?.length > 2 ? ` +${inv.items.length - 2}` : '');
-        const totalDisplay = isRefunded
-            ? `<del style="color:var(--muted)">${fmt(inv.total)} ج.م</del>`
-            : `<strong style="color:var(--green)">${fmt(inv.total)} ج.م</strong>`;
-        const profitDisplay = isRefunded
-            ? `<span style="color:var(--muted);text-decoration:line-through;">0.00 ج.م</span>`
-            : `<span style="color:var(--success);font-weight:700">+${fmt(inv.totalProfit)} ج.م</span>`;
-
-        const refundBtn = isRefunded ? '' : `
-            <button type="button" class="tbl-act-btn" style="color:var(--danger);border-color:rgba(239,68,68,0.3);margin-right:4px;" onclick='refundInvoice("${inv.invoiceId}")' title="إرجاع الفاتورة ورد الأصناف للمخزون">
-                <i class="fa-solid fa-rotate-left"></i> إرجاع
-            </button>`;
-
-        return `
-            <tr style="${isRefunded ? 'opacity:0.75;background:rgba(239,68,68,0.02);' : ''}">
-                <td><strong style="font-size:0.8rem;color:var(--primary);">${inv.invoiceId}</strong> ${statusBadge}</td>
-                <td style="font-size:0.8rem;color:var(--muted);">${dateStr}</td>
-                <td>${esc(inv.customerName || 'عميل نقدي')}</td>
-                <td style="font-size:0.8rem;">${esc(itemsSummary)}</td>
-                <td>${totalDisplay}</td>
-                <td>${pay}</td>
-                <td class="profit-sensitive">${profitDisplay}</td>
-                <td style="white-space:nowrap;text-align:center;">
-                    <button type="button" class="tbl-act-btn" onclick='showInvoiceModal(${JSON.stringify(inv)})'>
-                        <i class="fa-solid fa-eye"></i> عرض
-                    </button>
-                    ${refundBtn}
-                </td>
-            </tr>`;
-    }).join('');
+function setInvoiceStatusFilter(status) {
+    invSelectedStatus = status;
+    document.querySelectorAll('.inv-status-btn').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-status') === status);
+    });
+    filterInvoicesTable();
 }
 
 function filterInvoicesTable() {
     const q = $('invoiceSearchInput')?.value.trim().toLowerCase() || '';
-    const dateVal = $('invoicesDateFilter')?.value || '';
+    const customDate = $('invoicesDateFilter')?.value || '';
+
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     const filtered = allInvoicesCache.filter(inv => {
+        // 1. بحث بالاسم أو الرقم
         let matchQ = true;
         if (q) {
             matchQ = (inv.invoiceId && inv.invoiceId.toLowerCase().includes(q)) ||
                      (inv.customerName && inv.customerName.toLowerCase().includes(q));
         }
-        let matchDate = true;
-        if (dateVal && inv.date) {
-            matchDate = inv.date.startsWith(dateVal);
+
+        // 2. فلتر الحالة
+        let matchStatus = true;
+        if (invSelectedStatus === 'completed') {
+            matchStatus = inv.status !== 'refunded';
+        } else if (invSelectedStatus === 'refunded') {
+            matchStatus = inv.status === 'refunded';
         }
-        return matchQ && matchDate;
+
+        // 3. فلتر التاريخ
+        let matchDate = true;
+        const invDate = inv.date ? new Date(inv.date) : null;
+        if (invSelectedDateRange === 'today') {
+            matchDate = inv.date && inv.date.startsWith(todayStr);
+        } else if (invSelectedDateRange === 'week') {
+            matchDate = invDate && invDate >= oneWeekAgo;
+        } else if (invSelectedDateRange === 'month') {
+            matchDate = invDate && invDate >= oneMonthAgo;
+        } else if (invSelectedDateRange === 'custom' && customDate) {
+            matchDate = inv.date && inv.date.startsWith(customDate);
+        }
+
+        return matchQ && matchStatus && matchDate;
     });
 
     renderInvoicesTable(filtered);
@@ -7267,7 +7705,87 @@ function filterInvoicesTable() {
 function clearInvoiceFilter() {
     if ($('invoiceSearchInput')) $('invoiceSearchInput').value = '';
     if ($('invoicesDateFilter')) $('invoicesDateFilter').value = '';
-    renderInvoicesTable(allInvoicesCache);
+    setInvoiceDateRange('all');
+    setInvoiceStatusFilter('all');
+}
+
+function renderInvoicesTable(invoices) {
+    const tbody = $('invoicesViewTbody');
+    if (!tbody) return;
+
+    if (!invoices.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align:center;padding:50px 20px;color:var(--muted);">
+                    <i class="fa-solid fa-receipt" style="font-size:3rem;margin-bottom:12px;display:block;opacity:0.3;color:var(--primary);"></i>
+                    <strong style="font-size:1.05rem;color:var(--text);display:block;margin-bottom:4px;">لا توجد فواتير مطابقة للبحث أو التاريخ</strong>
+                    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;">جرّب اختيار فترة زمنية أخرى أو إزالة الفلاتر</p>
+                    <button type="button" class="tbl-act-btn" onclick="clearInvoiceFilter()" style="padding:6px 16px;font-weight:800;">
+                        <i class="fa-solid fa-rotate-left"></i> إظهار جميع الفواتير
+                    </button>
+                </td>
+            </tr>`;
+        return;
+    }
+
+    tbody.innerHTML = invoices.map(inv => {
+        const isRefunded = inv.status === 'refunded';
+        const d = new Date(inv.date);
+        const dateStr = d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+        const timeStr = d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        
+        const pay = inv.paymentMethod === 'cash'
+            ? '<span class="badge badge-cash"><i class="fa-solid fa-money-bills"></i> كاش</span>'
+            : '<span class="badge badge-visa"><i class="fa-solid fa-credit-card"></i> فيزا</span>';
+        
+        const statusBadge = isRefunded 
+            ? '<span class="badge-status refunded"><i class="fa-solid fa-rotate-left"></i> مسترجعة</span>'
+            : '<span class="badge-status completed"><i class="fa-solid fa-circle-check"></i> مكتملة</span>';
+        
+        const itemsList = inv.items || [];
+        const itemsSummary = itemsList.slice(0, 2).map(i => `${i.name} ×${i.qty}`).join('، ') + (itemsList.length > 2 ? ` <span style="color:var(--primary);font-weight:800;">+${itemsList.length - 2} أصناف</span>` : '');
+        
+        const totalDisplay = isRefunded
+            ? `<del style="color:var(--muted);font-weight:700;">${fmt(inv.total)} ج.م</del>`
+            : `<strong style="color:var(--green);font-size:0.95rem;font-weight:900;">${fmt(inv.total)} ج.م</strong>`;
+        
+        const profitDisplay = isRefunded
+            ? `<span style="color:var(--muted);text-decoration:line-through;">0.00 ج.م</span>`
+            : `<span style="color:var(--success);font-weight:800;background:var(--success-bg);padding:2px 8px;border-radius:6px;">+${fmt(inv.totalProfit)} ج.م</span>`;
+
+        const refundBtn = isRefunded ? '' : `
+            <button type="button" class="tbl-act-btn" style="color:var(--danger);border-color:rgba(239,68,68,0.3);margin-right:4px;" onclick='refundInvoice("${inv.invoiceId}")' title="إرجاع الفاتورة ورد الأصناف للمخزون">
+                <i class="fa-solid fa-rotate-left"></i> إرجاع
+            </button>`;
+
+        return `
+            <tr style="${isRefunded ? 'opacity:0.75;background:rgba(239,68,68,0.02);' : ''}">
+                <td>
+                    <div style="font-weight:900;color:var(--primary);font-size:0.84rem;margin-bottom:3px;">${inv.invoiceId}</div>
+                    ${statusBadge}
+                </td>
+                <td style="font-size:0.8rem;color:var(--muted);white-space:nowrap;">
+                    <div>${dateStr}</div>
+                    <div style="font-size:0.74rem;opacity:0.8;">${timeStr}</div>
+                </td>
+                <td>
+                    <div style="font-weight:800;font-size:0.85rem;color:var(--text);display:flex;align-items:center;gap:5px;">
+                        <i class="fa-regular fa-user" style="color:var(--muted);font-size:0.78rem;"></i>
+                        ${esc(inv.customerName || 'عميل نقدي')}
+                    </div>
+                </td>
+                <td style="font-size:0.82rem;max-width:240px;line-height:1.4;">${itemsSummary || '—'}</td>
+                <td style="white-space:nowrap;">${totalDisplay}</td>
+                <td>${pay}</td>
+                <td class="profit-sensitive" style="white-space:nowrap;">${profitDisplay}</td>
+                <td style="white-space:nowrap;text-align:center;">
+                    <button type="button" class="tbl-act-btn" onclick='showInvoiceModal(${JSON.stringify(inv)})' title="عرض وطباعة الفاتورة">
+                        <i class="fa-solid fa-eye"></i> عرض
+                    </button>
+                    ${refundBtn}
+                </td>
+            </tr>`;
+    }).join('');
 }
 
 async function refundInvoice(invId) {
