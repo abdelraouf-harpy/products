@@ -2245,54 +2245,231 @@ try {
 }
 
 /* ============================================================
-   IndexedDB Local Accelerator Cache (لتسريع فتح الصور محلياً)
+   إدارة الجلسات والتحقق من التراخيص والاشتراكات
+   ============================================================ */
+const SESSION_LIFETIME_MS = 14 * 24 * 60 * 60 * 1000; // 14 يوماً صلاحية الجلسة
+const LOW_STOCK_THRESHOLD = 5; // حد التنبيه لانخفاض المخزون (قابل للتعديل بسهولة)
+
+let currentUserSession = null;
+try {
+    const rawSession = JSON.parse(localStorage.getItem('harpy_auth_session')) || null;
+    if (rawSession && rawSession.key) {
+        if (rawSession.sessionExpiresAt && Date.now() > rawSession.sessionExpiresAt) {
+            localStorage.removeItem('harpy_auth_session');
+            currentUserSession = null;
+        } else {
+            currentUserSession = rawSession;
+        }
+    }
+} catch {
+    currentUserSession = null;
+}
+
+/* ============================================================
+   Multi-Tenant Storage Helper & Safe Migration
+   عزل التخزين المحلي لكل مستأجر وترحيل البيانات القديمة تلقائياً
+   ============================================================ */
+function getTenantKey() {
+    const session = (typeof currentUserSession !== 'undefined' && currentUserSession) 
+        ? currentUserSession 
+        : ((typeof currentSession !== 'undefined' && currentSession) ? currentSession : null);
+    if (!session || !session.key) return 'global';
+    return session.key.trim().toUpperCase();
+}
+
+function getProdsStorageKey() {
+    const tenant = getTenantKey();
+    return tenant === 'global' ? 'prods_v4' : `prods_${tenant}`;
+}
+
+function getCartStorageKey() {
+    const tenant = getTenantKey();
+    return tenant === 'global' ? 'harpy_cart_v1' : `cart_${tenant}`;
+}
+
+/* ============================================================
+   IndexedDB Multi-Tenant Accelerator Cache (عزل صور كل تاجر فيزيائياً)
    ============================================================ */
 class ImgDB {
     constructor() {
-        this._db   = null;
-        this.ready = this._open();
+        this._dbs = new Map(); // tenantKey -> Promise<IDBDatabase>
     }
-    _open() {
-        return new Promise(resolve => {
-            if (!window.indexedDB) { resolve(); return; }
-            const r = indexedDB.open('ProdImagesDB_v1', 1);
-            r.onupgradeneeded = e => e.target.result.createObjectStore('imgs');
-            r.onsuccess = e => { this._db = e.target.result; resolve(); };
-            r.onerror   = () => resolve();
+    _getDb(explicitTenant) {
+        const tenant = explicitTenant || getTenantKey();
+        if (this._dbs.has(tenant)) {
+            return this._dbs.get(tenant);
+        }
+        const p = new Promise(resolve => {
+            if (typeof window === 'undefined' || !window.indexedDB) { resolve(null); return; }
+            const dbName = tenant === 'global' ? 'ProdImagesDB_v1' : `ProdImagesDB_${tenant}`;
+            const r = indexedDB.open(dbName, 1);
+            r.onupgradeneeded = e => {
+                if (!e.target.result.objectStoreNames.contains('imgs')) {
+                    e.target.result.createObjectStore('imgs');
+                }
+            };
+            r.onsuccess = e => resolve(e.target.result);
+            r.onerror   = () => resolve(null);
+        });
+        this._dbs.set(tenant, p);
+        return p;
+    }
+    async save(key, data, explicitTenant) {
+        const db = await this._getDb(explicitTenant);
+        if (!db) return;
+        return new Promise(res => {
+            try {
+                const tx = db.transaction('imgs', 'readwrite');
+                tx.objectStore('imgs').put(data, String(key));
+                tx.oncomplete = res;
+                tx.onerror    = res;
+            } catch { res(); }
         });
     }
-    async save(key, data) {
-        await this.ready;
-        if (!this._db) return;
+    async get(key, explicitTenant) {
+        const db = await this._getDb(explicitTenant);
+        if (!db) return null;
         return new Promise(res => {
-            const tx = this._db.transaction('imgs', 'readwrite');
-            tx.objectStore('imgs').put(data, String(key));
-            tx.oncomplete = res;
-            tx.onerror    = res;
+            try {
+                const tx  = db.transaction('imgs', 'readonly');
+                const req = tx.objectStore('imgs').get(String(key));
+                req.onsuccess = () => res(req.result ?? null);
+                req.onerror   = () => res(null);
+            } catch { res(null); }
         });
     }
-    async get(key) {
-        await this.ready;
-        if (!this._db) return null;
+    async del(key, explicitTenant) {
+        const db = await this._getDb(explicitTenant);
+        if (!db) return;
         return new Promise(res => {
-            const tx  = this._db.transaction('imgs', 'readonly');
-            const req = tx.objectStore('imgs').get(String(key));
-            req.onsuccess = () => res(req.result ?? null);
-            req.onerror   = () => res(null);
-        });
-    }
-    async del(key) {
-        await this.ready;
-        if (!this._db) return;
-        return new Promise(res => {
-            const tx = this._db.transaction('imgs', 'readwrite');
-            tx.objectStore('imgs').delete(String(key));
-            tx.oncomplete = res;
-            tx.onerror    = res;
+            try {
+                const tx = db.transaction('imgs', 'readwrite');
+                tx.objectStore('imgs').delete(String(key));
+                tx.oncomplete = res;
+                tx.onerror    = res;
+            } catch { res(); }
         });
     }
 }
 const imgDB = new ImgDB();
+
+// ترحيل كاش الصور القديم مع إرجاع Promise فعلي لمنع أي Race Condition
+function migrateLegacyImgDB(cleanKey) {
+    return new Promise(resolve => {
+        if (!cleanKey || typeof window === 'undefined' || !window.indexedDB) {
+            resolve();
+            return;
+        }
+
+        // فحص الفلاج: إذا تم ترحيل ProdImagesDB_v1 بنجاح سابقاً لا نعيد فتحه نهائياً
+        if (localStorage.getItem('imgdb_migrated_v1_done')) {
+            resolve();
+            return;
+        }
+
+        const targetDbName = `ProdImagesDB_${cleanKey}`;
+        let req;
+        try {
+            req = indexedDB.open('ProdImagesDB_v1');
+        } catch (e) {
+            resolve();
+            return;
+        }
+
+        req.onerror = () => {
+            resolve();
+        };
+
+        req.onupgradeneeded = e => {
+            // إذا كانت قاعدة البيانات غير موجودة أصلاً وتم فتحها كنسخة فارغة، نلغيها ونحدد الفلاج
+            const db = e.target.result;
+            db.close();
+            try { indexedDB.deleteDatabase('ProdImagesDB_v1'); } catch (_) {}
+            localStorage.setItem('imgdb_migrated_v1_done', 'true');
+            resolve();
+        };
+
+        req.onsuccess = e => {
+            const oldDb = e.target.result;
+            if (!oldDb.objectStoreNames.contains('imgs')) {
+                oldDb.close();
+                try { indexedDB.deleteDatabase('ProdImagesDB_v1'); } catch (_) {}
+                localStorage.setItem('imgdb_migrated_v1_done', 'true');
+                resolve();
+                return;
+            }
+
+            let tx;
+            try {
+                tx = oldDb.transaction('imgs', 'readonly');
+            } catch (err) {
+                oldDb.close();
+                resolve();
+                return;
+            }
+
+            const store = tx.objectStore('imgs');
+            const cursorReq = store.openCursor();
+            const copyPromises = [];
+
+            cursorReq.onsuccess = e2 => {
+                const cursor = e2.target.result;
+                if (cursor) {
+                    copyPromises.push(imgDB.save(cursor.key, cursor.value, cleanKey));
+                    cursor.continue();
+                } else {
+                    // اكتمال التكرار على كافة صور الداتابيز القديمة
+                    Promise.all(copyPromises).then(() => {
+                        oldDb.close();
+                        try {
+                            indexedDB.deleteDatabase('ProdImagesDB_v1');
+                            console.log(`[ImgDB Migration] Migrated ${copyPromises.length} images to ${targetDbName} and deleted ProdImagesDB_v1`);
+                        } catch (_) {}
+                        localStorage.setItem('imgdb_migrated_v1_done', 'true');
+                        resolve();
+                    }).catch(() => {
+                        oldDb.close();
+                        localStorage.setItem('imgdb_migrated_v1_done', 'true');
+                        resolve();
+                    });
+                }
+            };
+
+            cursorReq.onerror = () => {
+                oldDb.close();
+                resolve();
+            };
+        };
+    });
+}
+
+async function migrateTenantData(licenseKey) {
+    if (!licenseKey) return;
+    const cleanKey = licenseKey.trim().toUpperCase();
+    const newProdsKey = `prods_${cleanKey}`;
+    const newCartKey  = `cart_${cleanKey}`;
+
+    try {
+        const legacyProds = localStorage.getItem('prods_v4');
+        if (legacyProds && !localStorage.getItem(newProdsKey)) {
+            localStorage.setItem(newProdsKey, legacyProds);
+            localStorage.removeItem('prods_v4');
+            console.log(`[Storage Migration] Migrated prods_v4 to ${newProdsKey}`);
+        }
+
+        const legacyCart = localStorage.getItem('harpy_cart_v1');
+        if (legacyCart && !localStorage.getItem(newCartKey)) {
+            localStorage.setItem(newCartKey, legacyCart);
+            localStorage.removeItem('harpy_cart_v1');
+            console.log(`[Storage Migration] Migrated harpy_cart_v1 to ${newCartKey}`);
+        }
+    } catch (e) {
+        console.warn('[Storage Migration Warning]:', e);
+    }
+
+    // ترحيل صور IndexedDB مع انتظار الـ Promise فعلياً لمنع الـ Race Condition
+    await migrateLegacyImgDB(cleanKey);
+}
 
 const PLACEHOLDER = `data:image/svg+xml,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200">
@@ -2365,79 +2542,6 @@ function compress(file, maxW=900, maxH=900, q=0.85) {
         reader.onerror = () => res(null);
         reader.readAsDataURL(file);
     });
-}
-
-/* ============================================================
-   إدارة الجلسات والتحقق من التراخيص والاشتراكات
-   ============================================================ */
-const SESSION_LIFETIME_MS = 14 * 24 * 60 * 60 * 1000; // 14 يوماً صلاحية الجلسة
-const LOW_STOCK_THRESHOLD = 5; // حد التنبيه لانخفاض المخزون (قابل للتعديل بسهولة)
-
-let currentUserSession = null;
-try {
-    const rawSession = JSON.parse(localStorage.getItem('harpy_auth_session')) || null;
-    if (rawSession && rawSession.key) {
-        if (rawSession.sessionExpiresAt && Date.now() > rawSession.sessionExpiresAt) {
-            localStorage.removeItem('harpy_auth_session');
-            currentUserSession = null;
-        } else {
-            currentUserSession = rawSession;
-        }
-    }
-} catch {
-    currentUserSession = null;
-}
-
-/* ============================================================
-   Multi-Tenant Storage Helper & Safe Migration
-   عزل التخزين المحلي لكل مستأجر وترحيل البيانات القديمة تلقائياً
-   ============================================================ */
-function getTenantKey() {
-    const session = (typeof currentUserSession !== 'undefined' && currentUserSession) 
-        ? currentUserSession 
-        : ((typeof currentSession !== 'undefined' && currentSession) ? currentSession : null);
-    if (!session || !session.key) return 'global';
-    return session.key.trim().toUpperCase();
-}
-
-function getProdsStorageKey() {
-    const tenant = getTenantKey();
-    return tenant === 'global' ? 'prods_v4' : `prods_${tenant}`;
-}
-
-function getCartStorageKey() {
-    const tenant = getTenantKey();
-    return tenant === 'global' ? 'harpy_cart_v1' : `cart_${tenant}`;
-}
-
-function migrateTenantData(licenseKey) {
-    if (!licenseKey) return;
-    const cleanKey = licenseKey.trim().toUpperCase();
-    const newProdsKey = `prods_${cleanKey}`;
-    const newCartKey  = `cart_${cleanKey}`;
-
-    try {
-        const legacyProds = localStorage.getItem('prods_v4');
-        if (legacyProds && !localStorage.getItem(newProdsKey)) {
-            localStorage.setItem(newProdsKey, legacyProds);
-            localStorage.removeItem('prods_v4');
-            console.log(`[Storage Migration] Migrated prods_v4 to ${newProdsKey}`);
-        }
-
-        const legacyCart = localStorage.getItem('harpy_cart_v1');
-        if (legacyCart && !localStorage.getItem(newCartKey)) {
-            localStorage.setItem(newCartKey, legacyCart);
-            localStorage.removeItem('harpy_cart_v1');
-            console.log(`[Storage Migration] Migrated harpy_cart_v1 to ${newCartKey}`);
-        }
-    } catch (e) {
-        console.warn('[Storage Migration Warning]:', e);
-    }
-}
-
-// ترحيل فوري للبيانات إذا وُجدت جلسة سابقة صالحة
-if (currentUserSession && currentUserSession.key) {
-    migrateTenantData(currentUserSession.key);
 }
 
 let products = [];
@@ -2793,7 +2897,7 @@ authForm.addEventListener('submit', async e => {
                     sessionExpiresAt: Date.now() + SESSION_LIFETIME_MS
                 };
                 localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
-                migrateTenantData(cleanKey);
+                await migrateTenantData(cleanKey);
                 authOverlay.classList.remove('open');
                 toast(`مرحباً بك يا ${nameInput} 👋 تم تأمين الحساب بـ PIN`, 'success');
                 initUserProductsSync();
@@ -2851,7 +2955,7 @@ authForm.addEventListener('submit', async e => {
                     sessionExpiresAt: Date.now() + SESSION_LIFETIME_MS
                 };
                 localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
-                migrateTenantData(cleanKey);
+                await migrateTenantData(cleanKey);
                 authOverlay.classList.remove('open');
                 toast(`مرحباً بك مجدداً يا ${userName} 👋`, 'success');
                 initUserProductsSync();
@@ -2872,7 +2976,7 @@ authForm.addEventListener('submit', async e => {
             sessionExpiresAt: Date.now() + SESSION_LIFETIME_MS
         };
         localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
-        migrateTenantData(currentUserSession.key);
+        await migrateTenantData(currentUserSession.key);
         authOverlay.classList.remove('open');
         toast(`مرحباً (وضع التجربة)`, 'info');
         updateUserUI();
@@ -2904,10 +3008,11 @@ function startLicenseWatcher(key) {
     });
 }
 
-function checkAuthGuard() {
+async function checkAuthGuard() {
     if (!currentUserSession || !currentUserSession.key) {
         authOverlay.classList.add('open');
     } else {
+        await migrateTenantData(currentUserSession.key);
         authOverlay.classList.remove('open');
         updateUserUI();
         initUserProductsSync();
@@ -3970,7 +4075,7 @@ function goToCashier() {
 
 async function init() {
     initTheme();
-    checkAuthGuard();
+    await checkAuthGuard();
     updateFloatCart();
 }
 
