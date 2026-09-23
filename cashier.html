@@ -718,6 +718,182 @@
             .cart-search-bar button { width: 100%; }
             .pay-method-btn { padding: 8px 4px; font-size: 0.78rem; }
         }
+
+        /* ── Overlay Base & Daily Report Modal ── */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            box-sizing: border-box;
+            backdrop-filter: blur(4px);
+        }
+        .overlay.open { display: flex; }
+
+        .daily-report-box {
+            background: var(--card);
+            border-radius: 20px;
+            max-width: 840px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 65px rgba(0,0,0,0.35);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        .report-modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: var(--bg);
+            border-radius: 20px 20px 0 0;
+            flex-wrap: wrap;
+        }
+        .report-modal-header h3 {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+        }
+        .report-date-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .report-date-input {
+            background: var(--card);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 5px 10px;
+            color: var(--text);
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .report-date-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 5px 10px;
+            color: var(--text);
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .report-date-btn:hover, .report-date-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .report-modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .report-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .report-stat-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .report-stat-card span {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--muted);
+        }
+        .report-stat-card strong {
+            font-size: 1.2rem;
+            font-weight: 900;
+        }
+        .report-section-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            margin: 18px 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+        }
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+        .report-table th {
+            background: var(--bg);
+            color: var(--muted);
+            font-weight: 800;
+            text-align: right;
+            padding: 8px 10px;
+            border-bottom: 2px solid var(--border);
+        }
+        .report-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        .report-modal-footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: var(--bg);
+            border-radius: 0 0 20px 20px;
+            flex-wrap: wrap;
+        }
+        .cbtn-cancel {
+            background: transparent;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 18px;
+            color: var(--text);
+            font-family: 'Cairo', sans-serif;
+            font-weight: 800;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background var(--tr);
+        }
+        .cbtn-cancel:hover { background: var(--border); }
+        .sidebar-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: var(--muted);
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+        .sidebar-close-btn:hover {
+            color: var(--text);
+            background: var(--border);
+        }
     </style>
 </head>
 <body>
@@ -794,6 +970,10 @@
             </div>
         </div>
         <div class="header-actions">
+            <button class="hbtn" id="cashierDailyReportBtn" onclick="openDailyReportModal()" style="background:var(--primary);color:#fff;border-color:var(--primary);" title="تقرير المبيعات والأرباح اليومي">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span class="btn-label">تقرير اليوم</span>
+            </button>
             <button class="hbtn" onclick="goBack()">
                 <i class="fa-solid fa-arrow-right"></i>
                 <span class="btn-label">إدارة المنتجات</span>
@@ -804,6 +984,9 @@
         </div>
     </div>
 </header>
+
+<!-- Subscription Expiry Banner -->
+<div id="subscriptionExpiryBanner" style="display:none;max-width:1400px;margin:12px auto 0;padding:0 16px;"></div>
 
 <!-- Persistent Reconciliation Alert Banner -->
 <div id="reconciliationBanner" style="display:none;max-width:1400px;margin:12px auto 0;padding:0 16px;">
@@ -989,6 +1172,38 @@
                 <i class="fa-solid fa-rotate"></i> إعادة إضافة الكل للمخزون
             </button>
             <button class="btn-close-inv" onclick="closeReconciliationModal()"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+        </div>
+    </div>
+</div>
+
+<!-- Daily Report & Z-Report Modal -->
+<div class="overlay" id="dailyReportModal">
+    <div class="daily-report-box">
+        <div class="report-modal-header">
+            <h3><i class="fa-solid fa-chart-pie" style="color:var(--primary);"></i> تقرير المبيعات والأرباح اليومي</h3>
+            <div class="report-date-bar">
+                <button type="button" class="report-date-btn active" id="repBtnToday" onclick="selectReportDay('today')">اليوم</button>
+                <button type="button" class="report-date-btn" id="repBtnYesterday" onclick="selectReportDay('yesterday')">أمس</button>
+                <input type="date" class="report-date-input" id="reportDateInput" onchange="onReportDateChanged(this.value)">
+                <button type="button" class="sidebar-close-btn" onclick="closeDailyReportModal()" style="display:flex;margin-right:6px;" title="إغلاق">&times;</button>
+            </div>
+        </div>
+        <div class="report-modal-body" id="dailyReportBody">
+            <div style="text-align:center;padding:40px;color:var(--muted);">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--primary);margin-bottom:12px;"></i>
+                <div>جاري جلب وتحليل بيانات المبيعات...</div>
+            </div>
+        </div>
+        <div class="report-modal-footer">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="hbtn" style="background:#10b981;color:#fff;border-color:#10b981;" onclick="exportCurrentDayInvoices()" title="تصدير إلى Excel">
+                    <i class="fa-solid fa-file-excel"></i> تصدير إكسيل
+                </button>
+                <button type="button" class="hbtn" style="background:var(--primary);color:#fff;border-color:var(--primary);" onclick="triggerPrintZReport()" title="طباعة تقرير الإغلاق المالي">
+                    <i class="fa-solid fa-receipt"></i> طباعة تقرير الإغلاق (Z-Report)
+                </button>
+            </div>
+            <button type="button" class="cbtn-cancel" style="flex:0 0 auto;padding:8px 18px;" onclick="closeDailyReportModal()">إغلاق</button>
         </div>
     </div>
 </div>
@@ -1287,6 +1502,42 @@ function loadSession() {
     return null;
 }
 
+/* فحص التنبيه بقرب انتهاء الاشتراك (قبل 3 أيام) */
+function checkSubscriptionExpiry(lic) {
+    const banner = $('subscriptionExpiryBanner');
+    if (!banner) return;
+
+    if (!lic || lic.planId === 'lifetime' || lic.durationDays === null || !lic.expiresAt) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    const now = Date.now();
+    const expTime = new Date(lic.expiresAt).getTime();
+    const diffMs = expTime - now;
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+    if (diffDays > 0 && diffDays <= 3.5) {
+        const daysLeft = Math.max(1, Math.ceil(diffDays));
+        const expDateFormatted = new Date(lic.expiresAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+        banner.innerHTML = `
+            <div style="background:#fffbeb;border:1.5px solid #f59e0b;border-radius:var(--radius);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:var(--shadow-sm);color:#92400e;">
+                <div style="display:flex;align-items:center;gap:10px;font-weight:800;font-size:0.9rem;">
+                    <i class="fa-solid fa-clock-rotate-left" style="font-size:1.3rem;color:#d97706;"></i>
+                    <div>
+                        <span>تنبيه باقتراب انتهاء الاشتراك: ينتهي اشتراكك خلال <strong>${daysLeft} أيام</strong> (بتاريخ ${expDateFormatted}).</span>
+                        <div style="font-size:0.78rem;font-weight:600;opacity:0.9;margin-top:2px;">يرجى تجديد الاشتراك مع الإدارة لضمان استمرار الخدمة والمزامنة السحابية دون توقف.</div>
+                    </div>
+                </div>
+                <button type="button" onclick="this.parentElement.parentElement.style.display='none'" style="background:none;border:none;color:#92400e;font-size:1.1rem;cursor:pointer;padding:4px 8px;" title="إغلاق">&times;</button>
+            </div>
+        `;
+        banner.style.display = 'block';
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
 async function checkAuth() {
     currentSession = loadSession();
     if (!currentSession) {
@@ -1294,6 +1545,7 @@ async function checkAuth() {
     } else {
         await migrateTenantData(currentSession.key);
         $('authOverlay').classList.remove('open');
+        checkSubscriptionExpiry(currentSession);
         // عرض السلة فوراً من localStorage (لا يحتاج Firebase)
         renderCart();
         updateSummary();
@@ -1501,6 +1753,16 @@ function loadProducts() {
     // عرض السلة من localStorage (لا يحتاج Firebase)
     renderCart();
     updateSummary();
+
+    // فحص صلاحية الاشتراك والتنبيه بالنهاية
+    if (db && currentSession && currentSession.key && currentSession.key !== 'DEMO-USER') {
+        db.ref(`licenses/${currentSession.key}`).on('value', snap => {
+            const lic = snap.val();
+            if (lic) checkSubscriptionExpiry(lic);
+        });
+    } else if (currentSession) {
+        checkSubscriptionExpiry(currentSession);
+    }
 
     // تحميل المنتجات للبحث السريع + سجل الفواتير (يحتاج Firebase)
     if (!db || !currentSession) return;
@@ -2233,6 +2495,414 @@ function exportSalesToExcel() {
 }
 
 /* ============================================================
+   المرحلة 7: تقرير المبيعات والأرباح اليومي وتقرير الإغلاق (Z-Report)
+   داخل نظام الكاشير
+   ============================================================ */
+let currentReportSummary = null;
+let selectedReportDate = new Date().toISOString().slice(0, 10);
+
+async function openDailyReportModal(targetDateStr) {
+    const today = new Date().toISOString().slice(0, 10);
+    selectedReportDate = targetDateStr || today;
+
+    const modal = $('dailyReportModal');
+    if (!modal) return;
+    modal.classList.add('open');
+
+    const dateInput = $('reportDateInput');
+    if (dateInput) dateInput.value = selectedReportDate;
+    updateReportDayButtons();
+
+    $('dailyReportBody').innerHTML = `
+        <div style="text-align:center;padding:40px;color:var(--muted);">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--primary);margin-bottom:12px;"></i>
+            <div>جاري جلب وتحليل بيانات المبيعات...</div>
+        </div>
+    `;
+
+    await fetchAndRenderDailyReport(selectedReportDate);
+}
+
+function closeDailyReportModal() {
+    $('dailyReportModal')?.classList.remove('open');
+}
+
+function selectReportDay(type) {
+    const today = new Date();
+    if (type === 'today') {
+        selectedReportDate = today.toISOString().slice(0, 10);
+    } else if (type === 'yesterday') {
+        const yest = new Date(today);
+        yest.setDate(today.getDate() - 1);
+        selectedReportDate = yest.toISOString().slice(0, 10);
+    }
+    const dateInput = $('reportDateInput');
+    if (dateInput) dateInput.value = selectedReportDate;
+    updateReportDayButtons();
+    fetchAndRenderDailyReport(selectedReportDate);
+}
+
+function onReportDateChanged(val) {
+    if (!val) return;
+    selectedReportDate = val;
+    updateReportDayButtons();
+    fetchAndRenderDailyReport(selectedReportDate);
+}
+
+function updateReportDayButtons() {
+    const today = new Date().toISOString().slice(0, 10);
+    const yest = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    $('repBtnToday')?.classList.toggle('active', selectedReportDate === today);
+    $('repBtnYesterday')?.classList.toggle('active', selectedReportDate === yest);
+}
+
+async function fetchAndRenderDailyReport(dateStr) {
+    let invoices = [];
+    if (lastInvoiceList && lastInvoiceList.length > 0) {
+        invoices = lastInvoiceList;
+    } else if (db && currentSession && currentSession.key && currentSession.key !== 'DEMO-USER') {
+        try {
+            const snap = await db.ref(`sales/${currentSession.key}/invoices`).once('value');
+            const val = snap.val();
+            invoices = val ? Object.values(val) : [];
+        } catch (e) {
+            console.error('Failed to load invoices:', e);
+        }
+    }
+    const summary = getDailyDigestSummary(invoices, dateStr);
+    currentReportSummary = summary;
+    renderDailyReportView(summary);
+}
+
+function getDailyDigestSummary(invoices, targetDateStr) {
+    let totalSales = 0;
+    let totalProfit = 0;
+    let completedCount = 0;
+    let refundedCount = 0;
+    let refundedAmount = 0;
+    let cashSales = 0;
+    let visaSales = 0;
+    const itemsCountMap = {};
+
+    const dayInvoices = invoices.filter(inv => {
+        if (!inv || !inv.date) return false;
+        try {
+            const d = new Date(inv.date);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const invDateStr = `${yyyy}-${mm}-${dd}`;
+            return invDateStr === targetDateStr;
+        } catch {
+            return inv.date.startsWith(targetDateStr);
+        }
+    });
+
+    dayInvoices.forEach(inv => {
+        if (inv.status === 'refunded') {
+            refundedCount++;
+            refundedAmount += (parseFloat(inv.total) || 0);
+        } else {
+            completedCount++;
+            const tot = parseFloat(inv.total) || 0;
+            const prof = parseFloat(inv.totalProfit) || 0;
+            totalSales += tot;
+            totalProfit += prof;
+
+            if (inv.paymentMethod === 'cash') {
+                cashSales += tot;
+            } else {
+                visaSales += tot;
+            }
+
+            if (Array.isArray(inv.items)) {
+                inv.items.forEach(it => {
+                    const name = it.name || 'صنف';
+                    const q = parseFloat(it.qty) || 1;
+                    const uprice = parseFloat(it.unitPrice) || 0;
+                    const ucost = parseFloat(it.unitCost) || 0;
+                    if (!itemsCountMap[name]) {
+                        itemsCountMap[name] = { name, qty: 0, revenue: 0, profit: 0 };
+                    }
+                    itemsCountMap[name].qty += q;
+                    itemsCountMap[name].revenue += uprice * q;
+                    itemsCountMap[name].profit += (uprice - ucost) * q;
+                });
+            }
+        }
+    });
+
+    const topItems = Object.values(itemsCountMap)
+        .sort((a, b) => b.qty - a.qty)
+        .slice(0, 5);
+
+    return {
+        dateStr: targetDateStr,
+        dayInvoices,
+        totalSales,
+        totalProfit,
+        completedCount,
+        refundedCount,
+        refundedAmount,
+        cashSales,
+        visaSales,
+        topItems
+    };
+}
+
+function renderDailyReportView(s) {
+    const body = $('dailyReportBody');
+    if (!body) return;
+
+    let formattedDate = s.dateStr;
+    try {
+        formattedDate = new Date(s.dateStr).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    } catch {}
+
+    let topItemsRows = '';
+    if (s.topItems && s.topItems.length > 0) {
+        topItemsRows = s.topItems.map((it, idx) => `
+            <tr>
+                <td><strong>${idx + 1}. ${it.name}</strong></td>
+                <td style="text-align:center;"><span class="badge badge-cash" style="background:#e0e7ff;color:#3730a3;padding:3px 8px;border-radius:6px;font-weight:800;">${it.qty} قطعة</span></td>
+                <td style="text-align:center;">${fmt(it.revenue)} ج.م</td>
+                <td style="text-align:left;color:var(--success);font-weight:700;">+${fmt(it.profit)} ج.م</td>
+            </tr>
+        `).join('');
+    } else {
+        topItemsRows = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted);">لا توجد مبيعات مسجلة في هذا اليوم</td></tr>';
+    }
+
+    let invsRows = '';
+    if (s.dayInvoices && s.dayInvoices.length > 0) {
+        invsRows = s.dayInvoices.map(inv => {
+            const isRef = inv.status === 'refunded';
+            let timeStr = '';
+            try {
+                timeStr = new Date(inv.date).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            } catch {
+                timeStr = inv.date;
+            }
+            const payBadge = inv.paymentMethod === 'cash' 
+                ? '<span class="badge badge-cash">كاش</span>' 
+                : '<span class="badge badge-visa">فيزا</span>';
+            const statusBadge = isRef 
+                ? '<span style="color:var(--danger);font-weight:700;font-size:0.75rem;">مسترجعة</span>'
+                : '<span style="color:var(--success);font-weight:700;font-size:0.75rem;">ناجحة</span>';
+
+            return `
+                <tr style="${isRef ? 'opacity:0.6;background:rgba(239,68,68,0.03);' : ''}">
+                    <td><span style="font-family:monospace;font-size:0.8rem;color:var(--primary);">${inv.invoiceId}</span></td>
+                    <td style="color:var(--muted);">${timeStr}</td>
+                    <td>${inv.customerName || 'عميل نقدي'}</td>
+                    <td style="text-align:center;">${payBadge}</td>
+                    <td style="text-align:center;"><strong>${fmt(inv.total)} ج.م</strong></td>
+                    <td style="text-align:center;">${statusBadge}</td>
+                </tr>
+            `;
+        }).join('');
+    } else {
+        invsRows = '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--muted);">لا توجد فواتير منشأة في هذا اليوم</td></tr>';
+    }
+
+    body.innerHTML = `
+        <div style="font-size:0.9rem;font-weight:700;color:var(--muted);margin-bottom:14px;">
+            <i class="fa-solid fa-calendar-day"></i> تقرير يوم: <strong style="color:var(--text);">${formattedDate}</strong>
+        </div>
+
+        <div class="report-stats-grid">
+            <div class="report-stat-card">
+                <span>إجمالي المبيعات</span>
+                <strong style="color:var(--primary);">${fmt(s.totalSales)} ج.م</strong>
+            </div>
+            <div class="report-stat-card">
+                <span>صافي الأرباح</span>
+                <strong style="color:var(--success);">+${fmt(s.totalProfit)} ج.م</strong>
+            </div>
+            <div class="report-stat-card">
+                <span>الفواتير الناجحة</span>
+                <strong style="color:var(--text);">${s.completedCount} فاتورة</strong>
+            </div>
+            <div class="report-stat-card">
+                <span>نقدية / فيزا</span>
+                <div style="font-size:0.82rem;font-weight:800;color:var(--text);margin-top:2px;">
+                    كاش: ${fmt(s.cashSales)}<br>فيزا: ${fmt(s.visaSales)}
+                </div>
+            </div>
+            <div class="report-stat-card">
+                <span>المرتجعات</span>
+                <strong style="color:var(--danger);">${s.refundedCount} (${fmt(s.refundedAmount)} ج.م)</strong>
+            </div>
+        </div>
+
+        <div class="report-section-title">
+            <i class="fa-solid fa-fire" style="color:#f59e0b;"></i> الأصناف الأكثر مبيعاً اليوم
+        </div>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>اسم الصنف</th>
+                    <th style="text-align:center;">الكمية</th>
+                    <th style="text-align:center;">إجمالي البيع</th>
+                    <th style="text-align:left;">صافي الربح</th>
+                </tr>
+            </thead>
+            <tbody>${topItemsRows}</tbody>
+        </table>
+
+        <div class="report-section-title">
+            <i class="fa-solid fa-receipt" style="color:var(--primary);"></i> فواتير اليوم (${s.dayInvoices.length})
+        </div>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>رقم الفاتورة</th>
+                    <th>الوقت</th>
+                    <th>العميل</th>
+                    <th style="text-align:center;">الدفع</th>
+                    <th style="text-align:center;">القيمة</th>
+                    <th style="text-align:center;">الحالة</th>
+                </tr>
+            </thead>
+            <tbody>${invsRows}</tbody>
+        </table>
+    `;
+}
+
+function triggerPrintZReport() {
+    if (!currentReportSummary) {
+        toast('لا توجد بيانات متاحة للطباعة', 'warning');
+        return;
+    }
+    printZReport(currentReportSummary);
+}
+
+function exportCurrentDayInvoices() {
+    if (!currentReportSummary) return;
+    exportDayInvoicesToExcel(currentReportSummary);
+}
+
+function exportDayInvoicesToExcel(summary) {
+    if (!summary || !summary.dayInvoices || summary.dayInvoices.length === 0) {
+        toast('لا توجد فواتير لتصديرها في هذا اليوم', 'warning');
+        return;
+    }
+
+    const headers = ['"رقم الفاتورة"', '"الوقت"', '"اسم العميل"', '"طريقة الدفع"', '"قيمة الفاتورة"', '"صافي الربح"', '"الحالة"', '"الأصناف"'];
+    const rows = summary.dayInvoices.map(inv => {
+        const d = new Date(inv.date);
+        const timeStr = d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        const itemsStr = (inv.items || []).map(i => `${i.name} (${i.qty})`).join(' | ');
+        const statusStr = inv.status === 'refunded' ? 'مسترجعة' : 'مكتملة';
+        const payStr = inv.paymentMethod === 'cash' ? 'نقداً (كاش)' : 'بطاقة (فيزا)';
+        return [
+            `"${inv.invoiceId}"`,
+            `"${timeStr}"`,
+            `"${(inv.customerName || 'عميل نقدي').replace(/"/g, '""')}"`,
+            `"${payStr}"`,
+            inv.total || 0,
+            inv.status === 'refunded' ? 0 : (inv.totalProfit || 0),
+            `"${statusStr}"`,
+            `"${itemsStr.replace(/"/g, '""')}"`
+        ].join(',');
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `تقرير_مبيعات_${summary.dateStr}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast('تم تصدير تقرير اليوم إلى Excel بنجاح 📊', 'success');
+}
+
+function printZReport(summary) {
+    const storeName = (currentSession?.name) || 'نظام هاربي لإدارة المنتجات';
+    const now = new Date();
+    const nowTimeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+
+    const topItemsRows = (summary.topItems || []).map((it, idx) => `
+        <tr>
+            <td style="text-align:right;">${idx + 1}. ${it.name}</td>
+            <td style="text-align:center;">${it.qty}</td>
+            <td style="text-align:left;">${fmt(it.revenue)} ج.م</td>
+        </tr>
+    `).join('');
+
+    const zHTML = `<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Z-Report — ${summary.dateStr}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        @page { size: 80mm auto; margin: 3mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+        body { width: 72mm; margin: 0 auto; padding: 4px; font-size: 11px; color: #000; background: #fff; }
+        .zh { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 6px; margin-bottom: 8px; }
+        .zh h2 { font-size: 15px; font-weight: 900; margin-bottom: 2px; }
+        .zh p { font-size: 10px; color: #333; }
+        .zr { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px; }
+        .zr.bold { font-weight: 900; font-size: 12px; }
+        .zd { border-top: 1px dashed #000; margin: 6px 0; }
+        .ztbl { width: 100%; border-collapse: collapse; margin: 5px 0; font-size: 10px; }
+        .ztbl th { border-bottom: 1px solid #000; text-align: right; padding: 3px 0; font-weight: 800; }
+        .ztbl td { padding: 3px 0; border-bottom: 1px dotted #ccc; }
+        .zs { margin-top: 16px; border-top: 1px dashed #000; padding-top: 8px; font-size: 10px; }
+        .zs-row { display: flex; justify-content: space-between; margin-top: 18px; }
+    </style>
+</head>
+<body>
+    <div class="zh">
+        <h2>${storeName}</h2>
+        <p>نظام Harpy للكاشير والمبيعات</p>
+        <p>تقرير الإغلاق المالي اليومي (Z-Report)</p>
+        <div style="font-size:9px;margin-top:4px;">تاريخ التقرير: ${summary.dateStr} | وقت الطباعة: ${nowTimeStr}</div>
+    </div>
+
+    <div class="zr bold"><span>إجمالي المبيعات</span><span>${fmt(summary.totalSales)} ج.م</span></div>
+    <div class="zr"><span>• نقداً (درج الكاش)</span><span>${fmt(summary.cashSales)} ج.م</span></div>
+    <div class="zr"><span>• بطاقة / فيزا</span><span>${fmt(summary.visaSales)} ج.م</span></div>
+    <div class="zr bold"><span>صافي الأرباح المحققة</span><span>${fmt(summary.totalProfit)} ج.م</span></div>
+
+    <div class="zd"></div>
+
+    <div class="zr"><span>عدد الفواتير الناجحة</span><span>${summary.completedCount}</span></div>
+    <div class="zr"><span>عدد المرتجعات</span><span>${summary.refundedCount}</span></div>
+    <div class="zr"><span>إجمالي قيمة المرتجع</span><span>${fmt(summary.refundedAmount)} ج.م</span></div>
+
+    <div class="zd"></div>
+    <div style="font-weight:800;font-size:10px;margin-bottom:4px;">🔥 الأكثر مبيعاً في هذا اليوم:</div>
+    <table class="ztbl">
+        <thead><tr><th>الصنف</th><th style="text-align:center;">الكمية</th><th style="text-align:left;">القيمة</th></tr></thead>
+        <tbody>${topItemsRows || '<tr><td colspan="3" style="text-align:center;">لا توجد مبيعات</td></tr>'}</tbody>
+    </table>
+
+    <div class="zs">
+        <div style="text-align:center;font-size:9px;color:#555;">تمت مطابقة درج النقدية والحسابات بنجاح</div>
+        <div class="zs-row">
+            <div>توقيع الكاشير: ............</div>
+            <div>توقيع المالك: ............</div>
+        </div>
+    </div>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    if (win) {
+        win.document.write(zHTML);
+        win.document.close();
+        setTimeout(() => { win.print(); }, 500);
+    } else {
+        toast('يرجى السماح بالنوافذ المنبثقة لطباعة التقرير', 'warning');
+    }
+}
+
+/* ============================================================
    Invoice Modal — Display, Print, PDF (بدون ظهور أي نسبة ربح للعميل)
    ============================================================ */
 function showInvoiceModal(inv) {
@@ -2396,6 +3066,9 @@ window.addEventListener('pageshow', () => {
 // Close invoice modal on overlay click
 $('invModal').addEventListener('click', e => {
     if (e.target === $('invModal')) closeInvModal();
+});
+$('dailyReportModal')?.addEventListener('click', e => {
+    if (e.target === $('dailyReportModal')) closeDailyReportModal();
 });
 </script>
 </body>
