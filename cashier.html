@@ -909,9 +909,14 @@
 <!-- Sales History -->
 <div class="history-section">
     <div class="c-card">
-        <div class="c-card-head">
+        <div class="c-card-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
             <h2><i class="fa-solid fa-clock-rotate-left"></i> سجل الفواتير السابقة</h2>
-            <span id="invoiceCount" style="font-size:0.8rem;color:var(--muted);font-weight:700;"></span>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span id="invoiceCount" style="font-size:0.8rem;color:var(--muted);font-weight:700;"></span>
+                <button class="tbl-act-btn" onclick="exportSalesToExcel()" style="background:var(--success-bg);color:var(--success);border-color:rgba(16,185,129,0.3);font-size:0.8rem;padding:6px 14px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                    <i class="fa-solid fa-file-excel"></i> تصدير Excel
+                </button>
+            </div>
         </div>
         <div class="c-card-body" style="padding: 0;">
             <div class="history-table-wrap">
@@ -925,7 +930,7 @@
                             <th>الإجمالي</th>
                             <th>طريقة الدفع</th>
                             <th>الربح</th>
-                            <th></th>
+                            <th>الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody id="historyBody">
@@ -1638,6 +1643,7 @@ function updateSummary() {
 
 /* ============================================================
    Complete Checkout — Save Invoice to Firebase & Deduct Stock
+   المرحلة 5: خصم المخزون الذري وحماية الفاتورة بـ Saga Compensation
    ============================================================ */
 async function completeCheckout() {
     const cart = getCart();
@@ -1647,6 +1653,34 @@ async function completeCheckout() {
     const btn = $('checkoutBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+
+    // 0. فحص المخزون وتنبيه الكاشير في حال وجود عجز
+    const outOfStockItems = [];
+    for (const item of cart) {
+        const prod = allProducts.find(p => p.id === item.id);
+        const availQ = (prod && prod.qty !== null && prod.qty !== undefined && !isNaN(prod.qty)) ? parseInt(prod.qty, 10) : 0;
+        if (availQ < item.qty) {
+            outOfStockItems.push({
+                name: item.name,
+                requested: item.qty,
+                available: availQ,
+                shortage: item.qty - availQ
+            });
+        }
+    }
+
+    if (outOfStockItems.length > 0) {
+        const warningLines = outOfStockItems.map(o => 
+            `• ${o.name}: المطلوب (${o.requested})، المتاح (${o.available}) — عجز (${o.shortage})`
+        ).join('\n');
+        
+        const proceed = confirm(`⚠️ تنبيه عجز مخزون:\nالأصناف التالية كميتها المتاحة أقل من المطلوب:\n${warningLines}\n\nهل تريد المتابعة وإتمام البيع بالسماح بالمخزون بالسالب؟`);
+        if (!proceed) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> إتمام البيع وحفظ الفاتورة';
+            return;
+        }
+    }
 
     try {
         const subtotal = cart.reduce((s, i) => s + i.unitPrice * i.qty, 0);
@@ -1678,22 +1712,53 @@ async function completeCheckout() {
             subtotal,
             discountAmount: discAmt,
             total,
-            totalProfit: totalProfit - discAmt
+            totalProfit: totalProfit - discAmt,
+            status: 'completed'
         };
 
-        // 1. حفظ الفاتورة في Firebase
-        if (db) {
-            await db.ref(`sales/${currentSession.key}/invoices/${invId}`).set(invoice);
+        // 1. خصم الكميات من المخزون ذرياً أولاً بـ Promise.allSettled مع تعويض (Rollback) لو فشل أي صنف
+        if (db && currentSession.key !== 'DEMO-USER') {
+            const deductedItems = [];
 
-            // 2. خصم الكمية من المخزون لكل منتج في Firebase
-            for (const item of cart) {
-                const prodRef = db.ref(`users_data/${currentSession.key}/products/${item.id}`);
-                const prodSnap = await prodRef.once('value');
-                const prod = prodSnap.val();
-                const curQ = (prod && prod.qty !== null && prod.qty !== undefined && !isNaN(prod.qty)) ? parseInt(prod.qty) : 1;
-                const newQty = Math.max(0, curQ - item.qty);
-                await prodRef.update({ qty: newQty });
+            const deductionPromises = cart.map(async item => {
+                const qtyRef = db.ref(`users_data/${currentSession.key}/products/${item.id}/qty`);
+                const txResult = await qtyRef.transaction(currentQty => {
+                    const curQ = (currentQty !== null && currentQty !== undefined && !isNaN(currentQty)) 
+                        ? parseInt(currentQty, 10) 
+                        : 0;
+                    return curQ - item.qty;
+                });
+
+                if (txResult && txResult.committed) {
+                    deductedItems.push({ id: item.id, qty: item.qty });
+                    return { id: item.id, success: true };
+                } else {
+                    throw new Error(`Transaction aborted for product ${item.id}`);
+                }
+            });
+
+            const results = await Promise.allSettled(deductionPromises);
+            const hasFailure = results.some(r => r.status === 'rejected');
+
+            if (hasFailure) {
+                console.error('[Checkout Compensation] Some deductions failed. Rolling back:', results);
+                // تعويض (Rollback): إعادة إضافة الكميات للأصناف التي نجحت قبل الفشل
+                for (const item of deductedItems) {
+                    try {
+                        const qtyRef = db.ref(`users_data/${currentSession.key}/products/${item.id}/qty`);
+                        await qtyRef.transaction(curQ => (parseInt(curQ, 10) || 0) + item.qty);
+                    } catch (rollbackErr) {
+                        console.error('[Rollback Error]:', rollbackErr);
+                    }
+                }
+                toast('فشل خصم بعض الأصناف من المخزون، تم إلغاء العملية ولم تُحفظ الفاتورة', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> إتمام البيع وحفظ الفاتورة';
+                return;
             }
+
+            // 2. حفظ الفاتورة في Firebase فقط بعد نجاح خصم كافة الأصناف بنسبة 100%
+            await db.ref(`sales/${currentSession.key}/invoices/${invId}`).set(invoice);
         }
 
         // 3. تحديث الكميات محلياً في localStorage فوراً
@@ -1703,8 +1768,8 @@ async function completeCheckout() {
             for (const item of cart) {
                 const p = localProds.find(x => x.id === item.id);
                 if (p) {
-                    const curQ = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty) : 1;
-                    p.qty = Math.max(0, curQ - item.qty);
+                    const curQ = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 0;
+                    p.qty = curQ - item.qty;
                 }
             }
             localStorage.setItem(prodsKey, JSON.stringify(localProds));
@@ -1731,15 +1796,18 @@ async function completeCheckout() {
 }
 
 /* ============================================================
-   Load & Render Sales History
+   Load & Render Sales History + Refund + Excel Export
+   المرحلة 6: إرجاع الفواتير وتصدير المبيعات وحماية الاسترجاع المزدوج
    ============================================================ */
+let lastInvoiceList = [];
+
 function loadHistory() {
     if (!db || !currentSession) return;
     db.ref(`sales/${currentSession.key}/invoices`).orderByChild('date').on('value', snap => {
         const val = snap.val();
-        const invList = val ? Object.values(val).reverse() : [];
-        $('invoiceCount').textContent = invList.length ? `${invList.length} فاتورة` : '';
-        renderHistory(invList);
+        lastInvoiceList = val ? Object.values(val).reverse() : [];
+        $('invoiceCount').textContent = lastInvoiceList.length ? `${lastInvoiceList.length} فاتورة` : '';
+        renderHistory(lastInvoiceList);
     });
 }
 
@@ -1750,27 +1818,168 @@ function renderHistory(invList) {
         return;
     }
     tbody.innerHTML = invList.map(inv => {
+        const isRefunded = inv.status === 'refunded';
         const d   = new Date(inv.date);
         const dateStr = d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'});
         const pay = inv.paymentMethod === 'cash'
             ? '<span class="badge badge-cash"><i class="fa-solid fa-money-bills"></i> كاش</span>'
             : '<span class="badge badge-visa"><i class="fa-solid fa-credit-card"></i> فيزا</span>';
+        const statusBadge = isRefunded 
+            ? '<span class="badge" style="background:var(--danger-bg);color:var(--danger);font-size:0.7rem;margin-right:4px;"><i class="fa-solid fa-rotate-left"></i> مسترجعة</span>'
+            : '';
         const itemsSummary = (inv.items||[]).slice(0,2).map(i=>`${i.name} ×${i.qty}`).join('، ') + (inv.items?.length > 2 ? ` +${inv.items.length-2}` : '');
-        return `<tr>
-            <td><strong style="font-size:0.78rem;color:var(--primary)">${inv.invoiceId}</strong></td>
+        const totalDisplay = isRefunded
+            ? `<del style="color:var(--muted)">${fmt(inv.total)} ج.م</del>`
+            : `<strong style="color:var(--green)">${fmt(inv.total)} ج.م</strong>`;
+        const profitDisplay = isRefunded
+            ? `<span style="color:var(--muted);text-decoration:line-through;">0.00 ج.م</span>`
+            : `<span style="color:var(--success);font-weight:700">+${fmt(inv.totalProfit)} ج.م</span>`;
+
+        const refundBtn = isRefunded
+            ? ''
+            : `<button class="tbl-act-btn" style="color:var(--danger);border-color:rgba(239,68,68,0.3);margin-right:4px;" onclick='refundInvoice("${inv.invoiceId}")' title="إرجاع الفاتورة ورد الأصناف للمخزون">
+                <i class="fa-solid fa-rotate-left"></i> إرجاع
+               </button>`;
+
+        return `<tr style="${isRefunded ? 'opacity:0.75;background:rgba(239,68,68,0.02);' : ''}">
+            <td><strong style="font-size:0.78rem;color:var(--primary)">${inv.invoiceId}</strong> ${statusBadge}</td>
             <td style="font-size:0.8rem;color:var(--muted)">${dateStr}</td>
             <td>${inv.customerName || '<span style="color:var(--muted)">—</span>'}</td>
             <td style="font-size:0.8rem">${itemsSummary}</td>
-            <td><strong style="color:var(--green)">${fmt(inv.total)} ج.م</strong></td>
+            <td>${totalDisplay}</td>
             <td>${pay}</td>
-            <td style="color:var(--success);font-weight:700">+${fmt(inv.totalProfit)} ج.م</td>
-            <td>
+            <td>${profitDisplay}</td>
+            <td style="white-space:nowrap;">
                 <button class="tbl-act-btn" onclick='showInvoiceModal(${JSON.stringify(inv)})'>
                     <i class="fa-solid fa-eye"></i> عرض
                 </button>
+                ${refundBtn}
             </td>
         </tr>`;
     }).join('');
+}
+
+async function refundInvoice(invId) {
+    if (!invId) return;
+    if (!currentSession) { toast('يرجى تسجيل الدخول أولاً', 'error'); return; }
+
+    const confirmRefund = confirm(`هل أنت متأكد من استرجاع الفاتورة رقم ${invId}؟\nسيتم إعادة كميات الأصناف المباعة إلى المخزون تلقائياً.`);
+    if (!confirmRefund) return;
+
+    if (!db || currentSession.key === 'DEMO-USER') {
+        toast('وضع التجربة: لا يمكن استرجاع الفواتير سحابياً', 'info');
+        return;
+    }
+
+    try {
+        // 1. حماية ذرية خادومية (Server-Side Idempotency via Transaction) لمنع الاسترجاع المزدوج
+        const statusRef = db.ref(`sales/${currentSession.key}/invoices/${invId}/status`);
+        const statusTx = await statusRef.transaction(currentStatus => {
+            if (currentStatus === 'refunded') {
+                return; // إلغاء الـ transaction (Abort) لأنها مسترجعة بالفعل
+            }
+            return 'refunded';
+        });
+
+        if (!statusTx || !statusTx.committed) {
+            toast('هذه الفاتورة تم استرجاعها بالفعل مسبقاً!', 'warning');
+            return;
+        }
+
+        // تسجيل تاريخ الاسترجاع
+        await db.ref(`sales/${currentSession.key}/invoices/${invId}/refundedAt`).set(new Date().toISOString());
+
+        // 2. قراءة بيانات الفاتورة لمعرفة الأصناف والكميات
+        const invSnap = await db.ref(`sales/${currentSession.key}/invoices/${invId}`).once('value');
+        const inv = invSnap.val();
+        if (inv && Array.isArray(inv.items)) {
+            // إعادة كميات الأصناف ذرياً إلى المخزون
+            for (const item of inv.items) {
+                const pId = item.productId || item.id;
+                if (!pId) continue;
+                const qtyRef = db.ref(`users_data/${currentSession.key}/products/${pId}/qty`);
+                await qtyRef.transaction(curQ => {
+                    const current = (curQ !== null && curQ !== undefined && !isNaN(curQ)) ? parseInt(curQ, 10) : 0;
+                    return current + item.qty;
+                });
+            }
+
+            // تحديث الكميات محلياً في localStorage
+            try {
+                const prodsKey = getProdsStorageKey();
+                let localProds = JSON.parse(localStorage.getItem(prodsKey)) || [];
+                for (const item of inv.items) {
+                    const pId = item.productId || item.id;
+                    const p = localProds.find(x => x.id === pId);
+                    if (p) {
+                        const curQ = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 0;
+                        p.qty = curQ + item.qty;
+                    }
+                }
+                localStorage.setItem(prodsKey, JSON.stringify(localProds));
+            } catch (e) {}
+        }
+
+        toast(`تم استرجاع الفاتورة ${invId} وإعادة الأصناف للمخزون بنجاح 🔄`, 'success');
+
+    } catch (err) {
+        console.error(err);
+        toast('حدث خطأ أثناء استرجاع الفاتورة، تحقق من الاتصال', 'error');
+    }
+}
+
+function exportSalesToExcel() {
+    if (!lastInvoiceList || !lastInvoiceList.length) {
+        toast('لا توجد فواتير لتصديرها', 'warning');
+        return;
+    }
+
+    const headers = [
+        'رقم الفاتورة',
+        'التاريخ والوقت',
+        'اسم العميل',
+        'طريقة الدفع',
+        'المجموع الفرعي',
+        'قيمة الخصم',
+        'الإجمالي النهائي',
+        'صافي الربح',
+        'الحالة',
+        'تفاصيل المنتجات'
+    ];
+
+    const rows = lastInvoiceList.map(inv => {
+        const d = new Date(inv.date);
+        const dateStr = d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'});
+        const itemsStr = (inv.items || []).map(i => `${i.name} (عدد: ${i.qty} - سعر: ${i.unitPrice})`).join(' | ');
+        const statusStr = inv.status === 'refunded' ? 'مسترجعة' : 'مكتملة';
+        const payStr = inv.paymentMethod === 'cash' ? 'نقداً (كاش)' : 'بطاقة (فيزا)';
+
+        return [
+            `"${inv.invoiceId}"`,
+            `"${dateStr}"`,
+            `"${(inv.customerName || 'عميل نقدي').replace(/"/g, '""')}"`,
+            `"${payStr}"`,
+            inv.subtotal || 0,
+            inv.discountAmount || 0,
+            inv.total || 0,
+            inv.status === 'refunded' ? 0 : (inv.totalProfit || 0),
+            `"${statusStr}"`,
+            `"${itemsStr.replace(/"/g, '""')}"`
+        ].join(',');
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const today = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `سجل_مبيعات_هاربي_${today}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast('تم تصدير سجل المبيعات إلى Excel بنجاح 📊', 'success');
 }
 
 /* ============================================================
