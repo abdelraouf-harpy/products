@@ -805,6 +805,24 @@
     </div>
 </header>
 
+<!-- Persistent Reconciliation Alert Banner -->
+<div id="reconciliationBanner" style="display:none;max-width:1400px;margin:12px auto 0;padding:0 16px;">
+    <div style="background:var(--danger-bg);border:1.5px solid var(--danger);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;color:var(--danger);font-weight:800;font-size:0.92rem;">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size:1.5rem;"></i>
+            <div>
+                <div>⚠️ تنبيه تسوية مخزون معلّق (<span id="reconcileCount">0</span> أصناف):</div>
+                <div style="font-size:0.8rem;font-weight:600;color:var(--text);margin-top:2px;">حدث انقطاع شبكة أثناء إلغاء فاتورة غير مكتملة، وتم خصم كميات لم تُسترد آلياً. يرجى مراجعة القائمة لإعادة إضافتها للمخزن.</div>
+            </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <button onclick="openReconciliationModal()" class="tbl-act-btn" style="background:var(--danger);color:#fff;border-color:var(--danger);padding:8px 16px;font-weight:800;cursor:pointer;">
+                <i class="fa-solid fa-list-check"></i> مراجعة وتسوية الأصناف
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Main Cashier Layout -->
 <div class="cashier-wrap">
 
@@ -954,6 +972,23 @@
             <button class="btn-print" onclick="printInvoice()"><i class="fa-solid fa-print"></i> طباعة</button>
             <button class="btn-pdf"   onclick="downloadPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
             <button class="btn-close-inv" onclick="closeInvModal()"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+        </div>
+    </div>
+</div>
+
+<!-- Reconciliation Modal -->
+<div class="inv-modal-overlay" id="reconciliationModal">
+    <div class="inv-modal-box" style="max-width:640px;">
+        <div class="inv-header" style="background:linear-gradient(135deg,#dc2626,#991b1b);">
+            <h2><i class="fa-solid fa-triangle-exclamation"></i> تسوية المخزون المعلق</h2>
+            <p>أصناف خُصمت أثناء عملية بيع غير مكتملة وفشل استرجاعها آلياً بسبب انقطاع الاتصال</p>
+        </div>
+        <div class="inv-body" id="reconciliationModalBody" style="padding:16px;"></div>
+        <div class="inv-actions" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <button class="tbl-act-btn" style="background:var(--success-bg);color:var(--success);border-color:var(--success);font-weight:800;padding:8px 14px;" onclick="retryAllReconciliations()">
+                <i class="fa-solid fa-rotate"></i> إعادة إضافة الكل للمخزون
+            </button>
+            <button class="btn-close-inv" onclick="closeReconciliationModal()"><i class="fa-solid fa-xmark"></i> إغلاق</button>
         </div>
     </div>
 </div>
@@ -1462,6 +1497,7 @@ $('authForm').addEventListener('submit', async e => {
    Load Products from Firebase (for quick-search)
    ============================================================ */
 function loadProducts() {
+    renderReconciliationBanner();
     // عرض السلة من localStorage (لا يحتاج Firebase)
     renderCart();
     updateSummary();
@@ -1642,6 +1678,195 @@ function updateSummary() {
 }
 
 /* ============================================================
+   Pending Reconciliation Management (Safety Net for Rollback Failures)
+   شبكة أمان لتسجيل واسترجاع الأصناف التي فشل تعويضها أثناء انقطاع الاتصال
+   ============================================================ */
+function getReconciliationKey() {
+    const key = (currentSession && currentSession.key) ? currentSession.key : 'global';
+    return `pending_reconciliation_${key}`;
+}
+
+function getPendingReconciliation() {
+    try {
+        return JSON.parse(localStorage.getItem(getReconciliationKey())) || [];
+    } catch {
+        return [];
+    }
+}
+
+function savePendingReconciliation(list) {
+    if (!list || list.length === 0) {
+        localStorage.removeItem(getReconciliationKey());
+    } else {
+        localStorage.setItem(getReconciliationKey(), JSON.stringify(list));
+    }
+    renderReconciliationBanner();
+}
+
+function recordFailedReconciliations(newItems) {
+    const list = getPendingReconciliation();
+    list.push(...newItems);
+    savePendingReconciliation(list);
+}
+
+function renderReconciliationBanner() {
+    const list = getPendingReconciliation();
+    const banner = $('reconciliationBanner');
+    const countEl = $('reconcileCount');
+    if (!banner || !countEl) return;
+
+    if (list.length > 0) {
+        countEl.textContent = list.length;
+        banner.style.display = 'block';
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+function openReconciliationModal() {
+    const list = getPendingReconciliation();
+    const body = $('reconciliationModalBody');
+    if (!body) return;
+
+    if (list.length === 0) {
+        body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-weight:700;">لا توجد أصناف معلقة بانتظار التسوية 👍</div>';
+    } else {
+        const rows = list.map((item, idx) => {
+            const d = new Date(item.timestamp);
+            const dateStr = d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'});
+            return `
+            <tr>
+                <td style="padding:10px 8px;border-bottom:1px solid var(--border);">
+                    <div style="font-weight:700;">${item.name || 'منتج'}</div>
+                    <small style="color:var(--muted);"># ${item.serial || '—'}</small>
+                </td>
+                <td style="padding:10px 8px;border-bottom:1px solid var(--border);text-align:center;font-weight:800;color:var(--danger);">${item.qtyDeducted} قطعة</td>
+                <td style="padding:10px 8px;border-bottom:1px solid var(--border);font-size:0.75rem;color:var(--muted);">${dateStr}</td>
+                <td style="padding:10px 8px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:left;">
+                    <button class="tbl-act-btn" style="color:var(--success);border-color:var(--success);margin-left:4px;" onclick="retrySingleReconciliation(${idx})">
+                        <i class="fa-solid fa-rotate"></i> إعادة
+                    </button>
+                    <button class="tbl-act-btn" style="color:var(--muted);" onclick="dismissReconciliation(${idx})">
+                        <i class="fa-solid fa-check"></i> تم الحل
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+
+        body.innerHTML = `
+            <table class="inv-items-table" style="width:100%;border-collapse:collapse;margin-bottom:12px;font-size:0.85rem;">
+                <thead>
+                    <tr style="background:var(--bg);text-align:right;">
+                        <th style="padding:8px;">المنتج</th>
+                        <th style="padding:8px;text-align:center;">الكمية المعلقة</th>
+                        <th style="padding:8px;">التوقيت</th>
+                        <th style="padding:8px;text-align:left;">الإجراء</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div style="font-size:0.8rem;color:var(--muted);background:var(--bg);padding:10px;border-radius:8px;line-height:1.5;">
+                <i class="fa-solid fa-circle-info"></i> هذه الأصناف خُصمت من Firebase عند محاولة بيع سابقة فشلت، ولم ينجح التراجع التلقائي بسبب ضعف الشبكة. الضغط على "إعادة" سيضيف الكمية مجدداً إلى رصيد المنتج في السيرفر والمخزن.
+            </div>`;
+    }
+
+    $('reconciliationModal')?.classList.add('open');
+}
+
+function closeReconciliationModal() {
+    $('reconciliationModal')?.classList.remove('open');
+}
+
+async function retrySingleReconciliation(idx) {
+    const list = getPendingReconciliation();
+    const item = list[idx];
+    if (!item) return;
+
+    if (!db || !currentSession || currentSession.key === 'DEMO-USER') {
+        toast('يرجى التأكد من الاتصال لتسوية المخزون', 'warning');
+        return;
+    }
+
+    try {
+        const qtyRef = db.ref(`users_data/${currentSession.key}/products/${item.productId}/qty`);
+        const tx = await qtyRef.transaction(curQ => (parseInt(curQ, 10) || 0) + item.qtyDeducted);
+        if (tx && tx.committed) {
+            try {
+                const prodsKey = getProdsStorageKey();
+                let localProds = JSON.parse(localStorage.getItem(prodsKey)) || [];
+                const p = localProds.find(x => x.id === item.productId);
+                if (p) {
+                    p.qty = ((!isNaN(p.qty) && p.qty !== null) ? parseInt(p.qty, 10) : 0) + item.qtyDeducted;
+                    localStorage.setItem(prodsKey, JSON.stringify(localProds));
+                }
+            } catch {}
+
+            list.splice(idx, 1);
+            savePendingReconciliation(list);
+            openReconciliationModal();
+            toast(`تمت إعادة ${item.qtyDeducted} قطعة للصنف "${item.name}" بنجاح ✓`, 'success');
+        } else {
+            toast('تعذر التعديل على السيرفر، تحقق من الاتصال', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        toast('حدث خطأ أثناء المحاولة', 'error');
+    }
+}
+
+async function retryAllReconciliations() {
+    const list = getPendingReconciliation();
+    if (list.length === 0) return;
+
+    if (!db || !currentSession || currentSession.key === 'DEMO-USER') {
+        toast('يرجى التأكد من الاتصال لتسوية المخزون', 'warning');
+        return;
+    }
+
+    let successCount = 0;
+    const remaining = [];
+
+    for (const item of list) {
+        try {
+            const qtyRef = db.ref(`users_data/${currentSession.key}/products/${item.productId}/qty`);
+            const tx = await qtyRef.transaction(curQ => (parseInt(curQ, 10) || 0) + item.qtyDeducted);
+            if (tx && tx.committed) {
+                successCount++;
+                try {
+                    const prodsKey = getProdsStorageKey();
+                    let localProds = JSON.parse(localStorage.getItem(prodsKey)) || [];
+                    const p = localProds.find(x => x.id === item.productId);
+                    if (p) {
+                        p.qty = ((!isNaN(p.qty) && p.qty !== null) ? parseInt(p.qty, 10) : 0) + item.qtyDeducted;
+                        localStorage.setItem(prodsKey, JSON.stringify(localProds));
+                    }
+                } catch {}
+            } else {
+                remaining.push(item);
+            }
+        } catch {
+            remaining.push(item);
+        }
+    }
+
+    savePendingReconciliation(remaining);
+    openReconciliationModal();
+    if (successCount > 0) {
+        toast(`تمت استعادة ${successCount} أصناف بنجاح إلى المخزون 🎉`, 'success');
+    } else {
+        toast('فشلت محاولة الاستعادة، تحقق من الاتصال', 'error');
+    }
+}
+
+function dismissReconciliation(idx) {
+    const list = getPendingReconciliation();
+    list.splice(idx, 1);
+    savePendingReconciliation(list);
+    openReconciliationModal();
+    toast('تم تجاهل الصنف واعتباره مسوى يدوياً', 'info');
+}
+
+/* ============================================================
    Complete Checkout — Save Invoice to Firebase & Deduct Stock
    المرحلة 5: خصم المخزون الذري وحماية الفاتورة بـ Saga Compensation
    ============================================================ */
@@ -1730,7 +1955,7 @@ async function completeCheckout() {
                 });
 
                 if (txResult && txResult.committed) {
-                    deductedItems.push({ id: item.id, qty: item.qty });
+                    deductedItems.push({ id: item.id, name: item.name, serial: item.serial, qty: item.qty });
                     return { id: item.id, success: true };
                 } else {
                     throw new Error(`Transaction aborted for product ${item.id}`);
@@ -1742,16 +1967,41 @@ async function completeCheckout() {
 
             if (hasFailure) {
                 console.error('[Checkout Compensation] Some deductions failed. Rolling back:', results);
+                const failedReconciliations = [];
+
                 // تعويض (Rollback): إعادة إضافة الكميات للأصناف التي نجحت قبل الفشل
                 for (const item of deductedItems) {
                     try {
                         const qtyRef = db.ref(`users_data/${currentSession.key}/products/${item.id}/qty`);
-                        await qtyRef.transaction(curQ => (parseInt(curQ, 10) || 0) + item.qty);
+                        const rbTx = await qtyRef.transaction(curQ => (parseInt(curQ, 10) || 0) + item.qty);
+                        if (!rbTx || !rbTx.committed) {
+                            failedReconciliations.push({
+                                productId: item.id,
+                                name: item.name,
+                                serial: item.serial,
+                                qtyDeducted: item.qty,
+                                timestamp: new Date().toISOString()
+                            });
+                        }
                     } catch (rollbackErr) {
                         console.error('[Rollback Error]:', rollbackErr);
+                        failedReconciliations.push({
+                            productId: item.id,
+                            name: item.name,
+                            serial: item.serial,
+                            qtyDeducted: item.qty,
+                            timestamp: new Date().toISOString()
+                        });
                     }
                 }
-                toast('فشل خصم بعض الأصناف من المخزون، تم إلغاء العملية ولم تُحفظ الفاتورة', 'error');
+
+                if (failedReconciliations.length > 0) {
+                    recordFailedReconciliations(failedReconciliations);
+                    toast('تنبيه: فشل استرداد كميات بعض الأصناف تلقائياً بسبب انقطاع الشبكة، تم حفظها في قائمة التسوية المعلّقة', 'warning');
+                } else {
+                    toast('فشل خصم بعض الأصناف من المخزون، تم إلغاء العملية ولم تُحفظ الفاتورة', 'error');
+                }
+
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> إتمام البيع وحفظ الفاتورة';
                 return;
