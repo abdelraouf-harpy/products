@@ -88,25 +88,25 @@ PLANS = {
     "month": {
         "name": "الاشتراك الشهري",
         "days": 30,
-        "price": "200 ج.م",
+        "price": "550 ج.م",
         "desc": "صلاحية 30 يوماً"
     },
     "6months": {
         "name": "اشتراك 6 شهور",
         "days": 180,
-        "price": "900 ج.م",
+        "price": "2400 ج.م",
         "desc": "صلاحية 180 يوماً"
     },
     "year": {
         "name": "الاشتراك السنوي",
         "days": 365,
-        "price": "1800 ج.م",
+        "price": "4000 ج.م",
         "desc": "صلاحية 365 يوماً"
     },
     "lifetime": {
         "name": "اشتراك مدى الحياة",
         "days": None,  # بدون تاريخ انتهاء
-        "price": "4500 ج.م",
+        "price": "8000 ج.م",
         "desc": "دائم لمدى الحياة بدون تجديد"
     },
     "trial": {
@@ -279,10 +279,10 @@ def main_menu_keyboard():
 
 def new_key_inline_keyboard():
     markup = types.InlineKeyboardMarkup(row_width=1)
-    b1 = types.InlineKeyboardButton("📅 باقة شهرية (30 يوم) — 200 ج.م", callback_data="gen_plan_month")
-    b2 = types.InlineKeyboardButton("🕒 باقة 6 شهور (180 يوم) — 900 ج.م", callback_data="gen_plan_6months")
-    b3 = types.InlineKeyboardButton("⭐ باقة سنوية (365 يوم) — 1800 ج.م", callback_data="gen_plan_year")
-    b4 = types.InlineKeyboardButton("👑 باقة مدى الحياة (دائم) — 4500 ج.م", callback_data="gen_plan_lifetime")
+    b1 = types.InlineKeyboardButton("📅 باقة شهرية (30 يوم) — 550 ج.م", callback_data="gen_plan_month")
+    b2 = types.InlineKeyboardButton("🕒 باقة 6 شهور (180 يوم) — 2400 ج.م", callback_data="gen_plan_6months")
+    b3 = types.InlineKeyboardButton("⭐ باقة سنوية (365 يوم) — 4000 ج.م", callback_data="gen_plan_year")
+    b4 = types.InlineKeyboardButton("👑 باقة مدى الحياة (دائم) — 8000 ج.م", callback_data="gen_plan_lifetime")
     b5 = types.InlineKeyboardButton("🎁 تجربة مجانية (7 أيام)", callback_data="gen_plan_trial")
     b6 = types.InlineKeyboardButton("✍️ تخصيص برقم العميل ومدة مخصصة", callback_data="gen_plan_custom")
     markup.add(b1, b2, b3, b4, b5, b6)
@@ -317,10 +317,10 @@ def confirm_reset_pin_keyboard(key):
 
 def renew_plans_keyboard(key):
     markup = types.InlineKeyboardMarkup(row_width=1)
-    b1 = types.InlineKeyboardButton("📅 تمديد شهر (+30 يوم) — 200 ج.م", callback_data=f"do_renew_{key}_month")
-    b2 = types.InlineKeyboardButton("🕒 تمديد 6 شهور (+180 يوم) — 900 ج.م", callback_data=f"do_renew_{key}_6months")
-    b3 = types.InlineKeyboardButton("⭐ تمديد سنة (+365 يوم) — 1800 ج.م", callback_data=f"do_renew_{key}_year")
-    b4 = types.InlineKeyboardButton("👑 ترقية لمدى الحياة — 4500 ج.م", callback_data=f"do_renew_{key}_lifetime")
+    b1 = types.InlineKeyboardButton("📅 تمديد شهر (+30 يوم) — 550 ج.م", callback_data=f"do_renew_{key}_month")
+    b2 = types.InlineKeyboardButton("🕒 تمديد 6 شهور (+180 يوم) — 2400 ج.م", callback_data=f"do_renew_{key}_6months")
+    b3 = types.InlineKeyboardButton("⭐ تمديد سنة (+365 يوم) — 4000 ج.م", callback_data=f"do_renew_{key}_year")
+    b4 = types.InlineKeyboardButton("👑 ترقية لمدى الحياة — 8000 ج.م", callback_data=f"do_renew_{key}_lifetime")
     b_back = types.InlineKeyboardButton("🔙 رجوع", callback_data=f"view_lic_{key}")
     markup.add(b1, b2, b3, b4, b_back)
     return markup
@@ -415,10 +415,10 @@ def handle_start(message):
     welcome_text = (
         "👑 **مرحباً بك في لوحة تحكم إدارة الاشتراكات والكاشير (harpy)**\n\n"
         "📊 **أسعار الباقات الرسمية المعتمدة:**\n"
-        "• 📅 **شهرية (30 يوم):** `200 ج.م`\n"
-        "• 🕒 **6 شهور (180 يوم):** `900 ج.م`\n"
-        "• ⭐ **سنوية (365 يوم):** `1800 ج.م`\n"
-        "• 👑 **مدى الحياة:** `4500 ج.م`\n\n"
+        "• 📅 **شهرية (30 يوم):** `550 ج.م`\n"
+        "• 🕒 **6 شهور (180 يوم):** `2400 ج.م`\n"
+        "• ⭐ **سنوية (365 يوم):** `4000 ج.م`\n"
+        "• 👑 **مدى الحياة:** `8000 ج.م`\n\n"
         "اختر الإجراء المطلوب من الأزرار بالأسفل 👇"
     )
     bot.send_message(message.chat.id, welcome_text, reply_markup=main_menu_keyboard(), parse_mode="Markdown")
@@ -449,10 +449,10 @@ def handle_btn_help(message):
     help_text = (
         "📖 **دليل إدارة الاشتراكات والأسعار:**\n\n"
         "💰 **قائمة أسعار الباقات:**\n"
-        "1️⃣ **الاشتراك الشهري:** `200 ج.م` (30 يوم)\n"
-        "2️⃣ **اشتراك 6 شهور:** `900 ج.م` (180 يوم)\n"
-        "3️⃣ **الاشتراك السنوي:** `1800 ج.م` (365 يوم)\n"
-        "4️⃣ **اشتراك مدى الحياة:** `4500 ج.م` (دائم)\n\n"
+        "1️⃣ **الاشتراك الشهري:** `550 ج.م` (30 يوم)\n"
+        "2️⃣ **اشتراك 6 شهور:** `2400 ج.م` (180 يوم)\n"
+        "3️⃣ **الاشتراك السنوي:** `4000 ج.م` (365 يوم)\n"
+        "4️⃣ **اشتراك مدى الحياة:** `8000 ج.م` (دائم)\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         "⚙️ **التحكم في الحسابات:**\n"
         "• ⏸️ **إيقاف مؤقت (تجميد):** يمنع العميل من الدخول مع الحفاظ الكامل على منتجاته وفواتيره ليعود إليها عند فك الحظر.\n"
@@ -775,6 +775,6 @@ if __name__ == "__main__":
     print("=" * 60, flush=True)
     print("🚀 تم تشغيل بوت تليجرام التفاعلي بنجاح!", flush=True)
     print(f"👑 حساب المدير المعتمد: {ADMIN_CHAT_ID}", flush=True)
-    print("💰 تم ضبط باقات الأسعار المعتمدة (200 / 900 / 1800 / 4500 ج.م)", flush=True)
+    print("💰 تم ضبط باقات الأسعار المعتمدة (550 / 2400 / 4000 / 8000 ج.م)", flush=True)
     print("=" * 60, flush=True)
     bot.infinity_polling()
