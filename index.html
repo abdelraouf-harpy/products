@@ -3043,7 +3043,6 @@
             <div class="auth-fg">
                 <label>كود التفعيل / الترخيص *</label>
                 <input type="text" id="authKey" required dir="ltr" 
-                       placeholder="HARPY-XXXX-XXXX"
                        style="text-align:center;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;" 
                        autocomplete="off">
             </div>
@@ -3052,19 +3051,19 @@
             <div id="firstTimeFields" style="display:none;">
                 <div class="auth-fg">
                     <label>الاسم الكامل *</label>
-                    <input type="text" id="authName" autocomplete="name" placeholder="اسم التاجر أو المتجر">
+                    <input type="text" id="authName" autocomplete="name">
                 </div>
                 <div class="auth-fg">
                     <label>رقم الموبايل *</label>
-                    <input type="tel" id="authPhone" dir="ltr" style="text-align:right;" autocomplete="tel" placeholder="01xxxxxxxxx">
+                    <input type="tel" id="authPhone" dir="ltr" style="text-align:right;" autocomplete="tel">
                 </div>
             </div>
 
             <div class="auth-fg">
-                <label id="pinLabel">رمز PIN الماستر (6 أرقام) *</label>
+                <label id="pinLabel">رمز PIN الماستر *</label>
                 <div style="position:relative;">
-                    <input type="password" id="authPin" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
-                           placeholder="••••••" dir="ltr"
+                    <input type="password" id="authPin" required inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8"
+                           dir="ltr"
                            style="text-align:center;font-size:1.3rem;font-weight:900;letter-spacing:6px;" autocomplete="off">
                     <button type="button" id="togglePinVisibilityBtn" title="إظهار / إخفاء الرمز"
                             style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px;font-size:1rem;">
@@ -3075,9 +3074,9 @@
 
             <!-- تأكيد رمز الـ PIN عند التفعيل لأول مرة -->
             <div class="auth-fg" id="pinConfirmGroup" style="display:none;">
-                <label>تأكيد رمز PIN (أعد كتابة الـ 6 أرقام) *</label>
-                <input type="password" id="authPinConfirm" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
-                       placeholder="••••••" dir="ltr"
+                <label id="pinConfirmLabel">تأكيد رمز PIN *</label>
+                <input type="password" id="authPinConfirm" inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8"
+                       dir="ltr"
                        style="text-align:center;font-size:1.3rem;font-weight:900;letter-spacing:6px;" autocomplete="off">
             </div>
 
@@ -3282,7 +3281,7 @@
                     <div class="c-card-body">
                         <!-- Customer Name -->
                         <div class="fg" style="margin-bottom:8px;">
-                            <input type="text" id="customerName" placeholder="اسم العميل (اختياري - عميل نقدي)..." autocomplete="off" style="font-size:0.86rem;padding:8px 12px;border-radius:10px;">
+                            <input type="text" id="customerName" placeholder="اسم العميل (اختياري)..." autocomplete="off" style="font-size:0.86rem;padding:8px 12px;border-radius:10px;">
                         </div>
 
                         <!-- Cart Items List (Inside Ticket) -->
@@ -3461,11 +3460,11 @@
                         </div>
                         <div class="fg">
                             <label>الكمية المتاحة (اختياري)</label>
-                            <input type="number" step="1" min="0" id="inQty" autocomplete="off" placeholder="اتركه فارغاً إذا لم تحدد كمية">
+                            <input type="number" step="1" min="0" id="inQty" autocomplete="off">
                         </div>
                         <div class="fg">
                             <label>حد التنبيه لنواقص المخزون</label>
-                            <input type="number" step="1" min="0" id="inLowStockThreshold" autocomplete="off" placeholder="افتراضي: 5 قطع">
+                            <input type="number" step="1" min="0" id="inLowStockThreshold" autocomplete="off">
                             <small style="color:var(--muted);font-size:0.75rem;margin-top:2px;">يتم إظهار تنبيه نقص عند وصول الكمية لهذا الحد أو أقل</small>
                         </div>
 
@@ -3491,7 +3490,7 @@
                                         <i class="fa-solid fa-link"></i> استخدام رابط صورة مباشر
                                     </button>
                                     <div class="url-input-box" id="urlInputBox">
-                                        <input type="url" id="inUrl" placeholder="https://...">
+                                        <input type="url" id="inUrl">
                                     </div>
                                 </div>
                             </div>
@@ -3736,19 +3735,19 @@
                         <form id="storeSettingsForm" onsubmit="saveStoreSettings(event)">
                             <div class="fg">
                                 <label>اسم المحل / المتجر *</label>
-                                <input type="text" id="stName" placeholder="مثال: سوبرماركت البركة" required>
+                                <input type="text" id="stName" required>
                             </div>
                             <div class="fg">
                                 <label>رقم هاتف المتجر</label>
-                                <input type="text" id="stPhone" placeholder="مثال: 01012345678">
+                                <input type="text" id="stPhone">
                             </div>
                             <div class="fg">
                                 <label>العنوان / المكان</label>
-                                <input type="text" id="stAddress" placeholder="مثال: القاهرة - مصر الجديدة">
+                                <input type="text" id="stAddress">
                             </div>
                             <div class="fg">
                                 <label>سياسة الاسترجاع ورسالة الفاتورة</label>
-                                <textarea id="stFooter" rows="3" placeholder="مثال: البضاعة المباعة تستبدل وترد خلال 14 يوماً بالفاتورة. شكراً لزيارتكم!"></textarea>
+                                <textarea id="stFooter" rows="3"></textarea>
                             </div>
                             <button type="submit" class="btn-save" style="margin-top:10px;">
                                 <i class="fa-solid fa-floppy-disk"></i> حفظ إعدادات المتجر
@@ -3813,8 +3812,8 @@
         <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;">أدخل رمز PIN الماستر الخاص بك لإلغاء وضع الكاشير والوصول للتقارير والأرباح.</p>
         <form id="pinUnlockForm" onsubmit="handleUnlockOwnerSubmit(event)">
             <div class="auth-fg">
-                <input type="password" id="unlockPinInput" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
-                       placeholder="••••••" dir="ltr"
+                <input type="password" id="unlockPinInput" required inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8"
+                       dir="ltr"
                        style="text-align:center;font-size:1.3rem;font-weight:900;letter-spacing:6px;" autocomplete="off">
             </div>
             <div style="display:flex;gap:8px;margin-top:10px;">
@@ -4745,7 +4744,16 @@ async function performBackgroundWeeklyCheckin(cleanKey, isManual = false) {
     try {
         const snap = await db.ref(`licenses/${cleanKey}`).once('value');
         const lic = snap.val();
-        if (!lic) return;
+        if (!lic) {
+            // الترخيص تم حذفه من قِبل الإدارة في بوت تليجرام
+            await HarpySecurityVault.removeItem(`harpy_offline_cred_${cleanKey}`);
+            await HarpySecurityVault.removeItem(`harpy_failed_attempts_${cleanKey}`);
+            await HarpySecurityVault.removeItem(`harpy_locked_until_${cleanKey}`);
+            localStorage.removeItem(`last_successful_checkin_${cleanKey}`);
+            logout(false);
+            toast('تم إلغاء أو حذف هذا الحساب من قِبل إدارة النظام!', 'error');
+            return;
+        }
 
         if (lic.status === 'blocked') {
             showCheckinBlockingOverlay('blocked', 'تم تجميد هذا الحساب من قِبل إدارة النظام. يُرجى مراجعة الدعم الفني لفك التجميد.');
@@ -4886,9 +4894,18 @@ async function checkLicenseStatus(keyVal) {
         if (firstTimeFields) firstTimeFields.style.display = 'none';
         if (pinConfirmGroup) pinConfirmGroup.style.display = 'none';
         if (btnText) btnText.textContent = 'دخول إلى النظام';
-        if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر (6 أرقام) *';
+        if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر *';
         if (modalSubtitle) modalSubtitle.textContent = 'أدخل كود التفعيل ورمز PIN الماستر للمتابعة ومزامنة حسابك.';
         return null;
+    }
+
+    if (cleanKey === 'DEMO-USER' || cleanKey === 'DEMO') {
+        if (firstTimeFields) firstTimeFields.style.display = 'none';
+        if (pinConfirmGroup) pinConfirmGroup.style.display = 'none';
+        if (btnText) btnText.textContent = 'دخول إلى النظام (تجريبي)';
+        if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر *';
+        if (modalSubtitle) modalSubtitle.textContent = 'وضع التجربة السريعة للنظام.';
+        return { planId: 'demo' };
     }
 
     // فحص إمكانية الاعتماد على البيانات المحلية في وضع الأوفلاين من خزنة IndexedDB
@@ -4902,7 +4919,7 @@ async function checkLicenseStatus(keyVal) {
             if (firstTimeFields) firstTimeFields.style.display = 'none';
             if (pinConfirmGroup) pinConfirmGroup.style.display = 'none';
             if (btnText) btnText.textContent = 'دخول إلى النظام (أوفلاين)';
-            if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر (6 أرقام) *';
+            if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر *';
             if (modalSubtitle) modalSubtitle.textContent = `مرحباً بك يا ${cachedCred.userName || 'التاجر'}، أدخل رمز PIN للدخول (وضع العمل دون اتصال).`;
             return cachedCred;
         } else {
@@ -4930,13 +4947,13 @@ async function checkLicenseStatus(keyVal) {
                 if (firstTimeFields) firstTimeFields.style.display = 'block';
                 if (pinConfirmGroup) pinConfirmGroup.style.display = 'block';
                 if (btnText) btnText.textContent = 'إنشاء الرمز وتفعيل الحساب';
-                if (pinLabel) pinLabel.textContent = 'أنشئ رمز PIN الماستر (6 أرقام) *';
+                if (pinLabel) pinLabel.textContent = 'أنشئ رمز PIN الماستر *';
                 if (modalSubtitle) modalSubtitle.textContent = 'تفعيل حساب جديد: يرجى إدخال بياناتك وإنشاء رمز PIN الخاص بك.';
             } else {
                 if (firstTimeFields) firstTimeFields.style.display = 'none';
                 if (pinConfirmGroup) pinConfirmGroup.style.display = 'none';
                 if (btnText) btnText.textContent = 'دخول إلى النظام';
-                if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر (6 أرقام) *';
+                if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر *';
                 if (modalSubtitle) modalSubtitle.textContent = `مرحباً بك يا ${lic.userName || 'التاجر'}، أدخل رمز PIN للدخول.`;
             }
         }
@@ -4946,7 +4963,7 @@ async function checkLicenseStatus(keyVal) {
             if (firstTimeFields) firstTimeFields.style.display = 'none';
             if (pinConfirmGroup) pinConfirmGroup.style.display = 'none';
             if (btnText) btnText.textContent = 'دخول إلى النظام (أوفلاين)';
-            if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر (6 أرقام) *';
+            if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر *';
             if (modalSubtitle) modalSubtitle.textContent = `مرحباً بك يا ${cachedCred.userName || 'التاجر'}، أدخل رمز PIN للدخول (وضع العمل دون اتصال).`;
             return cachedCred;
         }
@@ -4989,13 +5006,33 @@ authForm.addEventListener('submit', async e => {
         return;
     }
 
-    if (!/^\d{6}$/.test(pin)) {
-        toast('رمز PIN يجب أن يتكون من 6 أرقام رقمية فقط!', 'warning');
+    if (!/^\d{4,8}$/.test(pin)) {
+        toast('رمز PIN يجب أن يتكون من 4 إلى 8 أرقام رقمية!', 'warning');
         return;
     }
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحقق من الحساب...';
+
+    // التحقق الفوري من حساب التجربة (DEMO)
+    if (cleanKey === 'DEMO-USER' || cleanKey === 'DEMO') {
+        currentUserSession = {
+            name: nameInput || 'مستخدم تجريبي',
+            phone: phoneInput || '',
+            key: 'DEMO-USER',
+            offlineMode: 'permanent',
+            sessionExpiresAt: null
+        };
+        localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
+        await migrateTenantData('DEMO-USER');
+        authOverlay.classList.remove('open');
+        document.body.classList.remove('auth-locked');
+        toast('مرحباً بك في الوضع التجريبي', 'info');
+        updateUserUI();
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
+        return;
+    }
 
     // مسار التحقق في وضع عدم توفر الإنترنت أو تعذر الوصول إلى فايربيس
     const handleOfflineAuthFallback = async () => {
@@ -5124,23 +5161,38 @@ authForm.addEventListener('submit', async e => {
             const isFirstTime = !lic.hasPin && !lic.pinHash;
 
             if (isFirstTime) {
-                // حالة التفعيل لأول مرة: التحقق من الاسم والهاتف وتطابق الـ PIN وتوليد بصمة الجهاز
+                // التأكد من إظهار حقول التفعيل لأول مرة في حال لم تكن ظاهرة بعد
+                if ($('firstTimeFields')) $('firstTimeFields').style.display = 'block';
+                if ($('pinConfirmGroup')) $('pinConfirmGroup').style.display = 'block';
+                if ($('authBtnText')) $('authBtnText').textContent = 'إنشاء الرمز وتفعيل الحساب';
+                if ($('pinLabel')) $('pinLabel').textContent = 'أنشئ رمز PIN الماستر *';
+
                 if (!nameInput || nameInput.length < 2) {
-                    toast('يرجى كتابة اسمك الكامل أو اسم المتجر', 'warning');
+                    toast('يرجى كتابة اسمك الكامل أو اسم المتجر في الحقل المخصص', 'warning');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> إنشاء الرمز وتفعيل الحساب';
+                    $('authName')?.focus();
                     return;
                 }
                 if (!phoneInput || phoneInput.replace(/\D/g, '').length < 8) {
-                    toast('يرجى إدخال رقم هاتف صحيح', 'warning');
+                    toast('يرجى إدخال رقم هاتف صحيح في الحقل المخصص', 'warning');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> إنشاء الرمز وتفعيل الحساب';
+                    $('authPhone')?.focus();
+                    return;
+                }
+                if (!pinConfirm) {
+                    toast('يرجى تأكيد رمز PIN في الحقل المخصص', 'warning');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> إنشاء الرمز وتفعيل الحساب';
+                    $('authPinConfirm')?.focus();
                     return;
                 }
                 if (pin !== pinConfirm) {
                     toast('تأكيد رمز PIN غير متطابق مع الرمز المدخل!', 'warning');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> إنشاء الرمز وتفعيل الحساب';
+                    $('authPinConfirm')?.focus();
                     return;
                 }
 
@@ -5156,8 +5208,7 @@ authForm.addEventListener('submit', async e => {
                     pinSalt: salt,
                     failedAttempts: 0,
                     lockedUntil: null,
-                    pendingNotification: true,
-                    offlineMode: offlineMode
+                    pendingNotification: true
                 };
 
                 if (isLifetime) {
@@ -5366,7 +5417,20 @@ function startLicenseWatcher(key) {
 
     licenseWatcherUnsub = db.ref(`licenses/${key}`).on('value', async snap => {
         const lic = snap.val();
-        if (!lic) return;
+        if (!lic) {
+            // الترخيص تم حذفه من قِبل الإدارة في بوت تليجرام
+            toast('تم إلغاء وحذف هذا الترخيص من قبل إدارة النظام!', 'error');
+            await HarpySecurityVault.removeItem(`harpy_offline_cred_${key}`);
+            await HarpySecurityVault.removeItem(`harpy_failed_attempts_${key}`);
+            await HarpySecurityVault.removeItem(`harpy_locked_until_${key}`);
+            localStorage.removeItem(`last_successful_checkin_${key}`);
+            if (licenseWatcherUnsub && db) {
+                db.ref(`licenses/${key}`).off('value', licenseWatcherUnsub);
+                licenseWatcherUnsub = null;
+            }
+            logout(false);
+            return;
+        }
         
         if (lic.status === 'blocked') {
             toast('تم إيقاف حسابك من قبل الإدارة!', 'error');
@@ -5409,6 +5473,40 @@ async function checkAuthGuard() {
     }
 
     const cleanKey = currentUserSession.key;
+
+    // فحص سحابي سريع طالما الجهاز متصل للتأكد أن الحساب لم يتم حذفه من بوت تليجرام
+    if (navigator.onLine && db && cleanKey !== 'DEMO-USER' && cleanKey !== 'global') {
+        try {
+            const snap = await db.ref(`licenses/${cleanKey}`).once('value');
+            const lic = snap.val();
+            if (!lic) {
+                // الحساب تم حذفه من قِبل الإدارة في بوت تليجرام
+                await HarpySecurityVault.removeItem(`harpy_offline_cred_${cleanKey}`);
+                await HarpySecurityVault.removeItem(`harpy_failed_attempts_${cleanKey}`);
+                await HarpySecurityVault.removeItem(`harpy_locked_until_${cleanKey}`);
+                localStorage.removeItem(`last_successful_checkin_${cleanKey}`);
+                localStorage.removeItem('harpy_auth_session');
+                currentUserSession = null;
+                products = [];
+                updateUserUI();
+                document.body.classList.add('auth-locked');
+                authOverlay.classList.add('open');
+                toast('تم إلغاء وحذف هذا الترخيص من قبل إدارة النظام!', 'error');
+                return;
+            }
+            if (lic.status === 'blocked') {
+                showCheckinBlockingOverlay('blocked', 'تم تجميد هذا الحساب من قِبل إدارة النظام. يُرجى مراجعة الدعم الفني لفك التجميد.');
+                return;
+            }
+            if (lic.expiresAt && Date.now() > new Date(lic.expiresAt).getTime()) {
+                const expFormatted = new Date(lic.expiresAt).toLocaleDateString('ar-EG');
+                showCheckinBlockingOverlay('expired', `انتهت فترة اشتراكك في النظام بتاريخ ${expFormatted}. يرجى التواصل مع الإدارة لتجديد الباقة وإعادة تشغيل الكاشير فوراً.`);
+                return;
+            }
+        } catch (e) {
+            console.warn('[Quick auth guard check]:', e);
+        }
+    }
 
     // 1. تحقق من بصمة الجهاز في باقة مدى الحياة
     if (currentUserSession.offlineMode === 'permanent') {
