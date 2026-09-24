@@ -17,6 +17,9 @@
         "pinSalt": {
           ".write": "root.child('licenses').child($licenseKey).exists() && !data.exists()"
         },
+        "lockedDeviceFingerprint": {
+          ".write": "root.child('licenses').child($licenseKey).exists() && !data.exists()"
+        },
         "failedAttempts": {
           ".write": "root.child('licenses').child($licenseKey).exists()"
         },
@@ -33,6 +36,9 @@
           ".write": "root.child('licenses').child($licenseKey).exists()"
         },
 
+        "offlineMode": {
+          ".write": false
+        },
         "status": {
           ".write": false
         },

@@ -2964,6 +2964,23 @@
 </head>
 <body>
 
+<!-- Weekly Check-in & Device Lock Security Blocking Overlay -->
+<div class="auth-overlay" id="checkinBlockOverlay" style="display:none;z-index:99999;">
+    <div class="auth-box" style="max-width:440px;text-align:center;">
+        <div class="auth-icon" id="checkinIcon" style="background:rgba(239,68,68,0.1);color:var(--danger);margin:0 auto 16px;"><i class="fa-solid fa-wifi-slash"></i></div>
+        <h2 id="checkinTitle" style="color:var(--danger);font-size:1.25rem;margin-bottom:8px;font-weight:900;">مطلوب فحص الاتصال بالإنترنت</h2>
+        <p id="checkinSubtitle" style="font-size:0.88rem;color:var(--muted);line-height:1.6;margin-bottom:20px;">
+            انتهت مهلة العمل دون اتصال (7 أيام). يرجى توصيل هذا الجهاز بشبكة الإنترنت لمدة دقيقة واحدة للتحقق من صلاحية الاشتراك واستئناف العمل.
+        </p>
+        <button type="button" class="auth-btn" id="retryCheckinBtn" onclick="handleManualCheckinRetry()">
+            <i class="fa-solid fa-rotate-right"></i> <span id="retryCheckinBtnText">فحص الاتصال واستئناف العمل</span>
+        </button>
+        <a id="checkinSupportBtn" href="https://wa.me/201012345678" target="_blank" class="hbtn" style="display:none;background:#25D366;color:#fff;text-decoration:none;padding:12px 18px;border-radius:12px;font-size:0.88rem;font-weight:800;margin-top:12px;width:100%;box-sizing:border-box;align-items:center;justify-content:center;gap:8px;">
+            <i class="fa-brands fa-whatsapp"></i> <span>تواصل مع الإدارة والدعم الفني</span>
+        </a>
+    </div>
+</div>
+
 <!-- Authentication Modal / Screen -->
 <div class="auth-overlay" id="authOverlay">
     <div class="auth-box">
@@ -3145,6 +3162,9 @@
 
 <!-- Subscription Expiry Banner -->
 <div id="subscriptionExpiryBanner" style="display:none;max-width:1440px;margin:12px auto 0;padding:0 16px;"></div>
+
+<!-- Weekly Check-in Warning Banner (Days 5 to 7) -->
+<div id="weeklyCheckinBanner" style="display:none;max-width:1440px;margin:12px auto 0;padding:0 16px;"></div>
 
 <main class="app-body">
 
@@ -3929,7 +3949,7 @@ let currentUserSession = null;
 try {
     const rawSession = JSON.parse(localStorage.getItem('harpy_auth_session')) || null;
     if (rawSession && rawSession.key) {
-        if (rawSession.sessionExpiresAt && Date.now() > rawSession.sessionExpiresAt) {
+        if (rawSession.offlineMode !== 'permanent' && rawSession.sessionExpiresAt && Date.now() > rawSession.sessionExpiresAt) {
             localStorage.removeItem('harpy_auth_session');
             currentUserSession = null;
         } else {
@@ -4382,6 +4402,404 @@ function isCurrentlyLocked() {
     return currentLockoutUntil !== null && Date.now() < currentLockoutUntil;
 }
 
+/* ============================================================
+   خزنة الأمان المحلية المشفرة (IndexedDB Security Vault)
+   تخزين بيانات الاعتماد وعدادات القفل الأوفلاين في مخزن آمن ومقاوم للمسح العرضي
+   ============================================================ */
+const HarpySecurityVault = {
+    _dbPromise: null,
+    async getDB() {
+        if (!this._dbPromise) {
+            this._dbPromise = new Promise((resolve) => {
+                if (!window.indexedDB) {
+                    resolve(null);
+                    return;
+                }
+                try {
+                    const req = indexedDB.open('harpy_security_vault', 1);
+                    req.onupgradeneeded = e => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('auth_vault')) {
+                            db.createObjectStore('auth_vault');
+                        }
+                    };
+                    req.onsuccess = e => resolve(e.target.result);
+                    req.onerror = () => resolve(null);
+                } catch {
+                    resolve(null);
+                }
+            });
+        }
+        return this._dbPromise;
+    },
+    async getItem(key) {
+        try {
+            const db = await this.getDB();
+            if (db) {
+                const val = await new Promise((resolve) => {
+                    const tx = db.transaction('auth_vault', 'readonly');
+                    const store = tx.objectStore('auth_vault');
+                    const req = store.get(key);
+                    req.onsuccess = () => resolve(req.result !== undefined ? req.result : null);
+                    req.onerror = () => resolve(null);
+                });
+                if (val !== null && val !== undefined) return val;
+            }
+        } catch {}
+        // استرداد احتياطي تلقائي وترحيل من localStorage
+        try {
+            const lsVal = localStorage.getItem(key);
+            if (lsVal !== null && lsVal !== undefined) {
+                let parsed = lsVal;
+                try { parsed = JSON.parse(lsVal); } catch {}
+                this.setItem(key, parsed);
+                return parsed;
+            }
+        } catch {}
+        return null;
+    },
+    async setItem(key, value) {
+        try {
+            const db = await this.getDB();
+            if (db) {
+                await new Promise((resolve) => {
+                    const tx = db.transaction('auth_vault', 'readwrite');
+                    const store = tx.objectStore('auth_vault');
+                    store.put(value, key);
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = () => resolve(false);
+                });
+            }
+        } catch {}
+        // كتابة مزدوجة في localStorage كنسخة مرآة احتياطية فائقة المرونة
+        try {
+            const strVal = typeof value === 'object' ? JSON.stringify(value) : String(value);
+            localStorage.setItem(key, strVal);
+        } catch {}
+    },
+    async removeItem(key) {
+        try {
+            const db = await this.getDB();
+            if (db) {
+                await new Promise((resolve) => {
+                    const tx = db.transaction('auth_vault', 'readwrite');
+                    const store = tx.objectStore('auth_vault');
+                    store.delete(key);
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = () => resolve(false);
+                });
+            }
+        } catch {}
+        try { localStorage.removeItem(key); } catch {}
+    }
+};
+
+/* ============================================================
+   نظام التفعيل المزدوج: أوفلاين دائم (بصمة جهاز) وفحص أسبوعي
+   ============================================================ */
+
+async function getOrCreateDeviceFingerprint(cleanKey) {
+    const storageKey = `device_fingerprint_${cleanKey}`;
+    let existingFp = await HarpySecurityVault.getItem(storageKey);
+    if (existingFp) return existingFp;
+
+    const randomBytes = new Uint8Array(16);
+    if (window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(randomBytes);
+    } else {
+        for (let i = 0; i < 16; i++) randomBytes[i] = Math.floor(Math.random() * 256);
+    }
+    const randomHex = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const rawEntropy = [
+        navigator.userAgent || 'UnknownUA',
+        navigator.language || 'ar',
+        screen.colorDepth || 24,
+        (screen.width || 1024) + 'x' + (screen.height || 768),
+        navigator.hardwareConcurrency || 4,
+        randomHex
+    ].join('###');
+
+    let fingerprint = '';
+    if (window.crypto && window.crypto.subtle) {
+        const encoder = new TextEncoder();
+        const hashBuf = await window.crypto.subtle.digest('SHA-256', encoder.encode(rawEntropy));
+        fingerprint = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    } else {
+        fingerprint = 'fp_' + randomHex + '_' + Date.now();
+    }
+
+    await HarpySecurityVault.setItem(storageKey, fingerprint);
+    return fingerprint;
+}
+
+function enqueueOfflineAction(cleanKey, type, data) {
+    if (!cleanKey || cleanKey === 'DEMO-USER' || cleanKey === 'global') return;
+    const storageKey = `harpy_offline_sync_queue_${cleanKey}`;
+    let queue = [];
+    try {
+        queue = JSON.parse(localStorage.getItem(storageKey)) || [];
+    } catch {
+        queue = [];
+    }
+    queue.push({
+        id: 'sync_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        type: type, // 'checkout_invoice' | 'refund_invoice'
+        data: data,
+        timestamp: new Date().toISOString()
+    });
+    localStorage.setItem(storageKey, JSON.stringify(queue));
+}
+
+let isSyncingOfflineQueue = false;
+async function processOfflineSyncQueue(cleanKey) {
+    if (!cleanKey || cleanKey === 'DEMO-USER' || cleanKey === 'global' || !navigator.onLine || !db || isSyncingOfflineQueue) return;
+    const storageKey = `harpy_offline_sync_queue_${cleanKey}`;
+    let queue = [];
+    try {
+        queue = JSON.parse(localStorage.getItem(storageKey)) || [];
+    } catch {
+        queue = [];
+    }
+    if (!queue.length) return;
+
+    isSyncingOfflineQueue = true;
+    const tenant = cleanKey;
+
+    for (let i = 0; i < queue.length; i++) {
+        const item = queue[i];
+        if (!item) continue;
+
+        try {
+            if (item.type === 'checkout_invoice') {
+                const inv = item.data.invoice;
+                const itemsToDeduct = item.data.items || [];
+
+                if (!item.invoiceSynced) {
+                    await db.ref(`sales/${tenant}/invoices/${inv.invoiceId}`).set(inv);
+                    item.invoiceSynced = true;
+                    localStorage.setItem(storageKey, JSON.stringify(queue));
+                }
+
+                if (!item.deductedProductIds) item.deductedProductIds = [];
+                for (const p of itemsToDeduct) {
+                    if (!item.deductedProductIds.includes(p.productId)) {
+                        const qtyRef = db.ref(`users_data/${tenant}/products/${p.productId}/qty`);
+                        const tx = await qtyRef.transaction(curQ => {
+                            const cur = (curQ !== null && curQ !== undefined && !isNaN(curQ)) ? parseInt(curQ, 10) : 0;
+                            return cur - p.qty; // Delta decrement
+                        });
+                        if (tx && tx.committed) {
+                            item.deductedProductIds.push(p.productId);
+                            localStorage.setItem(storageKey, JSON.stringify(queue));
+                        } else {
+                            throw new Error(`Deduction transaction aborted for product ${p.productId}`);
+                        }
+                    }
+                }
+
+                queue.splice(i, 1);
+                i--;
+                localStorage.setItem(storageKey, JSON.stringify(queue));
+
+            } else if (item.type === 'refund_invoice') {
+                const invId = item.data.invoiceId;
+                const itemsToRestore = item.data.items || [];
+
+                if (!item.statusSynced) {
+                    await db.ref(`sales/${tenant}/invoices/${invId}/status`).set('refunded');
+                    item.statusSynced = true;
+                    localStorage.setItem(storageKey, JSON.stringify(queue));
+                }
+
+                if (!item.restoredProductIds) item.restoredProductIds = [];
+                for (const p of itemsToRestore) {
+                    if (!item.restoredProductIds.includes(p.productId)) {
+                        const qtyRef = db.ref(`users_data/${tenant}/products/${p.productId}/qty`);
+                        const tx = await qtyRef.transaction(curQ => {
+                            const cur = (curQ !== null && curQ !== undefined && !isNaN(curQ)) ? parseInt(curQ, 10) : 0;
+                            return cur + p.qty; // Delta increment
+                        });
+                        if (tx && tx.committed) {
+                            item.restoredProductIds.push(p.productId);
+                            localStorage.setItem(storageKey, JSON.stringify(queue));
+                        } else {
+                            throw new Error(`Restoration transaction aborted for product ${p.productId}`);
+                        }
+                    }
+                }
+
+                queue.splice(i, 1);
+                i--;
+                localStorage.setItem(storageKey, JSON.stringify(queue));
+            }
+        } catch (err) {
+            console.warn('[Offline Sync Queue Error]:', err);
+            break;
+        }
+    }
+
+    isSyncingOfflineQueue = false;
+}
+
+function checkWeeklyCheckinStatus(cleanKey, offlineMode) {
+    if (!cleanKey || cleanKey === 'DEMO-USER' || cleanKey === 'global') return { ok: true, mode: 'demo' };
+    if (offlineMode === 'permanent') return { ok: true, mode: 'permanent' };
+
+    const checkinKey = `last_successful_checkin_${cleanKey}`;
+    let lastCheckinStr = localStorage.getItem(checkinKey);
+    if (!lastCheckinStr) {
+        lastCheckinStr = new Date().toISOString();
+        localStorage.setItem(checkinKey, lastCheckinStr);
+    }
+
+    const lastCheckinTime = new Date(lastCheckinStr).getTime();
+    const daysSince = (Date.now() - lastCheckinTime) / (1000 * 60 * 60 * 24);
+
+    const banner = $('weeklyCheckinBanner');
+
+    if (daysSince >= 7) {
+        if (banner) banner.style.display = 'none';
+        showCheckinBlockingOverlay('network_required', 'انتهت مهلة العمل دون اتصال (7 أيام). يرجى توصيل هذا الجهاز بشبكة الإنترنت لمدة دقيقة واحدة للتحقق من صلاحية الاشتراك واستئناف العمل.');
+        return { ok: false, daysSince, status: 'locked' };
+    } else if (daysSince >= 5) {
+        const remainingDays = Math.max(1, Math.ceil(7 - daysSince));
+        if (banner) {
+            banner.innerHTML = `
+                <div style="background:#fef3c7;border:1.5px solid #f59e0b;color:#92400e;border-radius:12px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:0.86rem;font-weight:700;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size:1.1rem;color:#d97706;"></i>
+                        <span>تنبيه أمان: متبقي <strong>${remainingDays}</strong> ${remainingDays === 1 ? 'يوم' : 'أيام'} على موعد الفحص الدوري للاشتراك. يُرجى توصيل الجهاز بالإنترنت لتحديث الصلاحية تلقائياً.</span>
+                    </div>
+                    <button type="button" onclick="performBackgroundWeeklyCheckin('${cleanKey}', true)" class="hbtn" style="background:#f59e0b;color:#fff;border:none;padding:5px 12px;font-size:0.78rem;font-weight:800;border-radius:8px;cursor:pointer;">
+                        <i class="fa-solid fa-rotate-right"></i> فحص الآن
+                    </button>
+                </div>`;
+            banner.style.display = 'block';
+        }
+        return { ok: true, daysSince, status: 'warning' };
+    } else {
+        if (banner) banner.style.display = 'none';
+        return { ok: true, daysSince, status: 'normal' };
+    }
+}
+
+async function performBackgroundWeeklyCheckin(cleanKey, isManual = false) {
+    if (!cleanKey || cleanKey === 'DEMO-USER' || cleanKey === 'global' || !db) return;
+    if (!navigator.onLine) {
+        if (isManual) toast('لا يتوفر اتصال بشبكة الإنترنت حالياً، تأكد من الاتصال بالشبكة.', 'warning');
+        return;
+    }
+
+    try {
+        const snap = await db.ref(`licenses/${cleanKey}`).once('value');
+        const lic = snap.val();
+        if (!lic) return;
+
+        if (lic.status === 'blocked') {
+            showCheckinBlockingOverlay('blocked', 'تم تجميد هذا الحساب من قِبل إدارة النظام. يُرجى مراجعة الدعم الفني لفك التجميد.');
+            return;
+        }
+
+        if (lic.expiresAt && Date.now() > new Date(lic.expiresAt).getTime()) {
+            const expFormatted = new Date(lic.expiresAt).toLocaleDateString('ar-EG');
+            showCheckinBlockingOverlay('expired', `انتهت فترة اشتراكك في النظام بتاريخ ${expFormatted}. يرجى التواصل مع الإدارة لتجديد الباقة وإعادة تشغيل الكاشير فوراً.`);
+            return;
+        }
+
+        localStorage.setItem(`last_successful_checkin_${cleanKey}`, new Date().toISOString());
+
+        // Sliding Session: تجديد صلاحية الجلسة تلقائياً طالما التاجر متصل واشتراكه سارٍ
+        if (currentUserSession && currentUserSession.key === cleanKey) {
+            if (currentUserSession.offlineMode !== 'permanent') {
+                currentUserSession.sessionExpiresAt = Date.now() + SESSION_LIFETIME_MS;
+                localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
+            }
+        }
+
+        hideCheckinBlockingOverlay();
+        const banner = $('weeklyCheckinBanner');
+        if (banner) banner.style.display = 'none';
+
+        if (isManual) toast('تم التحقق من صلاحية الاشتراك وتحديث مهلة التشغيل بنجاح', 'success');
+
+        processOfflineSyncQueue(cleanKey);
+
+    } catch (err) {
+        console.warn('[Weekly Checkin Failed]:', err);
+        if (isManual) toast('تعذر الاتصال بالسيرفر، تحقق من اتصال الإنترنت وحاول مجدداً.', 'error');
+    }
+}
+
+function showCheckinBlockingOverlay(type, message) {
+    const overlay = $('checkinBlockOverlay');
+    if (!overlay) return;
+    const title = $('checkinTitle');
+    const subtitle = $('checkinSubtitle');
+    const icon = $('checkinIcon');
+    const supportBtn = $('checkinSupportBtn');
+
+    if (type === 'blocked') {
+        if (title) title.textContent = 'الحساب مجمد وموقوف';
+        if (icon) icon.innerHTML = '<i class="fa-solid fa-ban"></i>';
+        if (supportBtn) supportBtn.style.display = 'inline-flex';
+    } else if (type === 'expired') {
+        if (title) title.textContent = 'انتهاء فترة الاشتراك';
+        if (icon) icon.innerHTML = '<i class="fa-solid fa-hourglass-end"></i>';
+        if (supportBtn) supportBtn.style.display = 'inline-flex';
+    } else {
+        if (title) title.textContent = 'مطلوب فحص الاتصال بالإنترنت';
+        if (icon) icon.innerHTML = '<i class="fa-solid fa-wifi-slash"></i>';
+        if (supportBtn) supportBtn.style.display = 'none';
+    }
+
+    if (subtitle) subtitle.textContent = message;
+    overlay.style.display = 'flex';
+}
+
+function hideCheckinBlockingOverlay() {
+    const overlay = $('checkinBlockOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function handleManualCheckinRetry() {
+    const key = currentUserSession?.key || $('authKey')?.value.trim().toUpperCase();
+    if (!key) {
+        location.reload();
+        return;
+    }
+    const btn = $('retryCheckinBtnText');
+    if (btn) btn.textContent = 'جاري الفحص والاتصال...';
+    performBackgroundWeeklyCheckin(key, true).finally(() => {
+        if (btn) btn.textContent = 'فحص الاتصال واستئناف العمل';
+    });
+}
+
+// مراقبة استعادة وفقدان الاتصال بالإنترنت
+window.addEventListener('online', () => {
+    toast('تم استعادة الاتصال بالإنترنت', 'info');
+    const tenant = getTenantKey();
+    if (tenant && tenant !== 'global' && tenant !== 'DEMO-USER') {
+        performBackgroundWeeklyCheckin(tenant, false);
+        processOfflineSyncQueue(tenant);
+        if (db) {
+            initUserProductsSync();
+            startLicenseWatcher(tenant);
+        }
+    }
+});
+
+window.addEventListener('offline', () => {
+    toast('أنت الآن تعمل بدون اتصال بالإنترنت (وضع أوفلاين)', 'warning');
+});
+
+// فحص أمني دوري لصلاحية التشغيل كل 30 دقيقة أثناء الاستخدام
+setInterval(() => {
+    if (currentUserSession && currentUserSession.key && currentUserSession.offlineMode !== 'permanent') {
+        checkWeeklyCheckinStatus(currentUserSession.key, currentUserSession.offlineMode);
+    }
+}, 30 * 60 * 1000);
+
 // زر إظهار / إخفاء الرمز
 const togglePinBtn = $('togglePinVisibilityBtn');
 if (togglePinBtn) {
@@ -4409,13 +4827,36 @@ async function checkLicenseStatus(keyVal) {
     const pinLabel = $('pinLabel');
     const modalSubtitle = $('authModalSubtitle');
 
-    if (!cleanKey || cleanKey.length < 5 || !db) {
+    if (!cleanKey || cleanKey.length < 5) {
         if (firstTimeFields) firstTimeFields.style.display = 'none';
         if (pinConfirmGroup) pinConfirmGroup.style.display = 'none';
         if (btnText) btnText.textContent = 'دخول إلى النظام';
         if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر (6 أرقام) *';
         if (modalSubtitle) modalSubtitle.textContent = 'أدخل كود التفعيل ورمز PIN الماستر للمتابعة ومزامنة حسابك.';
         return null;
+    }
+
+    // فحص إمكانية الاعتماد على البيانات المحلية في وضع الأوفلاين من خزنة IndexedDB
+    let cachedCred = null;
+    try {
+        cachedCred = await HarpySecurityVault.getItem(`harpy_offline_cred_${cleanKey}`);
+    } catch {}
+
+    if (!navigator.onLine || !db) {
+        if (cachedCred) {
+            if (firstTimeFields) firstTimeFields.style.display = 'none';
+            if (pinConfirmGroup) pinConfirmGroup.style.display = 'none';
+            if (btnText) btnText.textContent = 'دخول إلى النظام (أوفلاين)';
+            if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر (6 أرقام) *';
+            if (modalSubtitle) modalSubtitle.textContent = `مرحباً بك يا ${cachedCred.userName || 'التاجر'}، أدخل رمز PIN للدخول (وضع العمل دون اتصال).`;
+            return cachedCred;
+        } else {
+            if (firstTimeFields) firstTimeFields.style.display = 'none';
+            if (pinConfirmGroup) pinConfirmGroup.style.display = 'none';
+            if (btnText) btnText.textContent = 'دخول إلى النظام';
+            if (modalSubtitle) modalSubtitle.textContent = 'أدخل كود التفعيل ورمز PIN للمتابعة (يتطلب اتصالاً بالإنترنت لأول مرة).';
+            return null;
+        }
     }
 
     try {
@@ -4446,6 +4887,14 @@ async function checkLicenseStatus(keyVal) {
         }
         return lic;
     } catch {
+        if (cachedCred) {
+            if (firstTimeFields) firstTimeFields.style.display = 'none';
+            if (pinConfirmGroup) pinConfirmGroup.style.display = 'none';
+            if (btnText) btnText.textContent = 'دخول إلى النظام (أوفلاين)';
+            if (pinLabel) pinLabel.textContent = 'رمز PIN الماستر (6 أرقام) *';
+            if (modalSubtitle) modalSubtitle.textContent = `مرحباً بك يا ${cachedCred.userName || 'التاجر'}، أدخل رمز PIN للدخول (وضع العمل دون اتصال).`;
+            return cachedCred;
+        }
         return null;
     }
 }
@@ -4493,7 +4942,94 @@ authForm.addEventListener('submit', async e => {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحقق من الحساب...';
 
-    if (db) {
+    // مسار التحقق في وضع عدم توفر الإنترنت أو تعذر الوصول إلى فايربيس
+    const handleOfflineAuthFallback = async () => {
+        let cachedCred = null;
+        try {
+            cachedCred = await HarpySecurityVault.getItem(`harpy_offline_cred_${cleanKey}`);
+        } catch {}
+
+        if (cachedCred) {
+            const localAttemptsKey = `harpy_failed_attempts_${cleanKey}`;
+            const localLockKey = `harpy_locked_until_${cleanKey}`;
+            const localLockedUntil = parseInt(await HarpySecurityVault.getItem(localLockKey) || '0', 10);
+            if (localLockedUntil && Date.now() < localLockedUntil) {
+                startLockoutTimer(localLockedUntil);
+                toast('تم قفل الدخول مؤقتاً لحماية الحساب بعد تكرار المحاولات الخاطئة!', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
+                return;
+            }
+
+            const salt = cachedCred.pinSalt || cleanKey;
+            const enteredHash = await hashPin(pin, salt);
+
+            if (enteredHash !== cachedCred.pinHash) {
+                let localAttempts = parseInt(await HarpySecurityVault.getItem(localAttemptsKey) || '0', 10) + 1;
+                if (localAttempts >= MAX_ATTEMPTS) {
+                    const lockTime = Date.now() + LOCKOUT_DURATION_MS;
+                    await HarpySecurityVault.setItem(localLockKey, lockTime);
+                    await HarpySecurityVault.setItem(localAttemptsKey, 0);
+                    startLockoutTimer(lockTime);
+                    toast('تم قفل الدخول مؤقتاً لمدة 60 ثانية بعد 5 محاولات خاطئة متتالية!', 'error');
+                } else {
+                    await HarpySecurityVault.setItem(localAttemptsKey, localAttempts);
+                    const remaining = MAX_ATTEMPTS - localAttempts;
+                    toast(`رمز PIN غير صحيح! متبقي ${remaining} محاولات قبل القفل المؤقت.`, 'error');
+                }
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> <span id="authBtnText">دخول إلى النظام</span>';
+                return;
+            }
+
+            // تصفير عداد المحاولات الفاشلة محلياً في خزنة IndexedDB
+            await HarpySecurityVault.removeItem(localAttemptsKey);
+            await HarpySecurityVault.removeItem(localLockKey);
+
+            // التحقق من البصمة في باقة مدى الحياة
+            if (cachedCred.offlineMode === 'permanent') {
+                const fp = await getOrCreateDeviceFingerprint();
+                if (cachedCred.lockedDeviceFingerprint && cachedCred.lockedDeviceFingerprint !== fp) {
+                    toast('عذراً، بصمة هذا الجهاز لا تتطابق مع الحساب المقترن!', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
+                    return;
+                }
+            } else {
+                // فحص مهلة 7 أيام أوفلاين لباقي الباقات
+                const checkin = checkWeeklyCheckinStatus(cleanKey, cachedCred.offlineMode);
+                if (!checkin.ok) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
+                    return;
+                }
+            }
+
+            currentUserSession = {
+                name: cachedCred.userName || 'التاجر',
+                phone: cachedCred.userPhone || '',
+                key: cleanKey,
+                offlineMode: cachedCred.offlineMode,
+                lockedDeviceFingerprint: cachedCred.lockedDeviceFingerprint,
+                expiresAt: cachedCred.expiresAt,
+                sessionExpiresAt: (cachedCred.offlineMode === 'permanent') ? null : (Date.now() + SESSION_LIFETIME_MS)
+            };
+            localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
+            await migrateTenantData(cleanKey);
+            authOverlay.classList.remove('open');
+            toast(`مرحباً بك يا ${currentUserSession.name} (وضع العمل دون اتصال)`, 'success');
+            updateUserUI();
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
+            return;
+        }
+
+        toast('يتطلب التفعيل والدخول لأول مرة اتصالاً بالإنترنت لربط الحساب بالجهاز وتوثيقه.', 'warning');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
+    };
+
+    if (db && navigator.onLine) {
         try {
             // قراءة طازجة وفورية (Fresh) من Firebase قبل أي معالجة لمطابقة الـ PIN أو فحص القفل
             const snap = await db.ref(`licenses/${cleanKey}`).once('value');
@@ -4527,10 +5063,12 @@ authForm.addEventListener('submit', async e => {
                 return;
             }
 
+            const isLifetime = (lic.offlineMode === 'permanent' || lic.planId === 'lifetime' || lic.durationDays === null);
+            const offlineMode = isLifetime ? 'permanent' : (lic.offlineMode || 'weekly-checkin');
             const isFirstTime = !lic.hasPin && !lic.pinHash;
 
             if (isFirstTime) {
-                // حالة التفعيل لأول مرة: التحقق من الاسم والهاتف وتطابق الـ PIN
+                // حالة التفعيل لأول مرة: التحقق من الاسم والهاتف وتطابق الـ PIN وتوليد بصمة الجهاز
                 if (!nameInput || nameInput.length < 2) {
                     toast('يرجى كتابة اسمك الكامل أو اسم المتجر', 'warning');
                     btn.disabled = false;
@@ -4552,8 +5090,9 @@ authForm.addEventListener('submit', async e => {
 
                 const salt = cleanKey;
                 const pinHash = await hashPin(pin, salt);
+                let fp = null;
 
-                await db.ref(`licenses/${cleanKey}`).update({
+                const updatePayload = {
                     userName: nameInput,
                     userPhone: phoneInput,
                     hasPin: true,
@@ -4561,27 +5100,65 @@ authForm.addEventListener('submit', async e => {
                     pinSalt: salt,
                     failedAttempts: 0,
                     lockedUntil: null,
-                    pendingNotification: true
-                });
+                    pendingNotification: true,
+                    offlineMode: offlineMode
+                };
+
+                if (isLifetime) {
+                    fp = await getOrCreateDeviceFingerprint();
+                    updatePayload.lockedDeviceFingerprint = fp;
+                }
+
+                await db.ref(`licenses/${cleanKey}`).update(updatePayload);
 
                 stopLockoutTimer();
                 currentUserSession = {
                     name: nameInput,
                     phone: phoneInput,
                     key: cleanKey,
+                    offlineMode: offlineMode,
+                    lockedDeviceFingerprint: fp,
                     expiresAt: lic.expiresAt,
-                    sessionExpiresAt: Date.now() + SESSION_LIFETIME_MS
+                    sessionExpiresAt: isLifetime ? null : (Date.now() + SESSION_LIFETIME_MS)
                 };
                 localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
+                localStorage.setItem(`last_successful_checkin_${cleanKey}`, new Date().toISOString());
+
+                // حفظ بيانات الاعتماد محلياً في خزنة IndexedDB للأوفلاين
+                const offlineCred = {
+                    userName: nameInput,
+                    userPhone: phoneInput,
+                    pinHash: pinHash,
+                    pinSalt: salt,
+                    offlineMode: offlineMode,
+                    lockedDeviceFingerprint: fp,
+                    expiresAt: lic.expiresAt
+                };
+                await HarpySecurityVault.setItem(`harpy_offline_cred_${cleanKey}`, offlineCred);
+
                 await migrateTenantData(cleanKey);
                 authOverlay.classList.remove('open');
-                toast(`مرحباً بك يا ${nameInput}، تم تأمين الحساب بـ PIN بنجاح`, 'success');
+                toast(`مرحباً بك يا ${nameInput}، تم تفعيل وتأمين الحساب بنجاح`, 'success');
                 initUserProductsSync();
                 startLicenseWatcher(cleanKey);
                 updateUserUI();
 
             } else {
-                // حالة الدخول اللاحق: مطابقة الـ PIN
+                // حالة الدخول اللاحق: فحص بصمة الجهاز لباقة مدى الحياة أولاً
+                let currentDeviceFp = null;
+                if (isLifetime) {
+                    currentDeviceFp = await getOrCreateDeviceFingerprint();
+                    if (lic.lockedDeviceFingerprint && lic.lockedDeviceFingerprint !== currentDeviceFp) {
+                        toast('عذراً، هذا الحساب مقترن بجهاز آخر ومحمي ببصمة العتاد! لا يمكن تشغيله على أكثر من جهاز في نفس الوقت. تواصل مع الدعم الفني لفك الاقتران.', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
+                        return;
+                    } else if (!lic.lockedDeviceFingerprint) {
+                        // الحساب تم فك قفله من البوت أو يحتاج ربط أولي بالجهاز
+                        await db.ref(`licenses/${cleanKey}`).update({ lockedDeviceFingerprint: currentDeviceFp });
+                    }
+                }
+
                 const salt = lic.pinSalt || cleanKey;
                 const enteredHash = await hashPin(pin, salt);
 
@@ -4627,10 +5204,28 @@ authForm.addEventListener('submit', async e => {
                     name: userName,
                     phone: userPhone,
                     key: cleanKey,
+                    offlineMode: offlineMode,
+                    lockedDeviceFingerprint: isLifetime ? (lic.lockedDeviceFingerprint || currentDeviceFp) : null,
                     expiresAt: lic.expiresAt,
-                    sessionExpiresAt: Date.now() + SESSION_LIFETIME_MS
+                    sessionExpiresAt: isLifetime ? null : (Date.now() + SESSION_LIFETIME_MS)
                 };
                 localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
+                localStorage.setItem(`last_successful_checkin_${cleanKey}`, new Date().toISOString());
+
+                // تحديث بيانات الاعتماد المحلية في خزنة IndexedDB للأوفلاين
+                const offlineCred = {
+                    userName: userName,
+                    userPhone: userPhone,
+                    pinHash: lic.pinHash,
+                    pinSalt: salt,
+                    offlineMode: offlineMode,
+                    lockedDeviceFingerprint: currentUserSession.lockedDeviceFingerprint,
+                    expiresAt: lic.expiresAt
+                };
+                await HarpySecurityVault.setItem(`harpy_offline_cred_${cleanKey}`, offlineCred);
+                await HarpySecurityVault.removeItem(`harpy_failed_attempts_${cleanKey}`);
+                await HarpySecurityVault.removeItem(`harpy_locked_until_${cleanKey}`);
+
                 await migrateTenantData(cleanKey);
                 authOverlay.classList.remove('open');
                 toast(`مرحباً بك مجدداً يا ${userName}`, 'success');
@@ -4640,9 +5235,12 @@ authForm.addEventListener('submit', async e => {
             }
 
         } catch (err) {
-            console.error(err);
-            toast('حدث خطأ أثناء الاتصال بالسيرفر، تحقق من اتصال الإنترنت', 'error');
+            console.error('[Auth Error, falling back to offline check]:', err);
+            await handleOfflineAuthFallback();
         }
+    } else if (cleanKey !== 'DEMO-USER' && cleanKey !== 'global') {
+        // لا يوجد اتصال بالإنترنت أو غير متصل بفايربيس
+        await handleOfflineAuthFallback();
     } else {
         // وضع بدون فايربيس (تجربة محلية)
         currentUserSession = {
@@ -4704,22 +5302,40 @@ function checkSubscriptionExpiry(lic) {
 
 /* مراقبة فورية لحالة الترخيص في الخلفية (إيقاف أو انتهاء الاشتراك) */
 function startLicenseWatcher(key) {
-    if (!db || !key || key === 'DEMO-USER') return;
+    if (!db || !key || key === 'DEMO-USER' || key === 'global') return;
     if (licenseWatcherUnsub) db.ref(`licenses/${key}`).off('value', licenseWatcherUnsub);
 
-    licenseWatcherUnsub = db.ref(`licenses/${key}`).on('value', snap => {
+    licenseWatcherUnsub = db.ref(`licenses/${key}`).on('value', async snap => {
         const lic = snap.val();
         if (!lic) return;
         
         if (lic.status === 'blocked') {
             toast('تم إيقاف حسابك من قبل الإدارة!', 'error');
-            logout(false);
+            showCheckinBlockingOverlay('blocked', 'تم تجميد هذا الحساب من قِبل إدارة النظام. يُرجى مراجعة الدعم الفني لفك التجميد.');
             return;
         }
 
         if (lic.expiresAt && Date.now() > new Date(lic.expiresAt).getTime()) {
-            toast('انتهت مدة اشتراكك، يرجى التجديد للمتابعة.', 'warning');
-            logout(false);
+            const expFormatted = new Date(lic.expiresAt).toLocaleDateString('ar-EG');
+            showCheckinBlockingOverlay('expired', `انتهت فترة اشتراكك في النظام بتاريخ ${expFormatted}. يرجى التواصل مع الإدارة لتجديد الباقة وإعادة تشغيل الكاشير فوراً.`);
+            return;
+        }
+
+        // تحديث وضع التشغيل وبصمة الجهاز المحلية إذا تغيرت سحابياً
+        if (currentUserSession && currentUserSession.key === key) {
+            const isLifetime = (lic.offlineMode === 'permanent' || lic.planId === 'lifetime' || lic.durationDays === null);
+            currentUserSession.offlineMode = isLifetime ? 'permanent' : (lic.offlineMode || 'weekly-checkin');
+            currentUserSession.expiresAt = lic.expiresAt;
+            if (isLifetime && lic.lockedDeviceFingerprint) {
+                currentUserSession.lockedDeviceFingerprint = lic.lockedDeviceFingerprint;
+                const fp = await getOrCreateDeviceFingerprint();
+                if (lic.lockedDeviceFingerprint !== fp) {
+                    toast('عذراً، هذا الحساب مقترن بجهاز آخر ومحمي ببصمة العتاد!', 'error');
+                    logout(false);
+                    return;
+                }
+            }
+            localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
         }
 
         checkSubscriptionExpiry(lic);
@@ -4729,12 +5345,50 @@ function startLicenseWatcher(key) {
 async function checkAuthGuard() {
     if (!currentUserSession || !currentUserSession.key) {
         authOverlay.classList.add('open');
-    } else {
-        await migrateTenantData(currentUserSession.key);
+        return;
+    }
+
+    const cleanKey = currentUserSession.key;
+
+    // 1. تحقق من بصمة الجهاز في باقة مدى الحياة
+    if (currentUserSession.offlineMode === 'permanent') {
+        const fp = await getOrCreateDeviceFingerprint();
+        if (currentUserSession.lockedDeviceFingerprint && currentUserSession.lockedDeviceFingerprint !== fp) {
+            toast('عذراً، بصمة هذا الجهاز لا تتطابق مع الحساب المقترن!', 'error');
+            logout(false);
+            return;
+        }
+        // مدى الحياة: تشغيل كامل دون أي اشتراط للاتصال بالإنترنت
         authOverlay.classList.remove('open');
+        await migrateTenantData(cleanKey);
         updateUserUI();
+
+        if (navigator.onLine && db) {
+            initUserProductsSync();
+            startLicenseWatcher(cleanKey);
+            processOfflineSyncQueue(cleanKey);
+        }
+        return;
+    }
+
+    // 2. التحقق من وضع الفحص الأسبوعي (Weekly Check-in)
+    if (cleanKey !== 'DEMO-USER' && cleanKey !== 'global') {
+        const checkin = checkWeeklyCheckinStatus(cleanKey, currentUserSession.offlineMode);
+        if (!checkin.ok) {
+            // الشاشة مقفلة بالأوفرلاي الحاجب لحين الفحص
+            return;
+        }
+    }
+
+    authOverlay.classList.remove('open');
+    await migrateTenantData(cleanKey);
+    updateUserUI();
+
+    if (navigator.onLine && db && cleanKey !== 'DEMO-USER') {
+        performBackgroundWeeklyCheckin(cleanKey, false);
         initUserProductsSync();
-        startLicenseWatcher(currentUserSession.key);
+        startLicenseWatcher(cleanKey);
+        processOfflineSyncQueue(cleanKey);
     }
 }
 
@@ -7372,9 +8026,11 @@ async function completeCheckout() {
         };
 
         const tenant = getTenantKey();
+        const isPermanent = currentUserSession?.offlineMode === 'permanent';
+        let savedOfflineQueue = false;
 
-        // 1. خصم الكميات ذرياً بـ Promise.allSettled مع تعويض Rollback
-        if (db && tenant !== 'global' && tenant !== 'DEMO-USER') {
+        // 1. خصم الكميات وحفظ الفاتورة (سحابياً إذا توفر الاتصال ولم يكن في وضع أوفلاين دائم، أو محلياً وطابور مزامنة)
+        if (!isPermanent && navigator.onLine && db && tenant !== 'global' && tenant !== 'DEMO-USER') {
             const deductedItems = [];
 
             const deductionPromises = cart.map(async item => {
@@ -7442,10 +8098,19 @@ async function completeCheckout() {
 
             await db.ref(`sales/${tenant}/invoices/${invId}`).set(invoice);
         } else {
+            // حفظ الفاتورة محلياً وإدراجها في طابور المزامنة الذرية
             const localInvsKey = `harpy_invoices_${tenant}`;
             const localInvs = JSON.parse(localStorage.getItem(localInvsKey)) || [];
             localInvs.unshift(invoice);
             localStorage.setItem(localInvsKey, JSON.stringify(localInvs));
+
+            if (tenant !== 'global' && tenant !== 'DEMO-USER') {
+                enqueueOfflineAction(tenant, 'checkout_invoice', invoice);
+                savedOfflineQueue = true;
+                if (navigator.onLine && db) {
+                    processOfflineSyncQueue(tenant);
+                }
+            }
         }
 
         // 3. تحديث الكميات محلياً
@@ -7475,12 +8140,16 @@ async function completeCheckout() {
         updateSummary();
 
         showInvoiceModal(invoice);
-        toast(`تم إتمام البيع بنجاح — فاتورة #${invId}`, 'success');
+        if (savedOfflineQueue) {
+            toast(`تم إتمام البيع بنجاح (أوفلاين - سيتم رفعها تلقائياً عند توفر النت) — فاتورة #${invId}`, 'success');
+        } else {
+            toast(`تم إتمام البيع بنجاح — فاتورة #${invId}`, 'success');
+        }
 
     } catch (err) {
         console.error(err);
         playWarningSound();
-        toast('حدث خطأ أثناء حفظ الفاتورة، تحقق من الاتصال بالإنترنت', 'error');
+        toast('حدث خطأ أثناء حفظ الفاتورة، يرجى المحاولة مجدداً', 'error');
     }
 
     if (btn) {
@@ -7894,9 +8563,16 @@ async function refundInvoice(invId) {
     if (!confirm(`هل أنت متأكد من استرجاع الفاتورة رقم ${invId}؟\nسيتم إعادة كميات الأصناف المباعة إلى المخزون تلقائياً.`)) return;
 
     const tenant = getTenantKey();
+    const isPermanent = currentUserSession?.offlineMode === 'permanent';
 
     try {
-        if (db && tenant !== 'global' && tenant !== 'DEMO-USER') {
+        let itemsToRestore = [];
+        const cachedTarget = allInvoicesCache.find(i => i.invoiceId === invId);
+        if (cachedTarget && Array.isArray(cachedTarget.items)) {
+            itemsToRestore = cachedTarget.items;
+        }
+
+        if (!isPermanent && navigator.onLine && db && tenant !== 'global' && tenant !== 'DEMO-USER') {
             const statusRef = db.ref(`sales/${tenant}/invoices/${invId}/status`);
             const statusTx = await statusRef.transaction(currentStatus => {
                 if (currentStatus === 'refunded') {
@@ -7914,8 +8590,9 @@ async function refundInvoice(invId) {
 
             const invSnap = await db.ref(`sales/${tenant}/invoices/${invId}`).once('value');
             const inv = invSnap.val();
-            if (inv && Array.isArray(inv.items)) {
-                for (const item of inv.items) {
+            const invItems = (inv && Array.isArray(inv.items)) ? inv.items : itemsToRestore;
+            if (Array.isArray(invItems)) {
+                for (const item of invItems) {
                     const pId = item.productId || item.id;
                     if (!pId) continue;
                     const qtyRef = db.ref(`users_data/${tenant}/products/${pId}/qty`);
@@ -7926,6 +8603,7 @@ async function refundInvoice(invId) {
                 }
             }
         } else {
+            // استرجاع محلي + إدراج في طابور الأوفلاين
             const localInvsKey = `harpy_invoices_${tenant}`;
             let localInvs = JSON.parse(localStorage.getItem(localInvsKey)) || [];
             const target = localInvs.find(i => i.invoiceId === invId);
@@ -7937,22 +8615,32 @@ async function refundInvoice(invId) {
                 target.status = 'refunded';
                 target.refundedAt = new Date().toISOString();
                 localStorage.setItem(localInvsKey, JSON.stringify(localInvs));
+                if (Array.isArray(target.items)) itemsToRestore = target.items;
+            }
+
+            if (tenant !== 'global' && tenant !== 'DEMO-USER') {
+                enqueueOfflineAction(tenant, 'refund_invoice', { invoiceId: invId, items: itemsToRestore });
+                if (navigator.onLine && db) {
+                    processOfflineSyncQueue(tenant);
+                }
             }
         }
 
-        const targetInv = allInvoicesCache.find(i => i.invoiceId === invId);
-        if (targetInv && Array.isArray(targetInv.items)) {
-            targetInv.status = 'refunded';
-            for (const item of targetInv.items) {
-                const pId = item.productId || item.id;
-                const p = products.find(x => x.id === pId);
-                if (p) {
-                    const curQ = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 0;
-                    p.qty = curQ + item.qty;
-                }
-            }
-            localStorage.setItem(getProdsStorageKey(), JSON.stringify(products));
+        if (cachedTarget) {
+            cachedTarget.status = 'refunded';
+            cachedTarget.refundedAt = new Date().toISOString();
         }
+
+        // استعادة الكميات محلياً
+        for (const item of itemsToRestore) {
+            const pId = item.productId || item.id;
+            const p = products.find(x => x.id === pId);
+            if (p) {
+                const curQ = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 0;
+                p.qty = curQ + item.qty;
+            }
+        }
+        localStorage.setItem(getProdsStorageKey(), JSON.stringify(products));
 
         renderProducts();
         updateCatTabs();

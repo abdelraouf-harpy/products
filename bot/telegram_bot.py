@@ -143,6 +143,8 @@ def save_license_to_firebase(key, plan_id="month", phone="غير محدد", cust
     now_dt = datetime.datetime.now()
     expires_at_str = (now_dt + datetime.timedelta(days=int(duration_days))).isoformat() if duration_days else None
 
+    offline_mode = "permanent" if plan_id == "lifetime" else "weekly-checkin"
+
     data = {
         "key": key,
         "phone": phone,
@@ -152,6 +154,8 @@ def save_license_to_firebase(key, plan_id="month", phone="غير محدد", cust
         "planName": plan_name,
         "planPrice": plan_price,
         "durationDays": duration_days,
+        "offlineMode": offline_mode,
+        "lockedDeviceFingerprint": None,
         "createdAt": now_str,
         "activatedAt": None,
         "expiresAt": expires_at_str,
@@ -256,6 +260,8 @@ def renew_or_extend_license(key, plan_id):
             "expiresAt": new_exp_str,
             "durationDays": (lic.get("durationDays") or 0) + (days if days else 99999)
         }
+        if plan_id == "lifetime":
+            update_data["offlineMode"] = "permanent"
 
         ru = requests.patch(url, json=update_data, timeout=10)
         if ru.status_code == 200:
@@ -288,7 +294,7 @@ def new_key_inline_keyboard():
     markup.add(b1, b2, b3, b4, b5, b6)
     return markup
 
-def license_action_keyboard(key, status, has_pin=False):
+def license_action_keyboard(key, status, has_pin=False, has_fingerprint=False, offline_mode="weekly-checkin"):
     markup = types.InlineKeyboardMarkup(row_width=2)
     b_renew = types.InlineKeyboardButton("🔄 تمديد / تجديد الاشتراك", callback_data=f"opt_renew_{key}")
     
@@ -300,12 +306,22 @@ def license_action_keyboard(key, status, has_pin=False):
     b_delete = types.InlineKeyboardButton("🗑️ حذف الحساب نهائياً", callback_data=f"ask_del_{key}")
     
     markup.add(b_renew)
-    if has_pin:
+    if has_fingerprint or offline_mode == "permanent":
+        b_unlock = types.InlineKeyboardButton("🔓 فك قفل الجهاز والـ PIN", callback_data=f"ask_unlock_dev_{key}")
+        markup.add(b_toggle, b_unlock)
+    elif has_pin:
         b_reset_pin = types.InlineKeyboardButton("🔑 تصفير رمز PIN", callback_data=f"ask_reset_pin_{key}")
         markup.add(b_toggle, b_reset_pin)
     else:
         markup.add(b_toggle)
     markup.add(b_delete)
+    return markup
+
+def confirm_unlock_device_keyboard(key):
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    b_yes = types.InlineKeyboardButton("⚠️ نعم، فك القفل وامسح البصمة", callback_data=f"do_unlock_dev_{key}")
+    b_no  = types.InlineKeyboardButton("❌ تراجع وإلغاء", callback_data=f"view_lic_{key}")
+    markup.add(b_yes, b_no)
     return markup
 
 def confirm_reset_pin_keyboard(key):
@@ -599,13 +615,60 @@ def handle_callback_query(call):
                 )
                 lic = get_license(key)
                 status = lic.get("status", "active") if lic else "active"
+                off_m = lic.get("offlineMode", "weekly-checkin") if lic else "weekly-checkin"
+                locked_fp = bool(lic.get("lockedDeviceFingerprint")) if lic else False
                 bot.edit_message_reply_markup(
                     call.message.chat.id,
                     call.message.message_id,
-                    reply_markup=license_action_keyboard(key, status, has_pin=False)
+                    reply_markup=license_action_keyboard(key, status, has_pin=False, has_fingerprint=locked_fp, offline_mode=off_m)
                 )
             else:
                 bot.answer_callback_query(call.id, "فشل في تصفير رمز PIN.", show_alert=True)
+        except Exception as e:
+            bot.answer_callback_query(call.id, f"خطأ: {e}", show_alert=True)
+
+    # طلب تأكيد فك قفل الجهاز والبصمة والـ PIN
+    elif data.startswith("ask_unlock_dev_"):
+        key = data.replace("ask_unlock_dev_", "")
+        bot.edit_message_reply_markup(
+            call.message.chat.id,
+            call.message.message_id,
+            reply_markup=confirm_unlock_device_keyboard(key)
+        )
+        bot.answer_callback_query(call.id, "تنبيه: سيتم فك قفل الجهاز ومسح البصمة والـ PIN ليتمكن التاجر من استعادة حسابه على جهاز جديد!", show_alert=True)
+
+    # تنفيذ فك قفل الجهاز والبصمة والـ PIN
+    elif data.startswith("do_unlock_dev_"):
+        key = data.replace("do_unlock_dev_", "")
+        url = get_fb_url(f"licenses/{key}.json")
+        try:
+            r = requests.patch(url, json={
+                "lockedDeviceFingerprint": None,
+                "hasPin": None,
+                "pinHash": None,
+                "pinSalt": None,
+                "failedAttempts": 0,
+                "lockedUntil": None
+            }, timeout=10)
+            if r.status_code == 200:
+                bot.answer_callback_query(call.id, "تم فك قفل الجهاز والـ PIN بنجاح ✓")
+                bot.send_message(
+                    call.message.chat.id,
+                    f"🔓 **تم فك قفل الجهاز للحساب `{key}` بنجاح!**\n\n"
+                    f"• تم مسح بصمة الجهاز السابقة ورمز PIN الماستر.\n"
+                    f"• يمكن للتاجر الآن تسجيل الدخول من جهازه الجديد أو متصفحه وإنشاء رمز PIN جديد، وسيتم ربط البصمة الجديدة تلقائياً.",
+                    parse_mode="Markdown"
+                )
+                lic = get_license(key)
+                status = lic.get("status", "active") if lic else "active"
+                off_m = lic.get("offlineMode", "weekly-checkin") if lic else "weekly-checkin"
+                bot.edit_message_reply_markup(
+                    call.message.chat.id,
+                    call.message.message_id,
+                    reply_markup=license_action_keyboard(key, status, has_pin=False, has_fingerprint=False, offline_mode=off_m)
+                )
+            else:
+                bot.answer_callback_query(call.id, "فشل في فك قفل الجهاز عبر السيرفر.", show_alert=True)
         except Exception as e:
             bot.answer_callback_query(call.id, f"خطأ: {e}", show_alert=True)
 
@@ -615,10 +678,12 @@ def handle_callback_query(call):
         lic = get_license(key)
         status = lic.get("status", "active") if lic else "active"
         has_pin = bool(lic.get("hasPin") or lic.get("pinHash")) if lic else False
+        locked_fp = bool(lic.get("lockedDeviceFingerprint")) if lic else False
+        off_m = lic.get("offlineMode", "weekly-checkin") if lic else "weekly-checkin"
         bot.edit_message_reply_markup(
             call.message.chat.id,
             call.message.message_id,
-            reply_markup=license_action_keyboard(key, status, has_pin=has_pin)
+            reply_markup=license_action_keyboard(key, status, has_pin=has_pin, has_fingerprint=locked_fp, offline_mode=off_m)
         )
         bot.answer_callback_query(call.id)
 
@@ -706,11 +771,17 @@ def send_subscribers_list(chat_id):
         has_pin = bool(data.get("hasPin") or data.get("pinHash"))
         pin_badge = "🟢 مفعّل ومحمي بـ PIN" if has_pin else "⚪ لسه ما عملش PIN"
 
+        offline_mode = data.get("offlineMode", "permanent" if data.get("planId") == "lifetime" else "weekly-checkin")
+        locked_fp = bool(data.get("lockedDeviceFingerprint"))
+        mode_badge = "🛡️ دائم أوفلاين (بصمة جهاز)" if offline_mode == "permanent" else "🔄 فحص دوري أسبوعي"
+        fp_badge = "🔒 مقفل بجهاز" if locked_fp else "🔓 غير مقفل بجهاز"
+
         card_text = (
             f"👤 **المستخدم:** {user_name}\n"
             f"📱 **الموبايل:** `{user_phone}`\n"
             f"🔑 **الكود:** `{key}`\n"
             f"🔒 **حماية الحساب:** {pin_badge}\n"
+            f"⚙️ **نمط التشغيل:** {mode_badge} ({fp_badge})\n"
             f"📦 **الباقة:** {plan_name}\n"
             f"📊 **الحالة:** {status_text}\n"
             f"📅 **الانتهاء:** `{exp_display}`"
@@ -720,7 +791,7 @@ def send_subscribers_list(chat_id):
             chat_id, 
             card_text, 
             parse_mode="Markdown",
-            reply_markup=license_action_keyboard(key, status, has_pin=has_pin)
+            reply_markup=license_action_keyboard(key, status, has_pin=has_pin, has_fingerprint=locked_fp, offline_mode=offline_mode)
         )
 
 def send_system_stats(chat_id):
