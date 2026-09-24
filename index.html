@@ -8,6 +8,16 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>نظام إدارة المنتجات</title>
+
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="theme-color" content="#4361ee">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="نظام المنتجات">
+    <meta name="mobile-web-app-capable" content="yes">
+
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -1913,57 +1923,62 @@
             .fab { display: inline-flex; }
         }
 
-        @media (max-width: 680px) {
+        @media (max-width: 768px) {
             .app-header {
-                padding: 8px 12px;
+                padding: 8px 12px 6px;
                 width: 100%;
                 max-width: 100vw;
                 overflow: visible;
                 box-sizing: border-box;
             }
             .header-inner {
-                display: flex;
+                display: grid;
+                grid-template-columns: 1fr auto;
+                grid-template-areas:
+                    "brand actions"
+                    "nav nav";
+                gap: 8px 10px;
                 align-items: center;
-                justify-content: space-between;
-                gap: 8px;
                 width: 100%;
                 max-width: 100%;
             }
             .header-brand {
+                grid-area: brand;
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                flex-shrink: 0;
+                min-width: 0;
             }
             .header-brand .icon {
-                width: 34px;
-                height: 34px;
-                font-size: 0.95rem;
+                width: 32px;
+                height: 32px;
+                font-size: 0.92rem;
                 border-radius: 8px;
+                flex-shrink: 0;
             }
             .header-brand h1 {
                 font-size: 0.95rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             .header-brand p {
                 display: none;
             }
-            .header-nav {
-                max-width: calc(100vw - 150px);
-                overflow-x: auto;
-                flex-shrink: 1;
-            }
-
             .header-actions {
+                grid-area: actions;
                 display: flex;
                 align-items: center;
+                gap: 6px;
+                justify-self: end;
                 flex-shrink: 0;
                 position: relative;
                 overflow: visible;
             }
             .hbtn-dots {
-                width: 36px;
-                height: 36px;
-                font-size: 1.15rem;
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
             }
             .header-dropdown {
                 top: calc(100% + 8px);
@@ -1985,7 +2000,7 @@
             .hbtn {
                 padding: 5px 8px;
                 font-size: 0.72rem;
-                height: 32px;
+                height: 30px;
                 border-radius: 8px;
                 flex-shrink: 0;
             }
@@ -1993,11 +2008,42 @@
                 display: none;
             }
             .hbtn.icon-only {
-                width: 32px;
-                height: 32px;
+                width: 30px;
+                height: 30px;
                 border-radius: 8px;
-                font-size: 0.82rem;
+                font-size: 0.8rem;
                 flex-shrink: 0;
+            }
+            .role-pill {
+                padding: 4px 9px;
+                font-size: 0.72rem;
+            }
+
+            .header-nav {
+                grid-area: nav;
+                width: 100%;
+                max-width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                padding: 3px 2px;
+                box-sizing: border-box;
+            }
+            .header-nav::-webkit-scrollbar {
+                display: none;
+            }
+            .header-nav .nav-tab {
+                flex-shrink: 0;
+                padding: 6px 12px;
+                font-size: 0.8rem;
+                border-radius: 8px;
+                white-space: nowrap;
+            }
+            .header-nav .nav-tab span {
+                display: inline !important;
             }
 
             .cat-tabs {
@@ -2311,110 +2357,321 @@
             scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
         }
 
-        /* When POS view is active: inset slightly from sides (24px) and stretch all the way to bottom of screen */
-        body[data-active-view="pos"],
-        body.pos-active-screen,
-        body:has(#view-pos.active) {
-            height: 100vh !important;
-            max-height: 100vh !important;
-            overflow: hidden !important;
-        }
-
-        body[data-active-view="pos"] .app-body,
-        body.pos-active-screen .app-body,
-        body:has(#view-pos.active) .app-body {
-            max-width: 100% !important;
-            width: 100% !important;
-            padding: 8px 24px 10px !important;
-            flex: 1 1 0% !important;
-            min-height: 0 !important;
-            height: calc(100vh - 75px) !important;
-            max-height: calc(100vh - 75px) !important;
-            box-sizing: border-box !important;
-            overflow: hidden !important;
-            margin: 0 !important;
-            display: flex !important;
-            flex-direction: column !important;
-        }
-
-        /* Hide website footer in POS view so panels stretch all the way to the screen edge */
-        body[data-active-view="pos"] footer,
-        body.pos-active-screen footer,
-        body:has(#view-pos.active) footer {
+        /* ── Floating Action Button (FAB): Only show in inventory view ── */
+        body[data-active-view="pos"] .fab,
+        body:not([data-active-view="inventory"]) .fab {
             display: none !important;
         }
 
-        #view-pos.active {
-            flex: 1 1 0% !important;
-            height: 100% !important;
-            max-height: 100% !important;
-            min-height: 0 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
+        /* ── DESKTOP POS SCREEN FIT (≥ 961px): Full-height register without bottom void ── */
+        @media (min-width: 961px) {
+            body[data-active-view="pos"],
+            body.pos-active-screen,
+            body:has(#view-pos.active) {
+                height: 100vh !important;
+                max-height: 100vh !important;
+                overflow: hidden !important;
+            }
+
+            body[data-active-view="pos"] .app-body,
+            body.pos-active-screen .app-body,
+            body:has(#view-pos.active) .app-body {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 8px 24px 10px !important;
+                flex: 1 1 0% !important;
+                min-height: 0 !important;
+                height: calc(100vh - 75px) !important;
+                max-height: calc(100vh - 75px) !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+                margin: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            body[data-active-view="pos"] footer,
+            body.pos-active-screen footer,
+            body:has(#view-pos.active) footer {
+                display: none !important;
+            }
+
+            #view-pos.active {
+                flex: 1 1 0% !important;
+                height: 100% !important;
+                max-height: 100% !important;
+                min-height: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                overflow: hidden !important;
+            }
+
+            .cashier-wrap {
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+                display: grid;
+                grid-template-columns: 1fr 560px;
+                gap: 14px;
+                box-sizing: border-box;
+                width: 100%;
+                align-items: stretch;
+                flex: 1 1 0% !important;
+                height: 100% !important;
+                min-height: 0 !important;
+                overflow: hidden;
+            }
+
+            @media (min-width: 1550px) {
+                .cashier-wrap {
+                    grid-template-columns: 1fr 580px;
+                    gap: 14px;
+                }
+            }
+            @media (max-width: 1200px) {
+                .cashier-wrap {
+                    grid-template-columns: 1fr 490px;
+                    gap: 10px;
+                }
+            }
+
+            #posCatalogPanel {
+                display: flex !important;
+                flex-direction: column;
+                flex: 1 1 0%;
+                height: 100%;
+                min-height: 0;
+            }
+            #posCatalogPanel .c-card {
+                flex: 1 1 0%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 0;
+            }
+            #posCatalogPanel .c-card-body {
+                flex: 1 1 0%;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                overflow: hidden;
+                padding: 10px 14px;
+            }
+
+            #posInvoicePanel {
+                display: flex !important;
+            }
+
+            .pos-mobile-toggle,
+            .pos-mobile-quickbar,
+            .pos-mobile-back-btn {
+                display: none !important;
+            }
         }
 
-        /* ── Cashier POS Workspace Layout (Commercial Register Screen Fit) ── */
-        .cashier-wrap {
-            max-width: 100%;
-            margin: 0;
-            padding: 0;
-            display: grid;
-            grid-template-columns: 1fr 560px;
-            gap: 14px;
-            box-sizing: border-box;
-            width: 100%;
-            align-items: stretch;
-            flex: 1 1 0% !important;
-            height: 100% !important;
-            min-height: 0 !important;
-            overflow: hidden;
-        }
-        @media (min-width: 1550px) {
-            .cashier-wrap {
-                grid-template-columns: 1fr 580px;
-                gap: 14px;
+        /* ── TABLET & MOBILE POS LAYOUT (≤ 960px): Segmented & Scrollable ── */
+        @media (max-width: 960px) {
+            body[data-active-view="pos"],
+            body.pos-active-screen,
+            body:has(#view-pos.active) {
+                height: auto !important;
+                max-height: none !important;
+                min-height: 100vh !important;
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
             }
-        }
-        @media (max-width: 1200px) {
-            .cashier-wrap {
-                grid-template-columns: 1fr 490px;
-                gap: 10px;
+
+            body[data-active-view="pos"] .app-body,
+            body.pos-active-screen .app-body,
+            body:has(#view-pos.active) .app-body {
+                height: auto !important;
+                max-height: none !important;
+                min-height: calc(100vh - 65px) !important;
+                padding: 8px 12px 90px !important;
+                overflow-y: visible !important;
+                flex: none !important;
+                display: block !important;
             }
-        }
-        @media (max-width: 880px) {
+
+            #view-pos.active {
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                flex: none !important;
+                display: block !important;
+            }
+
             .cashier-wrap {
-                grid-template-columns: 100%;
-                padding: 6px;
-                height: auto;
-                overflow: visible;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 12px !important;
+                height: auto !important;
+                overflow: visible !important;
+                flex: none !important;
+                width: 100% !important;
+            }
+
+            #posCatalogPanel,
+            #posInvoicePanel {
+                width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
                 flex: none !important;
             }
-            .header-nav .nav-tab span { display: none; }
-            .header-nav .nav-tab { padding: 8px 10px; }
-        }
 
-        .cashier-wrap > div:first-child {
-            display: flex;
-            flex-direction: column;
-            flex: 1 1 0%;
-            height: 100%;
-            min-height: 0;
-        }
-        .cashier-wrap > div:first-child .c-card {
-            flex: 1 1 0%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 0;
-        }
-        .cashier-wrap > div:first-child .c-card-body {
-            flex: 1 1 0%;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            overflow: hidden;
-            padding: 10px 14px;
+            #posCatalogPanel .c-card,
+            #posInvoicePanel .c-card {
+                height: auto !important;
+                flex: none !important;
+            }
+
+            #posCatalogPanel .c-card-body,
+            #posInvoicePanel .c-card-body {
+                height: auto !important;
+                overflow: visible !important;
+                flex: none !important;
+            }
+
+            .pos-touch-grid {
+                max-height: 520px;
+                min-height: 280px;
+            }
+
+            .cart-list {
+                max-height: 380px;
+                min-height: 100px;
+            }
+
+            /* Segmented Tabs for POS on Mobile / Tablet */
+            .pos-mobile-toggle {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-bottom: 12px;
+                background: var(--card);
+                padding: 6px;
+                border-radius: 14px;
+                border: 1.5px solid var(--border);
+                box-shadow: var(--shadow-sm);
+            }
+
+            .pos-m-btn {
+                background: var(--bg);
+                border: 1.5px solid transparent;
+                padding: 10px 8px;
+                border-radius: 10px;
+                font-family: inherit;
+                font-weight: 800;
+                font-size: 0.88rem;
+                color: var(--muted);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                transition: all 0.2s ease;
+            }
+
+            .pos-m-btn.active {
+                background: linear-gradient(135deg, var(--primary), var(--secondary));
+                color: #ffffff;
+                box-shadow: 0 3px 10px rgba(67, 97, 238, 0.35);
+            }
+
+            .pos-m-badge {
+                background: #ef4444;
+                color: #fff;
+                font-size: 0.72rem;
+                font-weight: 900;
+                padding: 2px 7px;
+                border-radius: 12px;
+                line-height: 1.2;
+            }
+
+            /* Switch active panel based on body[data-pos-tab] */
+            body:not([data-pos-tab="ticket"]) #posInvoicePanel {
+                display: none !important;
+            }
+            body:not([data-pos-tab="ticket"]) #posCatalogPanel {
+                display: flex !important;
+            }
+
+            body[data-pos-tab="ticket"] #posCatalogPanel {
+                display: none !important;
+            }
+            body[data-pos-tab="ticket"] #posInvoicePanel {
+                display: flex !important;
+            }
+
+            /* Mobile Quickbar at bottom */
+            .pos-mobile-quickbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                position: fixed;
+                bottom: 10px;
+                left: 12px;
+                right: 12px;
+                z-index: 150;
+                background: rgba(30, 41, 59, 0.95);
+                color: #fff;
+                padding: 10px 16px;
+                border-radius: 14px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                animation: slideUpQuickbar 0.25s ease;
+            }
+            @keyframes slideUpQuickbar {
+                from { transform: translateY(100%); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+
+            body[data-pos-tab="ticket"] .pos-mobile-quickbar {
+                display: none !important;
+            }
+
+            .pos-mobile-back-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: var(--bg);
+                border: 1.5px solid var(--border);
+                color: var(--primary);
+                font-weight: 800;
+                font-size: 0.82rem;
+                padding: 6px 12px;
+                border-radius: 8px;
+                cursor: pointer;
+            }
+
+            .c-card-head {
+                padding: 8px 12px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .c-card-head h2 {
+                font-size: 0.88rem;
+            }
+            #posCurrentTime {
+                display: none !important;
+            }
+            .c-card-body {
+                padding: 10px 12px;
+            }
+            .cart-search-bar input {
+                min-width: 0;
+            }
+            .ticket-head-actions {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            .ticket-head-actions .tbl-act-btn,
+            .ticket-head-actions .clear-cart-btn,
+            .ticket-head-actions .pos-mobile-back-btn {
+                padding: 4px 8px;
+                font-size: 0.74rem;
+            }
         }
 
         .c-card {
@@ -3569,7 +3826,12 @@
                         <span>استعادة نسخة احتياطية</span>
                     </button>
 
-                    <div class="menu-divider"></div>
+                    <button class="menu-item" id="pwaInstallBtn" onclick="triggerPwaInstall(); closeHeaderMenu();" style="display:none;color:var(--primary);font-weight:800;">
+                        <i class="fa-solid fa-cloud-arrow-down" style="color:var(--primary);"></i>
+                        <span>تثبيت التطبيق على الجهاز (PWA)</span>
+                    </button>
+
+                    <div class="menu-divider" id="pwaInstallDivider" style="display:none;"></div>
 
                     <button class="menu-item danger" id="menuLogoutBtn" onclick="logout(); closeHeaderMenu();" style="display:none;">
                         <i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -3608,9 +3870,20 @@
             </div>
         </div>
 
+        <!-- Segmented Toggle for Mobile & Small Tablets -->
+        <div class="pos-mobile-toggle" id="posMobileToggle">
+            <button type="button" class="pos-m-btn active" id="posTabCatalogBtn" onclick="setMobilePosTab('catalog')">
+                <i class="fa-solid fa-boxes-stacked"></i> <span>كتالوج الأصناف</span>
+            </button>
+            <button type="button" class="pos-m-btn" id="posTabTicketBtn" onclick="setMobilePosTab('ticket')">
+                <i class="fa-solid fa-receipt"></i> <span>تذكرة الفاتورة</span>
+                <span class="pos-m-badge" id="posTabTicketBadge" style="display:none;">0</span>
+            </button>
+        </div>
+
         <div class="cashier-wrap">
             <!-- Right (in RTL): Catalog, Barcode Search & Touch Grid -->
-            <div>
+            <div id="posCatalogPanel">
                 <div class="c-card">
                     <div class="c-card-head">
                         <h2><i class="fa-solid fa-boxes-stacked" style="color:var(--primary);"></i> كتالوج الأصناف ونقطة البيع</h2>
@@ -3633,10 +3906,15 @@
             </div>
 
             <!-- Left (in RTL): Invoice Ticket, Cart Items, Payment & Checkout -->
-            <div class="invoice-panel">
+            <div class="invoice-panel" id="posInvoicePanel">
                 <div class="c-card">
                     <div class="c-card-head">
-                        <h2><i class="fa-solid fa-receipt" style="color:var(--green);"></i> تذكرة الفاتورة</h2>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <button type="button" class="pos-mobile-back-btn" onclick="setMobilePosTab('catalog')" title="الرجوع للكتالوج">
+                                <i class="fa-solid fa-plus"></i> <span>إضافة</span>
+                            </button>
+                            <h2><i class="fa-solid fa-receipt" style="color:var(--green);"></i> تذكرة الفاتورة</h2>
+                        </div>
                         <div class="ticket-head-actions">
                             <button type="button" class="tbl-act-btn" id="parkCurrentBtn" onclick="parkCurrentInvoice()" title="تعليق الفاتورة مؤقتاً لخدمة عميل آخر">
                                 <i class="fa-solid fa-pause"></i> <span>تعليق</span>
@@ -3748,6 +4026,22 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Sticky Floating Quickbar for Mobile when browsing Catalog -->
+        <div class="pos-mobile-quickbar" id="posMobileQuickbar" style="display:none;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:36px;height:36px;border-radius:10px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                </div>
+                <div>
+                    <div style="font-size:0.88rem;font-weight:900;">السلة: <span id="posQuickbarCount">0</span> صنف</div>
+                    <div style="font-size:0.78rem;color:#cbd5e1;">الإجمالي: <strong id="posQuickbarTotal" style="color:#34d399;">0.00 ج.م</strong></div>
+                </div>
+            </div>
+            <button type="button" onclick="setMobilePosTab('ticket')" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:8px 16px;border-radius:10px;font-family:inherit;font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 3px 10px rgba(16,185,129,0.4);">
+                <span>عرض الفاتورة</span> <i class="fa-solid fa-arrow-left"></i>
+            </button>
         </div>
     </div>
 
@@ -8100,6 +8394,50 @@ async function handleUnlockOwnerSubmit(e) {
    ============================================================ */
 let currentView = 'pos';
 
+function setMobilePosTab(tab) {
+    document.body.setAttribute('data-pos-tab', tab);
+    const catalogBtn = $('posTabCatalogBtn');
+    const ticketBtn = $('posTabTicketBtn');
+    if (catalogBtn) catalogBtn.classList.toggle('active', tab === 'catalog');
+    if (ticketBtn) ticketBtn.classList.toggle('active', tab === 'ticket');
+
+    updateMobilePosQuickBar();
+
+    if (window.innerWidth <= 960) {
+        if (tab === 'ticket') {
+            const panel = $('posInvoicePanel');
+            if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            const panel = $('posCatalogPanel');
+            if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+}
+
+function updateMobilePosQuickBar() {
+    const cart = getCart();
+    const totalQty = cart.reduce((s, i) => s + (i.qty || 1), 0);
+    const total = parseFloat($('sumTotal')?.dataset.val) || 0;
+
+    const badge = $('posTabTicketBadge');
+    if (badge) {
+        badge.textContent = totalQty;
+        badge.style.display = totalQty > 0 ? 'inline-block' : 'none';
+    }
+
+    const qCount = $('posQuickbarCount');
+    const qTotal = $('posQuickbarTotal');
+    const bar = $('posMobileQuickbar');
+
+    if (qCount) qCount.textContent = totalQty;
+    if (qTotal) qTotal.textContent = `${fmt(total)} ج.م`;
+
+    const currentTab = document.body.getAttribute('data-pos-tab') || 'catalog';
+    if (bar) {
+        bar.style.display = (totalQty > 0 && currentTab === 'catalog') ? 'flex' : 'none';
+    }
+}
+
 function switchView(viewName) {
     if (isCashierMode() && (viewName === 'reports' || viewName === 'settings')) {
         playWarningSound();
@@ -8126,10 +8464,14 @@ function switchView(viewName) {
     updateFloatCart();
 
     if (viewName === 'pos') {
+        if (!document.body.getAttribute('data-pos-tab')) {
+            setMobilePosTab('catalog');
+        }
         renderCart();
         renderPosQuickProducts();
         updateSummary();
         updatePosCurrentTime();
+        updateMobilePosQuickBar();
         setTimeout(() => $('quickSearch')?.focus(), 100);
     } else if (viewName === 'inventory') {
         renderProducts();
@@ -8445,6 +8787,7 @@ function updateSummary() {
 
     calculateChangeDue();
     updateFloatCart();
+    updateMobilePosQuickBar();
 }
 
 function applyExactCash() {
@@ -10382,6 +10725,17 @@ async function init() {
     renderReconciliationBanner();
     loadStoreSettings();
 
+    // Register PWA Service Worker for Offline & Web App capabilities
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                console.log('PWA ServiceWorker registered with scope:', reg.scope);
+            }).catch(err => {
+                console.warn('PWA ServiceWorker registration failed:', err);
+            });
+        });
+    }
+
     await checkAuthGuard();
     updateFloatCart();
     updateLowStockNavBadge();
@@ -10392,6 +10746,50 @@ async function init() {
     } else {
         switchView('pos');
     }
+}
+
+/* ============================================================
+   PWA Installation Prompt & Offline Capabilities
+   ============================================================ */
+let deferredPwaPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPwaPrompt = e;
+    const installBtn = $('pwaInstallBtn');
+    const installDiv = $('pwaInstallDivider');
+    if (installBtn) installBtn.style.display = 'flex';
+    if (installDiv) installDiv.style.display = 'block';
+});
+
+window.addEventListener('appinstalled', () => {
+    deferredPwaPrompt = null;
+    const installBtn = $('pwaInstallBtn');
+    const installDiv = $('pwaInstallDivider');
+    if (installBtn) installBtn.style.display = 'none';
+    if (installDiv) installDiv.style.display = 'none';
+    toast('تم تثبيت التطبيق بنجاح على هذا الجهاز!', 'success');
+});
+
+async function triggerPwaInstall() {
+    if (!deferredPwaPrompt) {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS) {
+            toast('لتثبيت التطبيق على الآيفون أو الآيباد: اضغط زر المشاركة (Share) في Safari ثم اختر "إضافة إلى الشاشة الرئيسية" (Add to Home Screen)', 'info');
+        } else {
+            toast('التطبيق متاح كتطبيق ويب PWA. يمكنك تثبيته من قائمة خيارات المتصفح (تثبيت التطبيق أو إضافة للشاشة الرئيسية).', 'info');
+        }
+        return;
+    }
+    deferredPwaPrompt.prompt();
+    const { outcome } = await deferredPwaPrompt.userChoice;
+    if (outcome === 'accepted') {
+        toast('جاري تثبيت التطبيق على جهازك...', 'success');
+    }
+    deferredPwaPrompt = null;
+    const installBtn = $('pwaInstallBtn');
+    const installDiv = $('pwaInstallDivider');
+    if (installBtn) installBtn.style.display = 'none';
+    if (installDiv) installDiv.style.display = 'none';
 }
 
 init();
