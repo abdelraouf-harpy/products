@@ -367,23 +367,53 @@
         }
 
         .main-layout {
-            display: grid;
-            grid-template-columns: var(--sidebar-w) 1fr;
+            display: flex;
+            gap: 0;
+            align-items: flex-start;
+            transition: gap 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+        }
+
+        .main-layout.sidebar-active,
+        .main-layout:has(.sidebar.open) {
             gap: 20px;
-            align-items: start;
         }
 
         .sidebar {
+            width: 0;
+            opacity: 0;
+            overflow: hidden;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translateX(35px);
+            transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                        opacity 0.25s ease,
+                        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                        visibility 0.35s;
+            flex-shrink: 0;
             position: sticky;
             top: 76px;
+            z-index: 30;
         }
 
-        .card {
+        .sidebar .card {
+            width: var(--sidebar-w);
             background: var(--card);
             border-radius: var(--radius);
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--border);
             overflow: hidden;
+        }
+
+        .main-layout.sidebar-active .sidebar,
+        .main-layout:has(.sidebar.open) .sidebar,
+        .sidebar.open {
+            width: var(--sidebar-w);
+            opacity: 1;
+            overflow: visible;
+            visibility: visible;
+            pointer-events: auto;
+            transform: translateX(0);
         }
 
         .card-head {
@@ -406,16 +436,16 @@
         }
 
         .sidebar-close-btn {
-            display: none;
+            display: flex !important;
             background: var(--bg);
             border: 1px solid var(--border);
             border-radius: 50%;
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             padding: 0;
             cursor: pointer;
             color: var(--muted);
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             align-items: center;
             justify-content: center;
             transition: all var(--tr);
@@ -644,6 +674,66 @@
             display: flex;
             gap: 10px;
             align-items: center;
+        }
+
+        /* Add Product Toggle Button in Inventory Toolbar */
+        .btn-toggle-product-form {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--primary) 0%, #3a0ca3 100%);
+            color: #ffffff !important;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 11px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 3px 12px rgba(67, 97, 238, 0.3);
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .btn-toggle-product-form:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(67, 97, 238, 0.45);
+            background: linear-gradient(135deg, #4f73f8 0%, #4312b8 100%);
+        }
+
+        .btn-toggle-product-form:active {
+            transform: translateY(0);
+        }
+
+        .btn-toggle-product-form.active {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+            box-shadow: 0 3px 12px rgba(239, 68, 68, 0.35);
+        }
+
+        .btn-toggle-product-form.active:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+            box-shadow: 0 5px 16px rgba(239, 68, 68, 0.45);
+        }
+
+        .btn-toggle-product-form i {
+            font-size: 0.95rem;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-toggle-product-form:hover i {
+            transform: scale(1.15);
+        }
+
+        @media (max-width: 680px) {
+            .btn-toggle-product-form span {
+                display: none;
+            }
+            .btn-toggle-product-form {
+                padding: 11px 13px;
+            }
         }
 
         .search-box {
@@ -1770,13 +1860,13 @@
         }
 
         @media (max-width: 960px) {
-            .main-layout { grid-template-columns: 1fr; }
+            .main-layout { display: block; gap: 0; }
 
             .sidebar {
                 position: fixed;
                 top: 0;
                 right: -100%;
-                width: min(420px, 96vw);
+                width: min(420px, 96vw) !important;
                 height: 100vh;
                 height: 100dvh;
                 overflow-y: auto;
@@ -1786,13 +1876,21 @@
                 background: var(--bg);
                 padding: 12px 12px 120px;
                 box-shadow: -6px 0 30px rgba(0,0,0,0.25);
+                opacity: 1 !important;
+                visibility: visible !important;
+                pointer-events: auto !important;
+                transform: none !important;
+            }
+
+            .sidebar .card {
+                width: 100% !important;
             }
 
             .sidebar .form-body {
                 padding-bottom: 24px;
             }
 
-            .sidebar.open { right: 0; }
+            .sidebar.open { right: 0 !important; }
             .sidebar-close-btn { display: flex !important; }
             .fab { display: inline-flex; }
         }
@@ -3633,7 +3731,7 @@
         </div>
     </div>
 
-    <div class="main-layout">
+    <div class="main-layout" id="mainLayout">
 
         <div class="sidebar owner-only" id="sidebar">
             <div class="card">
@@ -3742,6 +3840,11 @@
         <div class="content-area">
 
             <div class="toolbar">
+                <button type="button" class="btn-toggle-product-form owner-only" id="toggleProductFormBtn" onclick="toggleSidebar()" title="إضافة منتج جديد">
+                    <i class="fa-solid fa-circle-plus"></i>
+                    <span class="btn-toggle-text">إضافة منتج</span>
+                </button>
+
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass s-icon"></i>
                     <input type="text" id="searchInput" placeholder="ابحث بالاسم أو الرقم التسلسلي...">
@@ -6812,10 +6915,9 @@ function editProduct(id) {
     cancelBtn.style.display = 'flex';
     $('formDelBtn').style.display = 'flex';
 
-    if (window.innerWidth <= 960) {
-        openSidebar();
-    } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    openSidebar();
+    if (window.innerWidth > 960) {
+        $('sidebar')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }
 
@@ -6849,6 +6951,7 @@ function resetForm() {
     saveBtn.disabled        = false;
     cancelBtn.style.display = 'none';
     $('formDelBtn').style.display = 'none';
+    closeSidebar();
 }
 
 function handleFormDelete() {
@@ -6938,19 +7041,64 @@ function toggleSidebar() {
         toast('إضافة وتعديل المنتجات متاح للمالك فقط', 'warning');
         return;
     }
-    $('sidebar').classList.contains('open') ? closeSidebar() : openSidebar();
+    const sb = $('sidebar');
+    if (!sb) return;
+    if (sb.classList.contains('open')) {
+        closeSidebar();
+    } else {
+        openSidebar();
+        setTimeout(() => {
+            $('inSerial')?.focus();
+        }, 120);
+    }
 }
 
 function openSidebar() {
-    $('sidebar').classList.add('open');
-    $('sidebarOverlay').classList.add('open');
-    $('fabBtn').classList.add('hide');
+    const sb = $('sidebar');
+    if (!sb) return;
+    sb.classList.add('open');
+    $('mainLayout')?.classList.add('sidebar-active');
+    $('sidebarOverlay')?.classList.add('open');
+    $('fabBtn')?.classList.add('hide');
+
+    const toggleBtn = $('toggleProductFormBtn');
+    if (toggleBtn) {
+        toggleBtn.classList.add('active');
+        const isEditing = Boolean($('editId')?.value);
+        toggleBtn.innerHTML = isEditing 
+            ? '<i class="fa-solid fa-xmark"></i> <span>إلغاء التعديل</span>'
+            : '<i class="fa-solid fa-xmark"></i> <span>إغلاق النموذج</span>';
+        toggleBtn.setAttribute('title', isEditing ? 'إلغاء التعديل وإغلاق اللوحة' : 'إغلاق لوحة إضافة منتج');
+    }
 }
 
 function closeSidebar() {
-    $('sidebar').classList.remove('open');
-    $('sidebarOverlay').classList.remove('open');
-    $('fabBtn').classList.remove('hide');
+    const sb = $('sidebar');
+    if (!sb) return;
+    sb.classList.remove('open');
+    $('mainLayout')?.classList.remove('sidebar-active');
+    $('sidebarOverlay')?.classList.remove('open');
+    $('fabBtn')?.classList.remove('hide');
+
+    const toggleBtn = $('toggleProductFormBtn');
+    if (toggleBtn) {
+        toggleBtn.classList.remove('active');
+        toggleBtn.innerHTML = '<i class="fa-solid fa-circle-plus"></i> <span>إضافة منتج</span>';
+        toggleBtn.setAttribute('title', 'إضافة منتج جديد');
+    }
+
+    setTimeout(() => {
+        if (!sb.classList.contains('open') && $('editId')?.value) {
+            productForm.reset();
+            $('editId').value = '';
+            formTitle.innerHTML = '<i class="fa-solid fa-circle-plus"></i> إضافة منتج';
+            saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ المنتج';
+            cancelBtn.style.display = 'none';
+            $('formDelBtn').style.display = 'none';
+            imgPreviewBox.classList.remove('show');
+            uploadPrompt.style.display = 'flex';
+        }
+    }, 350);
 }
 
 document.addEventListener('keydown', e => {
