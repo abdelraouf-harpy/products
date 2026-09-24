@@ -2170,47 +2170,107 @@
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
         }
 
-        /* ── Cashier POS Workspace Layout (Commercial 2-Column Register) ── */
+        /* ── Modern Custom Scrollbars & Removal of Windows Native Arrow Buttons ── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.4);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.7);
+        }
+        ::-webkit-scrollbar-button {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+        }
+
+        /* ── Cashier POS Workspace Layout (Commercial Register Screen Fit) ── */
         .cashier-wrap {
-            max-width: 1520px;
-            margin: 0 auto;
-            padding: 18px 20px;
+            max-width: 100%;
+            margin: 0;
+            padding: 10px 16px;
             display: grid;
-            grid-template-columns: 1fr 420px;
-            gap: 20px;
+            grid-template-columns: 1fr 500px;
+            gap: 14px;
             box-sizing: border-box;
             width: 100%;
-            align-items: start;
+            align-items: stretch;
+            height: calc(100vh - 66px);
+            overflow: hidden;
         }
-        @media (max-width: 1080px) {
-            .cashier-wrap { grid-template-columns: 1fr 380px; gap: 14px; padding: 12px; }
+        @media (max-width: 1180px) {
+            .cashier-wrap {
+                grid-template-columns: 1fr 450px;
+                gap: 10px;
+                padding: 8px 10px;
+                height: auto;
+                overflow: visible;
+            }
         }
         @media (max-width: 880px) {
-            .cashier-wrap { grid-template-columns: 100%; padding: 10px 8px; }
+            .cashier-wrap {
+                grid-template-columns: 100%;
+                padding: 8px;
+                height: auto;
+                overflow: visible;
+            }
             .header-nav .nav-tab span { display: none; }
             .header-nav .nav-tab { padding: 8px 10px; }
         }
 
+        .cashier-wrap > div:first-child {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+        .cashier-wrap > div:first-child .c-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+        }
+        .cashier-wrap > div:first-child .c-card-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+            padding: 10px 14px;
+        }
+
         .c-card {
             background: var(--card);
-            border-radius: 16px;
+            border-radius: 14px;
             box-shadow: var(--shadow);
             border: 1px solid var(--border);
             overflow: hidden;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             transition: box-shadow 0.2s ease;
         }
         .c-card-head {
-            padding: 13px 18px;
+            padding: 10px 16px;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
             background: var(--bg);
+            flex-shrink: 0;
         }
         .c-card-head h2 {
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -2218,22 +2278,23 @@
             color: var(--text);
             margin: 0;
         }
-        .c-card-body { padding: 16px 18px; }
+        .c-card-body { padding: 14px 16px; }
 
         /* Quick Barcode & Search Bar */
         .cart-search-bar {
             display: flex;
-            gap: 10px;
-            margin-bottom: 14px;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
         }
         .cart-search-bar input {
             flex: 1;
             background: var(--bg);
             border: 1.5px solid var(--border);
-            border-radius: 12px;
-            padding: 11px 16px;
+            border-radius: 10px;
+            padding: 8px 14px;
             font-family: inherit;
-            font-size: 0.92rem;
+            font-size: 0.88rem;
             font-weight: 700;
             color: var(--text);
             outline: none;
@@ -2248,30 +2309,31 @@
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: #fff;
             border: none;
-            border-radius: 12px;
-            padding: 0 18px;
+            border-radius: 10px;
+            padding: 0 16px;
             font-family: inherit;
             font-weight: 800;
-            font-size: 0.88rem;
+            font-size: 0.84rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 6px;
-            box-shadow: 0 3px 10px rgba(67, 97, 238, 0.3);
+            box-shadow: 0 3px 8px rgba(67, 97, 238, 0.25);
             transition: all 0.2s ease;
         }
         .cart-search-bar button:hover {
             transform: translateY(-1px);
-            box-shadow: 0 5px 14px rgba(67, 97, 238, 0.4);
+            box-shadow: 0 5px 12px rgba(67, 97, 238, 0.35);
         }
 
         /* Quick Touch Category Bar & Items Grid */
         .pos-cat-bar {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             overflow-x: auto;
-            padding-bottom: 8px;
-            margin-bottom: 14px;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
             scrollbar-width: thin;
         }
         .pos-cat-bar::-webkit-scrollbar { height: 4px; }
@@ -2279,10 +2341,10 @@
         .pos-cat-btn {
             background: var(--bg);
             border: 1.5px solid var(--border);
-            border-radius: 20px;
-            padding: 6px 15px;
+            border-radius: 18px;
+            padding: 5px 12px;
             font-family: inherit;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             font-weight: 800;
             color: var(--muted);
             cursor: pointer;
@@ -2298,25 +2360,25 @@
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: #fff;
             border-color: transparent;
-            box-shadow: 0 3px 10px rgba(67, 97, 238, 0.35);
+            box-shadow: 0 2px 8px rgba(67, 97, 238, 0.3);
         }
 
         .pos-touch-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 12px;
-            max-height: calc(100vh - 260px);
-            min-height: 440px;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 8px;
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
-            padding: 2px 2px 10px 2px;
+            padding: 2px 4px 6px 4px;
         }
         .pos-touch-card {
             background: var(--card);
             border: 1.5px solid var(--border);
-            border-radius: 14px;
+            border-radius: 12px;
             overflow: hidden;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
             position: relative;
@@ -2325,8 +2387,8 @@
         }
         .pos-touch-card:hover {
             border-color: var(--primary);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
         }
         .pos-touch-card:active {
             transform: scale(0.97);
@@ -2337,7 +2399,7 @@
         }
         .pos-touch-thumb {
             width: 100%;
-            height: 105px;
+            height: 74px;
             position: relative;
             background: var(--bg);
             overflow: hidden;
@@ -2346,43 +2408,43 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.3s ease;
+            transition: transform 0.25s ease;
         }
         .pos-touch-card:hover .pos-touch-thumb img {
-            transform: scale(1.06);
+            transform: scale(1.08);
         }
         .pos-touch-price {
             position: absolute;
-            bottom: 6px;
-            right: 6px;
+            bottom: 4px;
+            right: 4px;
             background: rgba(16, 185, 129, 0.95);
             color: #fff;
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             font-weight: 900;
-            padding: 2px 7px;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            padding: 1px 6px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(4px);
         }
         .pos-touch-badge {
             position: absolute;
-            top: 6px;
-            left: 6px;
+            top: 4px;
+            left: 4px;
             background: #ef4444;
             color: #fff;
-            font-size: 0.72rem;
+            font-size: 0.68rem;
             font-weight: 900;
-            min-width: 20px;
-            height: 20px;
-            padding: 0 5px;
-            border-radius: 10px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            border-radius: 9px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+            box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4);
         }
         .pos-touch-info {
-            padding: 8px 10px;
+            padding: 5px 6px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -2390,17 +2452,17 @@
             background: var(--card);
         }
         .pos-touch-name {
-            font-size: 0.82rem;
+            font-size: 0.76rem;
             font-weight: 800;
             color: var(--text);
-            line-height: 1.3;
+            line-height: 1.25;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         .pos-touch-stock {
-            font-size: 0.72rem;
+            font-size: 0.67rem;
             font-weight: 700;
             color: var(--muted);
         }
@@ -2409,41 +2471,65 @@
             font-weight: 800;
         }
 
+        /* Invoice Ticket Panel */
+        .invoice-panel {
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .invoice-panel .c-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+        }
+        .invoice-panel .c-card-body {
+            padding: 10px 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+            justify-content: space-between;
+        }
+
         /* Cart Items List in Ticket Panel */
         .cart-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            min-height: 120px;
-            max-height: 260px;
+            gap: 5px;
+            flex: 1;
+            min-height: 60px;
+            max-height: 155px;
             overflow-y: auto;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             padding-right: 2px;
         }
         .cart-empty {
             text-align: center;
-            padding: 30px 16px;
+            padding: 18px 10px;
             color: var(--muted);
         }
-        .cart-empty i { font-size: 2.2rem; display: block; margin-bottom: 8px; color: var(--border); }
+        .cart-empty i { font-size: 1.8rem; display: block; margin-bottom: 4px; color: var(--border); }
         .cart-item {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             background: var(--bg);
-            border-radius: 10px;
-            padding: 8px 10px;
+            border-radius: 8px;
+            padding: 5px 8px;
             border: 1px solid var(--border);
-            transition: all 0.2s ease;
+            transition: all 0.15s ease;
         }
         .cart-item:hover {
             border-color: var(--primary);
             background: var(--card);
         }
         .cart-item-img {
-            width: 42px;
-            height: 42px;
-            border-radius: 8px;
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
             object-fit: cover;
             background: var(--border);
             flex-shrink: 0;
@@ -2451,30 +2537,30 @@
         .cart-item-info { flex: 1; min-width: 0; }
         .cart-item-name {
             font-weight: 800;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             color: var(--text);
         }
-        .cart-item-meta { font-size: 0.74rem; color: var(--muted); margin-top: 2px; }
+        .cart-item-meta { font-size: 0.7rem; color: var(--muted); margin-top: 1px; }
         .cart-qty-controls {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
             background: var(--card);
             padding: 2px;
-            border-radius: 8px;
+            border-radius: 6px;
             border: 1px solid var(--border);
         }
         .qty-btn {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border: none;
-            border-radius: 6px;
+            border-radius: 5px;
             background: var(--bg);
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             font-weight: 900;
             color: var(--text);
             display: flex;
@@ -2484,115 +2570,223 @@
         }
         .qty-btn:hover { background: var(--primary); color: #fff; }
         .qty-num {
-            font-size: 0.88rem;
+            font-size: 0.82rem;
             font-weight: 900;
-            min-width: 20px;
+            min-width: 18px;
             text-align: center;
             color: var(--text);
         }
         .cart-del-btn {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             background: var(--danger-bg);
             color: var(--danger);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.82rem;
+            font-size: 0.76rem;
             transition: all 0.15s;
             flex-shrink: 0;
         }
         .cart-del-btn:hover { background: var(--danger); color: #fff; }
 
-        /* Payment Methods & Quick Cash */
-        .pay-methods { display: flex; gap: 8px; }
+        /* ── Lateral 2-Column Bottom Register Layout ── */
+        .pos-ticket-bottom {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: start;
+            flex-shrink: 0;
+        }
+        @media (max-width: 580px) {
+            .pos-ticket-bottom { grid-template-columns: 1fr; gap: 8px; }
+        }
+        .pos-ticket-col {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .pos-col-sec {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .pos-sub-label {
+            font-size: 0.74rem;
+            font-weight: 800;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 0;
+        }
+
+        /* Payment Methods */
+        .pay-methods { display: flex; gap: 6px; }
         .pay-method-btn {
             flex: 1;
-            padding: 9px 8px;
+            padding: 6px 6px;
             border: 1.5px solid var(--border);
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             text-align: center;
-            font-size: 0.86rem;
+            font-size: 0.8rem;
             font-weight: 800;
             color: var(--muted);
             background: var(--bg);
-            transition: all 0.2s;
+            transition: all 0.18s;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 7px;
+            gap: 5px;
         }
         .pay-method-btn.active {
             border-color: var(--primary);
             background: #e0e7ff;
             color: var(--primary);
+            box-shadow: 0 2px 6px rgba(67, 97, 238, 0.18);
         }
         [data-theme="dark"] .pay-method-btn.active { background: #1e2352; }
 
-        .quick-cash-row {
+        /* Enterprise Quick Cash Drawer Calculator */
+        .qc-chips-row {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-            margin-top: 6px;
+            grid-template-columns: 1.2fr repeat(3, 1fr);
+            gap: 4px;
         }
-        .qc-btn {
+        .qc-chip {
             background: var(--bg);
             border: 1.5px solid var(--border);
-            border-radius: 8px;
-            padding: 6px 2px;
-            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 5px 2px;
+            font-size: 0.74rem;
             font-weight: 800;
             color: var(--text);
             cursor: pointer;
             text-align: center;
-            transition: all 0.15s;
+            transition: all 0.15s ease;
+            white-space: nowrap;
         }
-        .qc-btn:hover {
+        .qc-chip:hover {
             border-color: var(--primary);
             color: var(--primary);
             background: var(--card);
+            transform: translateY(-1px);
+        }
+        .qc-chip.qc-exact {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: #059669;
+        }
+        .qc-chip.qc-exact:hover {
+            background: #059669;
+            color: #fff;
+            border-color: #059669;
+        }
+
+        .pos-cash-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .pos-cash-cur {
+            position: absolute;
+            right: 8px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--muted);
+            pointer-events: none;
+        }
+        .pos-cash-input-wrap input {
+            width: 100%;
+            background: var(--bg);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 5px 34px 5px 26px;
+            font-family: inherit;
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: var(--text);
+            outline: none;
+            transition: all 0.18s;
+            box-sizing: border-box;
+        }
+        .pos-cash-input-wrap input:focus {
+            border-color: var(--primary);
+            background: var(--card);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.12);
+        }
+        .qc-clear-btn {
+            position: absolute;
+            left: 6px;
+            width: 18px;
+            height: 18px;
+            border: none;
+            border-radius: 50%;
+            background: var(--border);
+            color: var(--muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            transition: all 0.15s;
+        }
+        .qc-clear-btn:hover {
+            background: var(--danger);
+            color: #fff;
         }
 
         .change-due-box {
-            background: var(--success-bg);
-            border: 1.5px solid var(--success);
-            color: var(--success);
-            border-radius: 10px;
-            padding: 9px 12px;
-            margin-top: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1.5px solid rgba(16, 185, 129, 0.4);
+            border-radius: 7px;
+            padding: 5px 8px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 0.88rem;
+            font-size: 0.78rem;
             font-weight: 800;
+            animation: fadeIn 0.2s ease;
+        }
+        .change-title {
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.74rem;
+        }
+        .change-val {
+            font-size: 0.88rem;
+            font-weight: 900;
         }
 
         /* Order Summary Box */
         .summary-box {
             background: var(--bg);
-            border-radius: 12px;
+            border-radius: 8px;
             border: 1.5px solid var(--border);
             overflow: hidden;
-            margin-top: 10px;
         }
         .summary-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 9px 14px;
-            font-size: 0.85rem;
+            padding: 4px 8px;
+            font-size: 0.76rem;
             border-bottom: 1px solid var(--border);
         }
         .summary-row:last-child { border-bottom: none; }
         .summary-row.total {
-            font-size: 1.1rem;
+            font-size: 0.92rem;
             font-weight: 900;
             background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
             color: #ffffff !important;
+            padding: 6px 8px;
         }
         .summary-row.total .summary-label,
         .summary-row.total .summary-val {
@@ -2606,30 +2800,31 @@
         /* The Hero Checkout CTA Button */
         .checkout-btn {
             width: 100%;
-            padding: 15px 18px;
+            padding: 11px 16px;
             background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
             color: #ffffff !important;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-family: inherit;
-            font-size: 1.05rem;
+            font-size: 0.98rem;
             font-weight: 900;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.18s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4);
-            margin-top: 12px;
+            gap: 8px;
+            box-shadow: 0 3px 14px rgba(16, 185, 129, 0.35);
+            margin-top: 0;
+            flex-shrink: 0;
         }
         .checkout-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
             background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         }
         .checkout-btn:active { transform: translateY(0); }
-        .checkout-btn i { font-size: 1.2rem; }
+        .checkout-btn i { font-size: 1.1rem; }
 
         .ticket-head-actions {
             display: flex;
@@ -2717,19 +2912,6 @@
         }
         .clear-cart-btn:hover { background: var(--danger); color: #fff; }
 
-        /* Compact ticket invoice panel */
-        .invoice-panel .c-card-body {
-            padding: 12px 14px;
-        }
-        .invoice-panel .cart-list {
-            min-height: 75px;
-            max-height: 180px;
-            margin-bottom: 8px;
-            gap: 6px;
-        }
-        .invoice-panel .fg {
-            margin-bottom: 8px;
-        }
 
         /* Hide float cart inside POS */
         #view-pos.active ~ #floatCartBtn,
@@ -3290,70 +3472,81 @@
                         </label>
                         <div class="cart-list" id="cartList"></div>
 
-                        <!-- Payment Method -->
-                        <div class="fg" style="margin-bottom:10px;">
-                            <label><i class="fa-solid fa-wallet"></i> طريقة الدفع</label>
-                            <div class="pay-methods">
-                                <div class="pay-method-btn active" id="payCash" onclick="setPayMethod('cash')">
-                                    <i class="fa-solid fa-money-bills"></i> كاش
+                        <!-- Bottom 2-Column Lateral Register Grid -->
+                        <div class="pos-ticket-bottom">
+                            <!-- Right Column (in RTL): Payment Method & Quick Cash Calculator -->
+                            <div class="pos-ticket-col">
+                                <!-- Payment Method Toggle -->
+                                <div class="pos-col-sec">
+                                    <label class="pos-sub-label"><i class="fa-solid fa-wallet"></i> طريقة الدفع</label>
+                                    <div class="pay-methods">
+                                        <div class="pay-method-btn active" id="payCash" onclick="setPayMethod('cash')">
+                                            <i class="fa-solid fa-money-bills"></i> كاش
+                                        </div>
+                                        <div class="pay-method-btn" id="payVisa" onclick="setPayMethod('visa')">
+                                            <i class="fa-solid fa-credit-card"></i> فيزا
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="pay-method-btn" id="payVisa" onclick="setPayMethod('visa')">
-                                    <i class="fa-solid fa-credit-card"></i> فيزا
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Quick Cash Numpad Row (Only for Cash) -->
-                        <div id="quickCashSection" style="margin-bottom:10px;">
-                            <label style="font-size:0.82rem;font-weight:800;color:var(--muted);"><i class="fa-solid fa-calculator"></i> حاسبة نقدية سريعة</label>
-                            <div class="quick-cash-row">
-                                <button type="button" class="qc-btn" onclick="applyExactCash()">بالضبط</button>
-                                <button type="button" class="qc-btn" onclick="applyQuickCash(50)">50 ج</button>
-                                <button type="button" class="qc-btn" onclick="applyQuickCash(100)">100 ج</button>
-                                <button type="button" class="qc-btn" onclick="applyQuickCash(200)">200 ج</button>
-                            </div>
-                            <div style="margin-top:6px;">
-                                <input type="number" id="receivedCashInput" placeholder="المبلغ المستلم (ج.م)..." min="0" step="1" oninput="calculateChangeDue()" style="font-weight:800;font-size:0.9rem;">
-                            </div>
-                            <div class="change-due-box" id="changeDueBox" style="display:none;">
-                                <span>الباقي للعميل (الفكة):</span>
-                                <strong id="changeDueAmount" style="font-size:1.15rem;color:var(--green);font-weight:900;">0.00 ج.م</strong>
-                            </div>
-                        </div>
-
-                        <!-- Discount -->
-                        <div class="fg" style="margin-bottom:8px;">
-                            <label><i class="fa-solid fa-tags"></i> الخصم</label>
-                            <div class="discount-row">
-                                <div class="fg" style="margin-bottom:0;">
-                                    <input type="number" id="discountVal" min="0" step="0.5" placeholder="0" oninput="updateSummary()">
-                                </div>
-                                <div class="fg" style="flex:0 0 90px;margin-bottom:0;">
-                                    <select id="discountType" onchange="updateSummary()">
-                                        <option value="percent">% نسبة</option>
-                                        <option value="amount">ج.م مبلغ</option>
-                                    </select>
+                                <!-- Quick Cash Calculator (Only for Cash) -->
+                                <div id="quickCashSection" class="pos-col-sec">
+                                    <label class="pos-sub-label"><i class="fa-solid fa-calculator"></i> حاسبة نقدية سريعة</label>
+                                    <div class="qc-chips-row">
+                                        <button type="button" class="qc-chip qc-exact" onclick="applyExactCash()" title="دفع المبلغ بالكامل"><i class="fa-solid fa-check"></i> بالضبط</button>
+                                        <button type="button" class="qc-chip" onclick="applyQuickCash(50)">+50</button>
+                                        <button type="button" class="qc-chip" onclick="applyQuickCash(100)">+100</button>
+                                        <button type="button" class="qc-chip" onclick="applyQuickCash(200)">+200</button>
+                                    </div>
+                                    <div class="pos-cash-input-wrap">
+                                        <span class="pos-cash-cur">ج.م</span>
+                                        <input type="number" id="receivedCashInput" placeholder="المبلغ المستلم..." min="0" step="1" oninput="calculateChangeDue()">
+                                        <button type="button" class="qc-clear-btn" onclick="clearCashReceived()" title="تفريغ المبلغ"><i class="fa-solid fa-xmark"></i></button>
+                                    </div>
+                                    <div class="change-due-box" id="changeDueBox" style="display:none;">
+                                        <span class="change-title"><i class="fa-solid fa-coins"></i> الباقي:</span>
+                                        <strong id="changeDueAmount" class="change-val">0.00 ج.م</strong>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Summary -->
-                        <div class="summary-box">
-                            <div class="summary-row">
-                                <span class="summary-label">المجموع الفرعي</span>
-                                <span class="summary-val" id="sumSubtotal">0.00 ج.م</span>
-                            </div>
-                            <div class="summary-row">
-                                <span class="summary-label">قيمة الخصم</span>
-                                <span class="summary-val" id="sumDiscount" style="color:var(--danger)">— ج.م</span>
-                            </div>
-                            <div class="summary-row total">
-                                <span class="summary-label">الإجمالي النهائي</span>
-                                <span class="summary-val" id="sumTotal">0.00 ج.م</span>
-                            </div>
-                            <div class="summary-row profit-row profit-sensitive" id="sumProfitRow">
-                                <span class="summary-label" style="color:var(--success)"><i class="fa-solid fa-chart-line"></i> صافي الربح (للمالك)</span>
-                                <span class="summary-val" id="sumProfit">0.00 ج.م</span>
+                            <!-- Left Column (in RTL): Discount & Order Summary -->
+                            <div class="pos-ticket-col">
+                                <!-- Discount -->
+                                <div class="pos-col-sec">
+                                    <label class="pos-sub-label"><i class="fa-solid fa-tags"></i> الخصم</label>
+                                    <div class="discount-row">
+                                        <div class="fg" style="margin-bottom:0;flex:1;">
+                                            <input type="number" id="discountVal" min="0" step="0.5" placeholder="0" oninput="updateSummary()">
+                                        </div>
+                                        <div class="fg" style="flex:0 0 85px;margin-bottom:0;">
+                                            <select id="discountType" onchange="updateSummary()">
+                                                <option value="percent">% نسبة</option>
+                                                <option value="amount">ج.م مبلغ</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Summary Box -->
+                                <div class="summary-box">
+                                    <div class="summary-row">
+                                        <span class="summary-label">المجموع</span>
+                                        <span class="summary-val" id="sumSubtotal">0.00 ج.م</span>
+                                    </div>
+                                    <div class="summary-row">
+                                        <span class="summary-label">الخصم</span>
+                                        <span class="summary-val" id="sumDiscount" style="color:var(--danger)">— ج.م</span>
+                                    </div>
+                                    <div class="summary-row total">
+                                        <span class="summary-label">الإجمالي</span>
+                                        <span class="summary-val" id="sumTotal">0.00 ج.م</span>
+                                    </div>
+                                    <div class="summary-row profit-row profit-sensitive" id="sumProfitRow">
+                                        <span class="summary-label"><i class="fa-solid fa-chart-line"></i> الربح</span>
+                                        <span class="summary-val" id="sumProfit">0.00 ج.م</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -3787,12 +3980,18 @@
                             <div style="font-size:0.78rem;color:var(--muted);margin-bottom:10px;">
                                 للعرض والتسويق أمام العملاء: ضغطة زر واحدة لتحميل متجر كامل (20 صنف بصور حقيقية وأسعار وفواتير سابقة) لإظهار قوة النظام فوراً.
                             </div>
-                            <div style="display:flex;flex-direction:column;gap:8px;">
-                                <button type="button" class="hbtn" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;border:none;justify-content:center;padding:12px;width:100%;font-weight:900;border-radius:11px;box-shadow:0 3px 12px rgba(5,150,105,0.3);" onclick="loadClothingDemoStoreData()">
-                                    <i class="fa-solid fa-shirt"></i> تحميل متجر ملابس وأزياء تجريبي (20 صنف)
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:10px;">
+                                <button type="button" class="hbtn" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;border:none;flex-direction:column;align-items:center;justify-content:center;padding:12px 10px;font-weight:900;border-radius:12px;box-shadow:0 3px 12px rgba(5,150,105,0.25);gap:5px;cursor:pointer;" onclick="loadClothingDemoStoreData()">
+                                    <div style="display:flex;align-items:center;gap:7px;font-size:0.9rem;">
+                                        <i class="fa-solid fa-shirt"></i> متجر ملابس وأزياء
+                                    </div>
+                                    <span style="font-size:0.72rem;opacity:0.92;font-weight:600;">20 صنف + صور ومقاسات واقعية</span>
                                 </button>
-                                <button type="button" class="hbtn" style="background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;justify-content:center;padding:11px;width:100%;font-weight:800;border-radius:11px;" onclick="loadDemoStoreData()">
-                                    <i class="fa-solid fa-cart-shopping"></i> تحميل سوبرماركت وبقالة تجريبي (20 صنف)
+                                <button type="button" class="hbtn" style="background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;flex-direction:column;align-items:center;justify-content:center;padding:12px 10px;font-weight:900;border-radius:12px;box-shadow:0 3px 12px rgba(67,97,238,0.25);gap:5px;cursor:pointer;" onclick="loadDemoStoreData()">
+                                    <div style="display:flex;align-items:center;gap:7px;font-size:0.9rem;">
+                                        <i class="fa-solid fa-basket-shopping"></i> سوبرماركت وبقالة
+                                    </div>
+                                    <span style="font-size:0.72rem;opacity:0.92;font-weight:600;">20 صنف + صور وباركودات وأسعار</span>
                                 </button>
                             </div>
                         </div>
@@ -4218,13 +4417,25 @@ async function migrateTenantData(licenseKey) {
 
 const PLACEHOLDER = `data:image/svg+xml,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200">
-  <rect width="300" height="200" fill="#e2e8f0"/>
-  <g opacity=".35" fill="#64748b">
-    <rect x="112" y="68" width="76" height="58" rx="6"/>
-    <circle cx="128" cy="86" r="11"/>
-    <polygon points="108,140 158,100 192,130 212,108 222,140"/>
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+  </defs>
+  <rect width="300" height="200" rx="12" fill="url(#bgGrad)"/>
+  <rect x="1" y="1" width="298" height="198" rx="11" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+  <g transform="translate(118, 55)">
+    <rect x="0" y="12" width="64" height="52" rx="10" fill="url(#boxGrad)" opacity="0.85"/>
+    <path d="M18 12 V-2 A14 14 0 0 1 46 -2 V12" fill="none" stroke="#94a3b8" stroke-width="4.5" stroke-linecap="round"/>
+    <circle cx="32" cy="38" r="6" fill="#f8fafc" opacity="0.9"/>
   </g>
-  <text x="150" y="174" text-anchor="middle" fill="#94a3b8" font-size="13" font-family="Arial,sans-serif">لا توجد صورة</text>
+  <text x="150" y="152" text-anchor="middle" fill="#64748b" font-size="13" font-weight="700" font-family="system-ui, -apple-system, sans-serif">صورة غير متوفرة</text>
+  <text x="150" y="172" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui, -apple-system, sans-serif">Harpy Retail System</text>
 </svg>`)}`;
 
 function esc(v) {
@@ -7926,6 +8137,14 @@ function applyQuickCash(amount) {
     calculateChangeDue();
 }
 
+function clearCashReceived() {
+    const input = $('receivedCashInput');
+    if (input) {
+        input.value = '';
+        calculateChangeDue();
+    }
+}
+
 function calculateChangeDue() {
     const input = $('receivedCashInput');
     const box = $('changeDueBox');
@@ -9102,26 +9321,26 @@ async function loadDemoStoreData() {
     if (!confirm('هل تريد تحميل المتجر التجريبي المتكامل؟\nسيتم إضافة 20 صنف واقعي بتصنيفات وأسعار وكميات وفواتير جاهزة للعرض الفوري.')) return;
 
     const demoProducts = [
-        { id: 1001, serial: '6221001001', name: 'لبن جهينة كامل الدسم 1 لتر', cat: 'ألبان وأجبان', whole: 38, sell: 45, qty: 35, lowStockThreshold: 10, imgData: '' },
-        { id: 1002, serial: '6221001002', name: 'جبنة لافاش كيري مثلثات 16 قطعة', cat: 'ألبان وأجبان', whole: 42, sell: 52, qty: 24, lowStockThreshold: 8, imgData: '' },
-        { id: 1003, serial: '6221001003', name: 'جبنة دومتي فيتا بلس 500 جم', cat: 'ألبان وأجبان', whole: 32, sell: 39, qty: 18, lowStockThreshold: 5, imgData: '' },
-        { id: 1004, serial: '6221001004', name: 'زبادي دانون طبيعي 105 جم', cat: 'ألبان وأجبان', whole: 8, sell: 11, qty: 50, lowStockThreshold: 15, imgData: '' },
-        { id: 1005, serial: '6222002001', name: 'أرز الضحى فاخر 1 كجم', cat: 'بقوليات وبقالة', whole: 33, sell: 40, qty: 40, lowStockThreshold: 10, imgData: '' },
-        { id: 1006, serial: '6222002002', name: 'سكر الأسرة ناعم 1 كجم', cat: 'بقوليات وبقالة', whole: 30, sell: 36, qty: 25, lowStockThreshold: 8, imgData: '' },
-        { id: 1007, serial: '6222002003', name: 'زيت عافية ذرة نقي 800 مل', cat: 'بقوليات وبقالة', whole: 85, sell: 98, qty: 15, lowStockThreshold: 6, imgData: '' },
-        { id: 1008, serial: '6222002004', name: 'مكرونة إيطاليانو فرن 400 جم', cat: 'بقوليات وبقالة', whole: 16, sell: 21, qty: 30, lowStockThreshold: 10, imgData: '' },
-        { id: 1009, serial: '6222002005', name: 'شاي العروسة أسود فاخر 250 جم', cat: 'مشروبات وساخنة', whole: 48, sell: 58, qty: 20, lowStockThreshold: 5, imgData: '' },
-        { id: 1010, serial: '6222002006', name: 'نسكافيه 3 في 1 كيس فردي', cat: 'مشروبات وساخنة', whole: 7, sell: 10, qty: 120, lowStockThreshold: 30, imgData: '' },
-        { id: 1011, serial: '6223003001', name: 'بيبسي كانز 330 مل', cat: 'مشروبات وساخنة', whole: 11, sell: 15, qty: 48, lowStockThreshold: 12, imgData: '' },
-        { id: 1012, serial: '6223003002', name: 'عصير بيتي برتقال طبيعي 1 لتر', cat: 'مشروبات وساخنة', whole: 22, sell: 28, qty: 16, lowStockThreshold: 6, imgData: '' },
-        { id: 1013, serial: '6224004001', name: 'شوكولاتة مورو كراميل 38 جم', cat: 'حلويات وسناكس', whole: 12, sell: 16, qty: 60, lowStockThreshold: 15, imgData: '' },
-        { id: 1014, serial: '6224004002', name: 'شيبسي عائلي طماطم متبلة', cat: 'حلويات وسناكس', whole: 11, sell: 15, qty: 32, lowStockThreshold: 10, imgData: '' },
-        { id: 1015, serial: '6224004003', name: 'بسكويت أوريو شوكولاتة كلاسيك', cat: 'حلويات وسناكس', whole: 8, sell: 12, qty: 45, lowStockThreshold: 10, imgData: '' },
-        { id: 1016, serial: '6225005001', name: 'صابون ديتول أصلي معقم 120 جم', cat: 'منظفات وعناية', whole: 22, sell: 28, qty: 22, lowStockThreshold: 8, imgData: '' },
-        { id: 1017, serial: '6225005002', name: 'مسحوق إريال أوتوماتيك لافندر 2.5 كجم', cat: 'منظفات وعناية', whole: 165, sell: 195, qty: 10, lowStockThreshold: 4, imgData: '' },
-        { id: 1018, serial: '6225005003', name: 'سائل أطباق فيري ليمون 650 مل', cat: 'منظفات وعناية', whole: 42, sell: 52, qty: 14, lowStockThreshold: 5, imgData: '' },
-        { id: 1019, serial: '6225005004', name: 'معجون أسنان كولجيت حماية فائقة 75 مل', cat: 'منظفات وعناية', whole: 34, sell: 44, qty: 19, lowStockThreshold: 6, imgData: '' },
-        { id: 1020, serial: '6225005005', name: 'مناديل فاين كلاسيك عبوة 550 منديل', cat: 'منظفات وعناية', whole: 28, sell: 36, qty: 26, lowStockThreshold: 8, imgData: '' }
+        { id: 1001, serial: '6221001001', name: 'لبن جهينة كامل الدسم 1 لتر', cat: 'ألبان وأجبان', whole: 38, sell: 45, qty: 35, lowStockThreshold: 10, imgData: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=300', imgType: 'url' },
+        { id: 1002, serial: '6221001002', name: 'جبنة لافاش كيري مثلثات 16 قطعة', cat: 'ألبان وأجبان', whole: 42, sell: 52, qty: 24, lowStockThreshold: 8, imgData: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=300', imgType: 'url' },
+        { id: 1003, serial: '6221001003', name: 'جبنة دومتي فيتا بلس 500 جم', cat: 'ألبان وأجبان', whole: 32, sell: 39, qty: 18, lowStockThreshold: 5, imgData: 'https://images.unsplash.com/photo-1589881133595-a3c085cb731d?w=300', imgType: 'url' },
+        { id: 1004, serial: '6221001004', name: 'زبادي دانون طبيعي 105 جم', cat: 'ألبان وأجبان', whole: 8, sell: 11, qty: 50, lowStockThreshold: 15, imgData: 'https://images.unsplash.com/photo-1571212515416-fef01fc43637?w=300', imgType: 'url' },
+        { id: 1005, serial: '6222002001', name: 'أرز الضحى فاخر 1 كجم', cat: 'بقوليات وبقالة', whole: 33, sell: 40, qty: 40, lowStockThreshold: 10, imgData: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300', imgType: 'url' },
+        { id: 1006, serial: '6222002002', name: 'سكر الأسرة ناعم 1 كجم', cat: 'بقوليات وبقالة', whole: 30, sell: 36, qty: 25, lowStockThreshold: 8, imgData: 'https://images.unsplash.com/photo-1581441363689-1f3c3c414635?w=300', imgType: 'url' },
+        { id: 1007, serial: '6222002003', name: 'زيت عافية ذرة نقي 800 مل', cat: 'بقوليات وبقالة', whole: 85, sell: 98, qty: 15, lowStockThreshold: 6, imgData: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=300', imgType: 'url' },
+        { id: 1008, serial: '6222002004', name: 'مكرونة إيطاليانو فرن 400 جم', cat: 'بقوليات وبقالة', whole: 16, sell: 21, qty: 30, lowStockThreshold: 10, imgData: 'https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=300', imgType: 'url' },
+        { id: 1009, serial: '6222002005', name: 'شاي العروسة أسود فاخر 250 جم', cat: 'مشروبات وساخنة', whole: 48, sell: 58, qty: 20, lowStockThreshold: 5, imgData: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=300', imgType: 'url' },
+        { id: 1010, serial: '6222002006', name: 'نسكافيه 3 في 1 كيس فردي', cat: 'مشروبات وساخنة', whole: 7, sell: 10, qty: 120, lowStockThreshold: 30, imgData: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=300', imgType: 'url' },
+        { id: 1011, serial: '6223003001', name: 'بيبسي كانز 330 مل', cat: 'مشروبات وساخنة', whole: 11, sell: 15, qty: 48, lowStockThreshold: 12, imgData: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300', imgType: 'url' },
+        { id: 1012, serial: '6223003002', name: 'عصير بيتي برتقال طبيعي 1 لتر', cat: 'مشروبات وساخنة', whole: 22, sell: 28, qty: 16, lowStockThreshold: 6, imgData: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=300', imgType: 'url' },
+        { id: 1013, serial: '6224004001', name: 'شوكولاتة مورو كراميل 38 جم', cat: 'حلويات وسناكس', whole: 12, sell: 16, qty: 60, lowStockThreshold: 15, imgData: 'https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=300', imgType: 'url' },
+        { id: 1014, serial: '6224004002', name: 'شيبسي عائلي طماطم متبلة', cat: 'حلويات وسناكس', whole: 11, sell: 15, qty: 32, lowStockThreshold: 10, imgData: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300', imgType: 'url' },
+        { id: 1015, serial: '6224004003', name: 'بسكويت أوريو شوكولاتة كلاسيك', cat: 'حلويات وسناكس', whole: 8, sell: 12, qty: 45, lowStockThreshold: 10, imgData: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=300', imgType: 'url' },
+        { id: 1016, serial: '6225005001', name: 'صابون ديتول أصلي معقم 120 جم', cat: 'منظفات وعناية', whole: 22, sell: 28, qty: 22, lowStockThreshold: 8, imgData: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300', imgType: 'url' },
+        { id: 1017, serial: '6225005002', name: 'مسحوق إريال أوتوماتيك لافندر 2.5 كجم', cat: 'منظفات وعناية', whole: 165, sell: 195, qty: 10, lowStockThreshold: 4, imgData: 'https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=300', imgType: 'url' },
+        { id: 1018, serial: '6225005003', name: 'سائل أطباق فيري ليمون 650 مل', cat: 'منظفات وعناية', whole: 42, sell: 52, qty: 14, lowStockThreshold: 5, imgData: 'https://images.unsplash.com/photo-1585837575652-267c041d77d4?w=300', imgType: 'url' },
+        { id: 1019, serial: '6225005004', name: 'معجون أسنان كولجيت حماية فائقة 75 مل', cat: 'منظفات وعناية', whole: 34, sell: 44, qty: 19, lowStockThreshold: 6, imgData: 'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?w=300', imgType: 'url' },
+        { id: 1020, serial: '6225005005', name: 'مناديل فاين كلاسيك عبوة 550 منديل', cat: 'منظفات وعناية', whole: 28, sell: 36, qty: 26, lowStockThreshold: 8, imgData: 'https://images.unsplash.com/photo-1584556812952-905ffd0c611a?w=300', imgType: 'url' }
     ];
 
     products = demoProducts;
@@ -9204,14 +9423,14 @@ async function loadClothingDemoStoreData() {
         { id: 2004, serial: '622800200201', name: 'قميص أكسفورد سليم فيت أبيض - 42', cat: 'قمصان رسمية وكاجوال', whole: 250, sell: 450, qty: 15, lowStockThreshold: 4, desc: 'قميص رجالي رسمي للمناسبات والعمل، قطن معالج سهل الكي ومقاوم للتجاعيد.', imgData: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300', imgType: 'url' },
         { id: 2005, serial: '622800200202', name: 'قميص كتان طبيعي صيفي هافان - L', cat: 'قمصان رسمية وكاجوال', whole: 290, sell: 520, qty: 12, lowStockThreshold: 4, desc: 'كتان هندي طبيعي 100% بارد وخفيف على الجسم بأزرار خشبية أنيقة.', imgData: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=300', imgType: 'url' },
         { id: 2006, serial: '622800200203', name: 'قميص كاجوال جينز خفيف - XL', cat: 'قمصان رسمية وكاجوال', whole: 240, sell: 420, qty: 3, lowStockThreshold: 5, desc: 'جينز مغسول ناعم بلون أزرق داكن، أزرار كبس لؤلؤية عملية.', imgData: 'https://images.unsplash.com/photo-1589310243389-96a5483213a8?w=300', imgType: 'url' },
-        { id: 2007, serial: '622800300301', name: 'بنطلون جينز كلاسيك ريجولار أزرق - 34', cat: 'بناطيل وجينز', whole: 320, sell: 580, qty: 20, lowStockThreshold: 6, desc: 'دنيم مستورد عالي التحمل مع نسبة ليكرا مريحة للحركة اليومية.', imgData: 'https://images.unsplash.com/photo-1542272604-780c96856592?w=300', imgType: 'url' },
+        { id: 2007, serial: '622800300301', name: 'بنطلون جينز كلاسيك ريجولار أزرق - 34', cat: 'بناطيل وجينز', whole: 320, sell: 580, qty: 20, lowStockThreshold: 6, desc: 'دنيم مستورد عالي التحمل مع نسبة ليكرا مريحة للحركة اليومية.', imgData: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=300', imgType: 'url' },
         { id: 2008, serial: '622800300302', name: 'بنطلون كارجو جبردين جيوب زيتوني - 32', cat: 'بناطيل وجينز', whole: 280, sell: 490, qty: 16, lowStockThreshold: 5, desc: 'تصميم عسكري عصري مع 6 جيوب عملية وخامة جبردين مغسول متينة.', imgData: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=300', imgType: 'url' },
         { id: 2009, serial: '622800300303', name: 'بنطلون سويت بانتس ميلتون أسود - M', cat: 'بناطيل وجينز', whole: 190, sell: 340, qty: 2, lowStockThreshold: 5, desc: 'أستيك عريض برباط قطني محكم، مثالي للجري والنوادي والاسترخاء.', imgData: 'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=300', imgType: 'url' },
         { id: 2010, serial: '622800400401', name: 'هودي ميلتون مبطن فرو ثقيل أسود - XL', cat: 'جواكت وملابس شتوية', whole: 360, sell: 650, qty: 14, lowStockThreshold: 4, desc: 'بطانة داخلية من الفرو الناعم لتدفئة فائقة في الشتاء، كابيتشو واسع وجيب كنغر.', imgData: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=300', imgType: 'url' },
-        { id: 2011, serial: '622800400402', name: 'جاكيت بامب ووتر بروف عازل كحلي - L', cat: 'جواكت وملابس شتوية', whole: 550, sell: 950, qty: 8, lowStockThreshold: 3, desc: 'مقاوم للأمطار والرياح مع عزل حراري فايبر حراري مستورد وسوستة محكمة.', imgData: 'https://images.unsplash.com/photo-1544923246-77307dd654cb?w=300', imgType: 'url' },
+        { id: 2011, serial: '622800400402', name: 'جاكيت بامب ووتر بروف عازل كحلي - L', cat: 'جواكت وملابس شتوية', whole: 550, sell: 950, qty: 8, lowStockThreshold: 3, desc: 'مقاوم للأمطار والرياح مع عزل حراري فايبر حراري مستورد وسوستة محكمة.', imgData: 'https://images.unsplash.com/photo-1548883354-7622d03aca27?w=300', imgType: 'url' },
         { id: 2012, serial: '622800400403', name: 'جاكيت جلد صناعي فاخر بني - 2XL', cat: 'جواكت وملابس شتوية', whole: 620, sell: 1100, qty: 5, lowStockThreshold: 2, desc: 'جلد بي يو ناعم ومقاوم للتقشير، ياقة دائرية أنيقة وبطانة ساتان ناعمة.', imgData: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=300', imgType: 'url' },
         { id: 2013, serial: '622800500501', name: 'دريس كريب صيفي مشجر أنيق - Free Size', cat: 'ملابس نسائية', whole: 380, sell: 680, qty: 11, lowStockThreshold: 3, desc: 'خامة كريب تركي انسيابية وباردة بألوان زهرية ربيعية مبهجة وحزام خصر.', imgData: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=300', imgType: 'url' },
-        { id: 2014, serial: '622800500502', name: 'بلوزة ستان حرير ناعمة نبيتي - L', cat: 'ملابس نسائية', whole: 220, sell: 390, qty: 15, lowStockThreshold: 4, desc: 'ستان لامع ناعم الملمس، أكمام بف كلاسيكية مناسبة للخروجات والسهرات.', imgData: 'https://images.unsplash.com/photo-1564257631407-4deb129f0425?w=300', imgType: 'url' },
+        { id: 2014, serial: '622800500502', name: 'بلوزة ستان حرير ناعمة نبيتي - L', cat: 'ملابس نسائية', whole: 220, sell: 390, qty: 15, lowStockThreshold: 4, desc: 'ستان لامع ناعم الملمس، أكمام بف كلاسيكية مناسبة للخروجات والسهرات.', imgData: 'https://images.unsplash.com/photo-1551803091-e20673f15770?w=300', imgType: 'url' },
         { id: 2015, serial: '622800500503', name: 'كارديجان صوف تريكو طويل بيج - M', cat: 'ملابس نسائية', whole: 310, sell: 550, qty: 9, lowStockThreshold: 3, desc: 'صوف ناعم لا يسبب حساسية، غرزة تريكو واسعة وتصميم مفتوح عصري.', imgData: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=300', imgType: 'url' },
         { id: 2016, serial: '622800600601', name: 'حذاء سنيكرز كاجوال أبيض جلد طبي - 43', cat: 'أحذية وإكسسوارات', whole: 420, sell: 750, qty: 14, lowStockThreshold: 4, desc: 'فرش طبي ميموري فوم مريح للوقوف لساعات طويلة ونعل ربر مانع للانزلاق.', imgData: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=300', imgType: 'url' },
         { id: 2017, serial: '622800600602', name: 'كوتشي رياضي شبكي أسود خفيف - 42', cat: 'أحذية وإكسسوارات', whole: 350, sell: 620, qty: 12, lowStockThreshold: 3, desc: 'قماش شبكي يسمح بتهوية القدم ووزن خفيف جداً مثالي للمشي والتمارين.', imgData: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300', imgType: 'url' },
