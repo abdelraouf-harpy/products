@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="referrer" content="no-referrer">
     <title>نظام إدارة المنتجات</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -56,17 +56,26 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', -apple-system, BlinkMacSystemFont, sans-serif; }
 
-        html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+        html {
+            scroll-behavior: smooth;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
 
         body {
             background: var(--bg);
             color: var(--text);
             transition: background var(--tr), color var(--tr);
             min-height: 100vh;
+            min-height: 100dvh;
             overflow-x: hidden;
             width: 100%;
+            max-width: 100vw;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .app-header {
@@ -1322,26 +1331,63 @@
             display: none;
             position: fixed;
             inset: 0;
-            z-index: 9999;
-            background: rgba(12, 14, 20, 0.95);
-            backdrop-filter: blur(12px);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            z-index: 999999;
+            background: rgba(12, 14, 20, 0.98);
+            backdrop-filter: blur(16px);
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 16px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            box-sizing: border-box;
+            touch-action: pan-y;
         }
 
         .auth-overlay.open { display: flex; }
+
+        body.auth-locked {
+            overflow: hidden !important;
+            touch-action: none !important;
+            position: fixed !important;
+            width: 100% !important;
+            height: 100% !important;
+            inset: 0 !important;
+        }
+
+        body.auth-locked .app-header,
+        body.auth-locked .app-body,
+        body.auth-locked .fab,
+        body.auth-locked .float-cart,
+        body.auth-locked .sidebar-overlay,
+        body.auth-locked .modal-overlay,
+        body.auth-locked #subscriptionExpiryBanner,
+        body.auth-locked #weeklyCheckinBanner,
+        body.auth-locked #reconciliationBanner {
+            visibility: hidden !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
+            filter: blur(25px) !important;
+        }
 
         .auth-box {
             background: var(--card);
             border-radius: 20px;
             max-width: 420px;
             width: 100%;
+            margin: auto;
             padding: 32px 24px;
             box-shadow: 0 25px 60px rgba(0,0,0,0.5);
             animation: popIn 0.25s ease;
             text-align: center;
             border: 1.5px solid var(--border);
+            box-sizing: border-box;
         }
 
         .auth-icon {
@@ -1390,11 +1436,12 @@
             padding: 12px 14px;
             border: 1.5px solid var(--border);
             border-radius: 10px;
-            font-size: 0.95rem;
+            font-size: 16px; /* Crucial: 16px prevents mobile browser auto-zoom on focus! */
             outline: none;
             background: var(--bg);
             color: var(--text);
             transition: all var(--tr);
+            box-sizing: border-box;
         }
 
         .auth-fg input:focus {
@@ -1782,8 +1829,12 @@
                 font-size: 0.95rem;
             }
             .header-brand p {
-                font-size: 0.72rem;
-                display: block;
+                display: none;
+            }
+            .header-nav {
+                max-width: calc(100vw - 150px);
+                overflow-x: auto;
+                flex-shrink: 1;
             }
 
             .header-actions {
@@ -2962,10 +3013,10 @@
         }
     </style>
 </head>
-<body>
+<body class="auth-locked">
 
 <!-- Weekly Check-in & Device Lock Security Blocking Overlay -->
-<div class="auth-overlay" id="checkinBlockOverlay" style="display:none;z-index:99999;">
+<div class="auth-overlay" id="checkinBlockOverlay" style="display:none;z-index:999999;">
     <div class="auth-box" style="max-width:440px;text-align:center;">
         <div class="auth-icon" id="checkinIcon" style="background:rgba(239,68,68,0.1);color:var(--danger);margin:0 auto 16px;"><i class="fa-solid fa-wifi-slash"></i></div>
         <h2 id="checkinTitle" style="color:var(--danger);font-size:1.25rem;margin-bottom:8px;font-weight:900;">مطلوب فحص الاتصال بالإنترنت</h2>
@@ -4755,11 +4806,15 @@ function showCheckinBlockingOverlay(type, message) {
 
     if (subtitle) subtitle.textContent = message;
     overlay.style.display = 'flex';
+    document.body.classList.add('auth-locked');
 }
 
 function hideCheckinBlockingOverlay() {
     const overlay = $('checkinBlockOverlay');
     if (overlay) overlay.style.display = 'none';
+    if (currentUserSession && currentUserSession.key && !$('authOverlay')?.classList.contains('open')) {
+        document.body.classList.remove('auth-locked');
+    }
 }
 
 function handleManualCheckinRetry() {
@@ -5017,6 +5072,7 @@ authForm.addEventListener('submit', async e => {
             localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
             await migrateTenantData(cleanKey);
             authOverlay.classList.remove('open');
+            document.body.classList.remove('auth-locked');
             toast(`مرحباً بك يا ${currentUserSession.name} (وضع العمل دون اتصال)`, 'success');
             updateUserUI();
             btn.disabled = false;
@@ -5138,6 +5194,7 @@ authForm.addEventListener('submit', async e => {
 
                 await migrateTenantData(cleanKey);
                 authOverlay.classList.remove('open');
+                document.body.classList.remove('auth-locked');
                 toast(`مرحباً بك يا ${nameInput}، تم تفعيل وتأمين الحساب بنجاح`, 'success');
                 initUserProductsSync();
                 startLicenseWatcher(cleanKey);
@@ -5228,6 +5285,7 @@ authForm.addEventListener('submit', async e => {
 
                 await migrateTenantData(cleanKey);
                 authOverlay.classList.remove('open');
+                document.body.classList.remove('auth-locked');
                 toast(`مرحباً بك مجدداً يا ${userName}`, 'success');
                 initUserProductsSync();
                 startLicenseWatcher(cleanKey);
@@ -5252,6 +5310,7 @@ authForm.addEventListener('submit', async e => {
         localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
         await migrateTenantData(currentUserSession.key);
         authOverlay.classList.remove('open');
+        document.body.classList.remove('auth-locked');
         toast(`مرحباً (وضع التجربة)`, 'info');
         updateUserUI();
     }
@@ -5344,6 +5403,7 @@ function startLicenseWatcher(key) {
 
 async function checkAuthGuard() {
     if (!currentUserSession || !currentUserSession.key) {
+        document.body.classList.add('auth-locked');
         authOverlay.classList.add('open');
         return;
     }
@@ -5360,6 +5420,7 @@ async function checkAuthGuard() {
         }
         // مدى الحياة: تشغيل كامل دون أي اشتراط للاتصال بالإنترنت
         authOverlay.classList.remove('open');
+        document.body.classList.remove('auth-locked');
         await migrateTenantData(cleanKey);
         updateUserUI();
 
@@ -5381,6 +5442,7 @@ async function checkAuthGuard() {
     }
 
     authOverlay.classList.remove('open');
+    document.body.classList.remove('auth-locked');
     await migrateTenantData(cleanKey);
     updateUserUI();
 
@@ -5441,6 +5503,7 @@ function logout(confirmPrompt = true) {
         renderProducts();
         updateStats();
         updateCatTabs();
+        document.body.classList.add('auth-locked');
         authOverlay.classList.add('open');
     }
 }
