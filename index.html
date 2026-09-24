@@ -2195,33 +2195,60 @@
             scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
         }
 
+        /* When POS view is active: maximize horizontal space, eliminate wasted margins, fit 100% of viewport */
+        body[data-active-view="pos"] .app-body,
+        body:has(#view-pos.active) .app-body {
+            max-width: 100% !important;
+            padding: 8px 14px 6px !important;
+            height: calc(100vh - 62px) !important;
+            max-height: calc(100vh - 62px) !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        #view-pos.active {
+            height: 100% !important;
+            max-height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+        }
+
         /* ── Cashier POS Workspace Layout (Commercial Register Screen Fit) ── */
         .cashier-wrap {
             max-width: 100%;
             margin: 0;
-            padding: 10px 16px;
+            padding: 0;
             display: grid;
-            grid-template-columns: 1fr 500px;
+            grid-template-columns: 1fr 580px;
             gap: 14px;
             box-sizing: border-box;
             width: 100%;
             align-items: stretch;
-            height: calc(100vh - 66px);
+            height: 100%;
+            min-height: 0;
             overflow: hidden;
         }
-        @media (max-width: 1180px) {
+        @media (min-width: 1550px) {
             .cashier-wrap {
-                grid-template-columns: 1fr 450px;
+                grid-template-columns: 1fr 620px;
+                gap: 16px;
+            }
+        }
+        @media (max-width: 1200px) {
+            .cashier-wrap {
+                grid-template-columns: 1fr 500px;
                 gap: 10px;
-                padding: 8px 10px;
-                height: auto;
-                overflow: visible;
             }
         }
         @media (max-width: 880px) {
             .cashier-wrap {
                 grid-template-columns: 100%;
-                padding: 8px;
+                padding: 6px;
                 height: auto;
                 overflow: visible;
             }
@@ -2365,12 +2392,13 @@
 
         .pos-touch-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 8px;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
             flex: 1;
             min-height: 0;
             overflow-y: auto;
-            padding: 2px 4px 6px 4px;
+            padding: 2px 4px 10px 4px;
+            align-content: start;
         }
         .pos-touch-card {
             background: var(--card);
@@ -2399,7 +2427,7 @@
         }
         .pos-touch-thumb {
             width: 100%;
-            height: 74px;
+            height: 105px;
             position: relative;
             background: var(--bg);
             overflow: hidden;
@@ -2415,36 +2443,36 @@
         }
         .pos-touch-price {
             position: absolute;
-            bottom: 4px;
-            right: 4px;
+            bottom: 5px;
+            right: 5px;
             background: rgba(16, 185, 129, 0.95);
             color: #fff;
-            font-size: 0.72rem;
+            font-size: 0.78rem;
             font-weight: 900;
-            padding: 1px 6px;
-            border-radius: 5px;
+            padding: 2px 7px;
+            border-radius: 6px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(4px);
         }
         .pos-touch-badge {
             position: absolute;
-            top: 4px;
-            left: 4px;
+            top: 5px;
+            left: 5px;
             background: #ef4444;
             color: #fff;
-            font-size: 0.68rem;
+            font-size: 0.72rem;
             font-weight: 900;
-            min-width: 18px;
-            height: 18px;
-            padding: 0 4px;
-            border-radius: 9px;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 5px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4);
         }
         .pos-touch-info {
-            padding: 5px 6px;
+            padding: 6px 8px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -2452,17 +2480,17 @@
             background: var(--card);
         }
         .pos-touch-name {
-            font-size: 0.76rem;
+            font-size: 0.82rem;
             font-weight: 800;
             color: var(--text);
-            line-height: 1.25;
+            line-height: 1.3;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             margin-bottom: 2px;
         }
         .pos-touch-stock {
-            font-size: 0.67rem;
+            font-size: 0.7rem;
             font-weight: 700;
             color: var(--muted);
         }
@@ -2485,7 +2513,7 @@
             margin-bottom: 0;
         }
         .invoice-panel .c-card-body {
-            padding: 10px 12px;
+            padding: 10px 14px;
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -2498,20 +2526,23 @@
         .cart-list {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 6px;
             flex: 1;
             min-height: 60px;
-            max-height: 155px;
+            max-height: 170px;
             overflow-y: auto;
             margin-bottom: 8px;
             padding-right: 2px;
         }
         .cart-empty {
             text-align: center;
-            padding: 18px 10px;
+            padding: 14px 10px;
             color: var(--muted);
         }
-        .cart-empty i { font-size: 1.8rem; display: block; margin-bottom: 4px; color: var(--border); }
+        .cart-empty i { font-size: 1.6rem; display: block; margin-bottom: 4px; color: var(--border); }
+        .cart-empty p { margin: 2px 0; font-size: 0.85rem; font-weight: 700; color: var(--text); }
+        .cart-empty small { font-size: 0.74rem; color: var(--muted); }
+
         .cart-item {
             display: flex;
             align-items: center;
@@ -2527,8 +2558,8 @@
             background: var(--card);
         }
         .cart-item-img {
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             border-radius: 6px;
             object-fit: cover;
             background: var(--border);
@@ -2537,13 +2568,13 @@
         .cart-item-info { flex: 1; min-width: 0; }
         .cart-item-name {
             font-weight: 800;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             color: var(--text);
         }
-        .cart-item-meta { font-size: 0.7rem; color: var(--muted); margin-top: 1px; }
+        .cart-item-meta { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
         .cart-qty-controls {
             display: flex;
             align-items: center;
@@ -2596,8 +2627,8 @@
         /* ── Lateral 2-Column Bottom Register Layout ── */
         .pos-ticket-bottom {
             display: grid;
-            grid-template-columns: 1.15fr 1fr;
-            gap: 10px;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
             margin-bottom: 8px;
             align-items: start;
             flex-shrink: 0;
@@ -2616,7 +2647,7 @@
             gap: 4px;
         }
         .pos-sub-label {
-            font-size: 0.74rem;
+            font-size: 0.78rem;
             font-weight: 800;
             color: var(--muted);
             display: flex;
@@ -2629,12 +2660,12 @@
         .pay-methods { display: flex; gap: 6px; }
         .pay-method-btn {
             flex: 1;
-            padding: 6px 6px;
+            padding: 7px 10px;
             border: 1.5px solid var(--border);
             border-radius: 8px;
             cursor: pointer;
             text-align: center;
-            font-size: 0.8rem;
+            font-size: 0.84rem;
             font-weight: 800;
             color: var(--muted);
             background: var(--bg);
@@ -2642,7 +2673,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 6px;
         }
         .pay-method-btn.active {
             border-color: var(--primary);
@@ -2655,15 +2686,15 @@
         /* Enterprise Quick Cash Drawer Calculator */
         .qc-chips-row {
             display: grid;
-            grid-template-columns: 1.2fr repeat(3, 1fr);
-            gap: 4px;
+            grid-template-columns: 1.3fr repeat(3, 1fr);
+            gap: 5px;
         }
         .qc-chip {
             background: var(--bg);
             border: 1.5px solid var(--border);
-            border-radius: 6px;
-            padding: 5px 2px;
-            font-size: 0.74rem;
+            border-radius: 8px;
+            padding: 6px 4px;
+            font-size: 0.78rem;
             font-weight: 800;
             color: var(--text);
             cursor: pointer;
@@ -2695,8 +2726,8 @@
         }
         .pos-cash-cur {
             position: absolute;
-            right: 8px;
-            font-size: 0.72rem;
+            right: 10px;
+            font-size: 0.76rem;
             font-weight: 800;
             color: var(--muted);
             pointer-events: none;
@@ -2706,9 +2737,9 @@
             background: var(--bg);
             border: 1.5px solid var(--border);
             border-radius: 8px;
-            padding: 5px 34px 5px 26px;
+            padding: 6px 36px 6px 28px;
             font-family: inherit;
-            font-size: 0.84rem;
+            font-size: 0.88rem;
             font-weight: 800;
             color: var(--text);
             outline: none;
@@ -2722,9 +2753,9 @@
         }
         .qc-clear-btn {
             position: absolute;
-            left: 6px;
-            width: 18px;
-            height: 18px;
+            left: 7px;
+            width: 20px;
+            height: 20px;
             border: none;
             border-radius: 50%;
             background: var(--border);
@@ -2733,7 +2764,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.65rem;
+            font-size: 0.7rem;
             transition: all 0.15s;
         }
         .qc-clear-btn:hover {
@@ -2744,12 +2775,12 @@
         .change-due-box {
             background: rgba(16, 185, 129, 0.1);
             border: 1.5px solid rgba(16, 185, 129, 0.4);
-            border-radius: 7px;
-            padding: 5px 8px;
+            border-radius: 8px;
+            padding: 6px 10px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 0.78rem;
+            font-size: 0.82rem;
             font-weight: 800;
             animation: fadeIn 0.2s ease;
         }
@@ -2758,10 +2789,10 @@
             display: flex;
             align-items: center;
             gap: 4px;
-            font-size: 0.74rem;
+            font-size: 0.78rem;
         }
         .change-val {
-            font-size: 0.88rem;
+            font-size: 0.95rem;
             font-weight: 900;
         }
 
@@ -2776,17 +2807,17 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 4px 8px;
-            font-size: 0.76rem;
+            padding: 5px 10px;
+            font-size: 0.78rem;
             border-bottom: 1px solid var(--border);
         }
         .summary-row:last-child { border-bottom: none; }
         .summary-row.total {
-            font-size: 0.92rem;
+            font-size: 0.95rem;
             font-weight: 900;
             background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
             color: #ffffff !important;
-            padding: 6px 8px;
+            padding: 6px 10px;
         }
         .summary-row.total .summary-label,
         .summary-row.total .summary-val {
@@ -2800,13 +2831,13 @@
         /* The Hero Checkout CTA Button */
         .checkout-btn {
             width: 100%;
-            padding: 11px 16px;
+            padding: 12px 18px;
             background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
             color: #ffffff !important;
             border: none;
             border-radius: 10px;
             font-family: inherit;
-            font-size: 0.98rem;
+            font-size: 1rem;
             font-weight: 900;
             cursor: pointer;
             transition: all 0.18s ease;
@@ -2815,7 +2846,7 @@
             justify-content: center;
             gap: 8px;
             box-shadow: 0 3px 14px rgba(16, 185, 129, 0.35);
-            margin-top: 0;
+            margin-top: 4px;
             flex-shrink: 0;
         }
         .checkout-btn:hover {
@@ -2824,7 +2855,7 @@
             background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         }
         .checkout-btn:active { transform: translateY(0); }
-        .checkout-btn i { font-size: 1.1rem; }
+        .checkout-btn i { font-size: 1.15rem; }
 
         .ticket-head-actions {
             display: flex;
@@ -4070,6 +4101,50 @@
     </div>
 </div>
 
+<!-- Partial Refund / Item Return Modal -->
+<div class="overlay" id="partialRefundModal">
+    <div class="daily-report-box" style="max-width:620px;">
+        <div class="report-modal-header" style="background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;">
+            <h3><i class="fa-solid fa-rotate-left"></i> <span id="refundModalTitle">استرجاع أصناف من الفاتورة</span></h3>
+            <button type="button" class="sidebar-close-btn" onclick="closeRefundModal()" style="color:#fff;">&times;</button>
+        </div>
+        <div class="report-modal-body" id="refundModalBody" style="padding:16px;">
+            <!-- Invoice Info -->
+            <div id="refundInvoiceMeta" style="background:var(--bg);padding:10px 14px;border-radius:10px;border:1px solid var(--border);margin-bottom:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:0.84rem;">
+            </div>
+
+            <!-- Notice & Quick Action -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+                <span style="font-weight:800;font-size:0.85rem;color:var(--text);">حدد الأصناف والكميات المراد استرجاعها:</span>
+                <button type="button" class="tbl-act-btn" onclick="selectAllForRefund()" style="font-size:0.76rem;color:var(--danger);border-color:var(--danger);">
+                    <i class="fa-solid fa-list-check"></i> استرجاع الفاتورة بالكامل
+                </button>
+            </div>
+
+            <!-- Items List with Return Quantity Steppers -->
+            <div id="refundItemsList" style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;padding-right:2px;margin-bottom:14px;">
+            </div>
+
+            <!-- Refund Summary Badge -->
+            <div style="background:var(--danger-bg);border:1.5px solid var(--danger);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div>
+                    <div style="font-size:0.78rem;color:var(--muted);font-weight:700;">إجمالي المبلغ المسترد للعميل:</div>
+                    <strong id="refundTotalAmountText" style="font-size:1.25rem;color:var(--danger);font-weight:900;">0.00 ج.م</strong>
+                </div>
+                <div style="font-size:0.84rem;font-weight:800;color:var(--text);">
+                    الأصناف المحددة: <span id="refundSelectedCount" style="color:var(--danger);font-weight:900;">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="report-modal-footer" style="display:flex;justify-content:space-between;gap:10px;">
+            <button type="button" class="cbtn-cancel" onclick="closeRefundModal()">إلغاء</button>
+            <button type="button" id="confirmRefundBtn" class="hbtn" style="background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:none;padding:10px 20px;font-weight:900;border-radius:10px;cursor:pointer;" onclick="executePartialRefund()">
+                <i class="fa-solid fa-rotate-left"></i> تأكيد الاسترجاع وإعادة للمخزون
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Details Modal -->
 <div class="overlay" id="detailsModal" onclick="closeDetailsModal()">
     <div class="details-box" onclick="event.stopPropagation()">
@@ -4886,6 +4961,46 @@ async function processOfflineSyncQueue(cleanKey) {
                             localStorage.setItem(storageKey, JSON.stringify(queue));
                         } else {
                             throw new Error(`Restoration transaction aborted for product ${p.productId}`);
+                        }
+                    }
+                }
+
+                queue.splice(i, 1);
+                i--;
+                localStorage.setItem(storageKey, JSON.stringify(queue));
+
+            } else if (item.type === 'refund_invoice_items') {
+                const invId = item.data.invoiceId;
+                const itemsToRestore = item.data.items || [];
+                const status = item.data.status || 'partially_refunded';
+                const refundedAmount = item.data.refundedAmount;
+                const refundHistory = item.data.refundHistory;
+
+                if (!item.statusSynced) {
+                    await db.ref(`sales/${tenant}/invoices/${invId}`).update({
+                        status: status,
+                        refundedAmount: refundedAmount,
+                        refundHistory: refundHistory
+                    });
+                    item.statusSynced = true;
+                    localStorage.setItem(storageKey, JSON.stringify(queue));
+                }
+
+                if (!item.restoredProductIds) item.restoredProductIds = [];
+                for (const p of itemsToRestore) {
+                    const pId = p.productId || p.id;
+                    if (!pId) continue;
+                    if (!item.restoredProductIds.includes(pId)) {
+                        const qtyRef = db.ref(`users_data/${tenant}/products/${pId}/qty`);
+                        const tx = await qtyRef.transaction(curQ => {
+                            const cur = (curQ !== null && curQ !== undefined && !isNaN(curQ)) ? parseInt(curQ, 10) : 0;
+                            return cur + (p.qty || p.returnQty || 0);
+                        });
+                        if (tx && tx.committed) {
+                            item.restoredProductIds.push(pId);
+                            localStorage.setItem(storageKey, JSON.stringify(queue));
+                        } else {
+                            throw new Error(`Restoration transaction aborted for product ${pId}`);
                         }
                     }
                 }
@@ -8759,22 +8874,32 @@ async function loadInvoicesView() {
 
 function updateInvoicesKPIs(invoices) {
     const totalCount = invoices.length;
-    const completed = invoices.filter(i => i.status !== 'refunded');
-    const refunded = invoices.filter(i => i.status === 'refunded');
+    const activeInvoices = invoices.filter(i => i.status !== 'refunded');
+    const fullyRefunded = invoices.filter(i => i.status === 'refunded');
+    const partiallyRefunded = invoices.filter(i => i.status === 'partially_refunded');
 
-    const totalSales = completed.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
-    const avgTicket = completed.length ? (totalSales / completed.length) : 0;
-    const totalProfit = completed.reduce((s, i) => s + (parseFloat(i.totalProfit) || 0), 0);
+    const totalSales = activeInvoices.reduce((s, i) => s + Math.max(0, (parseFloat(i.total) || 0) - (parseFloat(i.refundedAmount) || 0)), 0);
+    const avgTicket = activeInvoices.length ? (totalSales / activeInvoices.length) : 0;
+    const totalProfit = activeInvoices.reduce((s, i) => {
+        const origTotal = parseFloat(i.total) || 1;
+        const refAmt = parseFloat(i.refundedAmount) || 0;
+        const ratio = Math.max(0, (origTotal - refAmt) / origTotal);
+        return s + ((parseFloat(i.totalProfit) || 0) * ratio);
+    }, 0);
     const profitMargin = totalSales > 0 ? ((totalProfit / totalSales) * 100) : 0;
-    const refundTotal = refunded.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
+    
+    const fullRefundTotal = fullyRefunded.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
+    const partialRefundTotal = activeInvoices.reduce((s, i) => s + (parseFloat(i.refundedAmount) || 0), 0);
+    const refundTotal = fullRefundTotal + partialRefundTotal;
+    const refundCount = fullyRefunded.length + partiallyRefunded.length;
 
     if ($('invKpiTotalCount')) $('invKpiTotalCount').textContent = totalCount;
-    if ($('invKpiCompletedCount')) $('invKpiCompletedCount').textContent = `${completed.length} مكتملة`;
+    if ($('invKpiCompletedCount')) $('invKpiCompletedCount').textContent = `${activeInvoices.length} نشطة/مكتملة`;
     if ($('invKpiTotalSales')) $('invKpiTotalSales').textContent = `${fmt(totalSales)} ج.م`;
     if ($('invKpiAvgTicket')) $('invKpiAvgTicket').textContent = `متوسط الفاتورة: ${fmt(avgTicket)} ج.م`;
     if ($('invKpiTotalProfit')) $('invKpiTotalProfit').textContent = `+${fmt(totalProfit)} ج.م`;
     if ($('invKpiProfitMargin')) $('invKpiProfitMargin').textContent = `هامش الربح: ${profitMargin.toFixed(1)}%`;
-    if ($('invKpiRefundCount')) $('invKpiRefundCount').textContent = `${refunded.length} فاتورة`;
+    if ($('invKpiRefundCount')) $('invKpiRefundCount').textContent = `${refundCount} مسترجع/جزئي`;
     if ($('invKpiRefundTotal')) $('invKpiRefundTotal').textContent = `المسترد: ${fmt(refundTotal)} ج.م`;
 }
 
@@ -8826,7 +8951,7 @@ function filterInvoicesTable() {
         if (invSelectedStatus === 'completed') {
             matchStatus = inv.status !== 'refunded';
         } else if (invSelectedStatus === 'refunded') {
-            matchStatus = inv.status === 'refunded';
+            matchStatus = inv.status === 'refunded' || inv.status === 'partially_refunded';
         }
 
         // 3. فلتر التاريخ
@@ -8855,6 +8980,12 @@ function clearInvoiceFilter() {
     setInvoiceStatusFilter('all');
 }
 
+function showInvoiceModalById(invId) {
+    if (!invId) return;
+    const inv = allInvoicesCache.find(i => i.invoiceId === invId);
+    if (inv) showInvoiceModal(inv);
+}
+
 function renderInvoicesTable(invoices) {
     const tbody = $('invoicesViewTbody');
     if (!tbody) return;
@@ -8875,7 +9006,8 @@ function renderInvoicesTable(invoices) {
     }
 
     tbody.innerHTML = invoices.map(inv => {
-        const isRefunded = inv.status === 'refunded';
+        const isFullyRefunded = inv.status === 'refunded';
+        const isPartialRefunded = inv.status === 'partially_refunded';
         const d = new Date(inv.date);
         const dateStr = d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
         const timeStr = d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
@@ -8884,28 +9016,55 @@ function renderInvoicesTable(invoices) {
             ? '<span class="badge badge-cash"><i class="fa-solid fa-money-bills"></i> كاش</span>'
             : '<span class="badge badge-visa"><i class="fa-solid fa-credit-card"></i> فيزا</span>';
         
-        const statusBadge = isRefunded 
-            ? '<span class="badge-status refunded"><i class="fa-solid fa-rotate-left"></i> مسترجعة</span>'
-            : '<span class="badge-status completed"><i class="fa-solid fa-circle-check"></i> مكتملة</span>';
+        let statusBadge = '';
+        if (isFullyRefunded) {
+            statusBadge = '<span class="badge-status refunded"><i class="fa-solid fa-rotate-left"></i> مسترجعة بالكامل</span>';
+        } else if (isPartialRefunded) {
+            statusBadge = '<span class="badge-status" style="background:rgba(245,158,11,0.15);color:#d97706;border:1.5px solid rgba(245,158,11,0.35);"><i class="fa-solid fa-rotate-left"></i> مرتجع جزئي</span>';
+        } else {
+            statusBadge = '<span class="badge-status completed"><i class="fa-solid fa-circle-check"></i> مكتملة</span>';
+        }
         
         const itemsList = inv.items || [];
-        const itemsSummary = itemsList.slice(0, 2).map(i => `${i.name} ×${i.qty}`).join('، ') + (itemsList.length > 2 ? ` <span style="color:var(--primary);font-weight:800;">+${itemsList.length - 2} أصناف</span>` : '');
+        const itemsSummary = itemsList.slice(0, 2).map(i => {
+            const refTag = (i.refundedQty && i.refundedQty > 0) ? `<small style="color:var(--danger);font-weight:800;">(رد ${i.refundedQty})</small>` : '';
+            return `${i.name} ×${i.qty} ${refTag}`;
+        }).join('، ') + (itemsList.length > 2 ? ` <span style="color:var(--primary);font-weight:800;">+${itemsList.length - 2} أصناف</span>` : '');
         
-        const totalDisplay = isRefunded
-            ? `<del style="color:var(--muted);font-weight:700;">${fmt(inv.total)} ج.م</del>`
-            : `<strong style="color:var(--green);font-size:0.95rem;font-weight:900;">${fmt(inv.total)} ج.م</strong>`;
+        let totalDisplay = '';
+        if (isFullyRefunded) {
+            totalDisplay = `<del style="color:var(--muted);font-weight:700;">${fmt(inv.total)} ج.م</del>`;
+        } else if (isPartialRefunded) {
+            const netTotal = Math.max(0, (inv.total || 0) - (inv.refundedAmount || 0));
+            totalDisplay = `
+                <strong style="color:var(--green);font-size:0.95rem;font-weight:900;">${fmt(netTotal)} ج.م</strong>
+                <div style="color:var(--danger);font-size:0.72rem;font-weight:800;margin-top:2px;">
+                    <i class="fa-solid fa-rotate-left" style="font-size:0.68rem;"></i> رد ${fmt(inv.refundedAmount || 0)} ج.م
+                </div>`;
+        } else {
+            totalDisplay = `<strong style="color:var(--green);font-size:0.95rem;font-weight:900;">${fmt(inv.total)} ج.م</strong>`;
+        }
         
-        const profitDisplay = isRefunded
-            ? `<span style="color:var(--muted);text-decoration:line-through;">0.00 ج.م</span>`
-            : `<span style="color:var(--success);font-weight:800;background:var(--success-bg);padding:2px 8px;border-radius:6px;">+${fmt(inv.totalProfit)} ج.م</span>`;
+        let profitDisplay = '';
+        if (isFullyRefunded) {
+            profitDisplay = `<span style="color:var(--muted);text-decoration:line-through;">0.00 ج.م</span>`;
+        } else if (isPartialRefunded) {
+            const origTotal = parseFloat(inv.total) || 1;
+            const refAmt = parseFloat(inv.refundedAmount) || 0;
+            const remainingRatio = Math.max(0, (origTotal - refAmt) / origTotal);
+            const netProfit = Math.max(0, (parseFloat(inv.totalProfit) || 0) * remainingRatio);
+            profitDisplay = `<span style="color:var(--success);font-weight:800;background:var(--success-bg);padding:2px 8px;border-radius:6px;">+${fmt(netProfit)} ج.م</span>`;
+        } else {
+            profitDisplay = `<span style="color:var(--success);font-weight:800;background:var(--success-bg);padding:2px 8px;border-radius:6px;">+${fmt(inv.totalProfit)} ج.م</span>`;
+        }
 
-        const refundBtn = isRefunded ? '' : `
-            <button type="button" class="inv-act-btn refund" onclick='refundInvoice("${inv.invoiceId}")' title="إرجاع الفاتورة ورد الأصناف للمخزون">
-                <i class="fa-solid fa-rotate-left"></i> إرجاع
+        const refundBtn = isFullyRefunded ? '' : `
+            <button type="button" class="inv-act-btn refund" onclick='openRefundModal("${inv.invoiceId}")' title="${isPartialRefunded ? 'إرجاع أصناف إضافية من الفاتورة' : 'إرجاع أصناف من الفاتورة وردها للمخزون'}">
+                <i class="fa-solid fa-rotate-left"></i> ${isPartialRefunded ? 'استرجاع متبقي' : 'إرجاع'}
             </button>`;
 
         return `
-            <tr style="${isRefunded ? 'opacity:0.75;background:rgba(239,68,68,0.02);' : ''}">
+            <tr style="${isFullyRefunded ? 'opacity:0.75;background:rgba(239,68,68,0.02);' : ''}">
                 <td>
                     <div style="font-weight:900;color:var(--primary);font-size:0.84rem;margin-bottom:3px;">${inv.invoiceId}</div>
                     ${statusBadge}
@@ -8928,7 +9087,7 @@ function renderInvoicesTable(invoices) {
                 <td>${pay}</td>
                 <td class="profit-sensitive" style="white-space:nowrap;">${profitDisplay}</td>
                 <td style="white-space:nowrap;text-align:center;">
-                    <button type="button" class="inv-act-btn view" onclick='showInvoiceModal(${JSON.stringify(inv)})' title="عرض وطباعة الفاتورة">
+                    <button type="button" class="inv-act-btn view" onclick='showInvoiceModalById("${inv.invoiceId}")' title="عرض وطباعة الفاتورة">
                         <i class="fa-solid fa-eye"></i> عرض
                     </button>
                     ${refundBtn}
@@ -8937,102 +9096,351 @@ function renderInvoicesTable(invoices) {
     }).join('');
 }
 
-async function refundInvoice(invId) {
-    if (!invId) return;
+let currentRefundingInvoice = null;
+let refundItemsState = [];
 
-    if (!confirm(`هل أنت متأكد من استرجاع الفاتورة رقم ${invId}؟\nسيتم إعادة كميات الأصناف المباعة إلى المخزون تلقائياً.`)) return;
+function openRefundModal(invId) {
+    if (!invId) return;
+    const inv = allInvoicesCache.find(i => i.invoiceId === invId);
+    if (!inv) {
+        toast('لم يتم العثور على بيانات الفاتورة', 'error');
+        return;
+    }
+    if (inv.status === 'refunded') {
+        toast('تم استرجاع هذه الفاتورة بالكامل مسبقاً', 'warning');
+        return;
+    }
+
+    currentRefundingInvoice = inv;
+    const subtotal = parseFloat(inv.subtotal) || parseFloat(inv.total) || 1;
+    const discountAmt = parseFloat(inv.discountAmount) || 0;
+    const discountFactor = subtotal > 0 ? Math.max(0, 1 - (discountAmt / subtotal)) : 1;
+
+    // تجهيز قائمة الأصناف وكمياتها القابلة للاسترجاع
+    const items = Array.isArray(inv.items) ? inv.items : [];
+    refundItemsState = items.map((it, idx) => {
+        const soldQty = parseInt(it.qty, 10) || 0;
+        const alreadyRefunded = parseInt(it.refundedQty, 10) || 0;
+        const maxRefundable = Math.max(0, soldQty - alreadyRefunded);
+        const unitPrice = parseFloat(it.unitPrice) || 0;
+        const effectivePrice = Math.round(unitPrice * discountFactor * 100) / 100;
+        return {
+            index: idx,
+            item: it,
+            soldQty: soldQty,
+            alreadyRefunded: alreadyRefunded,
+            maxRefundable: maxRefundable,
+            returnQty: 0,
+            unitPrice: unitPrice,
+            effectivePrice: effectivePrice
+        };
+    });
+
+    // تعبئة معلومات الفاتورة في رأس المودال
+    const metaEl = $('refundInvoiceMeta');
+    if (metaEl) {
+        const d = new Date(inv.date);
+        const dateStr = d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        const pay = inv.paymentMethod === 'cash' ? 'كاش' : 'فيزا';
+        metaEl.innerHTML = `
+            <div><strong>رقم الفاتورة:</strong> <span style="color:var(--primary);font-weight:900;">${inv.invoiceId}</span></div>
+            <div><strong>العميل:</strong> <span>${esc(inv.customerName || 'عميل نقدي')}</span></div>
+            <div><strong>التاريخ:</strong> <span>${dateStr}</span></div>
+            <div><strong>طريقة الدفع:</strong> <span>${pay}</span></div>
+            <div><strong>إجمالي الفاتورة:</strong> <span style="font-weight:900;color:var(--green);">${fmt(inv.total)} ج.م</span></div>
+            ${inv.discountAmount > 0 ? `<div><strong>الخصم:</strong> <span style="color:var(--danger);font-weight:800;">${fmt(inv.discountAmount)} ج.م</span></div>` : ''}
+            ${(inv.refundedAmount || 0) > 0 ? `<div><strong>مسترجع سابقاً:</strong> <span style="color:var(--danger);font-weight:800;">${fmt(inv.refundedAmount)} ج.م</span></div>` : ''}
+        `;
+    }
+
+    renderRefundModalItems();
+    updateRefundModalCalculation();
+
+    const modal = $('partialRefundModal');
+    if (modal) modal.classList.add('open');
+}
+
+function renderRefundModalItems() {
+    const listEl = $('refundItemsList');
+    if (!listEl) return;
+
+    if (!refundItemsState.length) {
+        listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">لا توجد أصناف في هذه الفاتورة</div>';
+        return;
+    }
+
+    listEl.innerHTML = refundItemsState.map((st, idx) => {
+        const isExhausted = st.maxRefundable <= 0;
+        return `
+            <div style="background:var(--card-bg);border:1.5px solid ${isExhausted ? 'var(--border)' : 'rgba(239,68,68,0.25)'};border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;opacity:${isExhausted ? '0.6' : '1'};">
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:800;font-size:0.86rem;color:var(--text);word-break:break-word;">
+                        ${esc(st.item.name)}
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin-top:2px;">
+                        <span>السعر: <strong>${fmt(st.unitPrice)} ج.م</strong></span>
+                        <span>تم بيع: <strong>${st.soldQty}</strong></span>
+                        ${st.alreadyRefunded > 0 ? `<span style="color:var(--danger);font-weight:700;">مسترجع سابقاً: ${st.alreadyRefunded}</span>` : ''}
+                        <span style="color:var(--primary);font-weight:700;">المتبقي للاسترجاع: ${st.maxRefundable}</span>
+                    </div>
+                </div>
+
+                ${isExhausted ? `
+                    <div style="font-size:0.78rem;font-weight:800;color:var(--muted);background:var(--bg);padding:4px 8px;border-radius:6px;white-space:nowrap;">
+                        <i class="fa-solid fa-check-double"></i> مسترجع بالكامل
+                    </div>
+                ` : `
+                    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                        <button type="button" class="tbl-act-btn" onclick="stepRefundQty(${idx}, -1)" style="width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;font-weight:900;border-radius:6px;">-</button>
+                        <input type="number" id="refundQtyInput_${idx}" min="0" max="${st.maxRefundable}" value="${st.returnQty}" 
+                            oninput="onRefundQtyInput(${idx})" 
+                            style="width:52px;text-align:center;padding:4px 2px;font-weight:900;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:0.88rem;" />
+                        <button type="button" class="tbl-act-btn" onclick="stepRefundQty(${idx}, 1)" style="width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;font-weight:900;border-radius:6px;">+</button>
+                        <div style="min-width:68px;text-align:left;font-weight:900;color:var(--danger);font-size:0.85rem;" id="refundRowAmount_${idx}">
+                            ${fmt(st.returnQty * st.effectivePrice)} ج.م
+                        </div>
+                    </div>
+                `}
+            </div>
+        `;
+    }).join('');
+}
+
+function stepRefundQty(idx, delta) {
+    const st = refundItemsState[idx];
+    if (!st || st.maxRefundable <= 0) return;
+    const newQty = Math.max(0, Math.min(st.maxRefundable, st.returnQty + delta));
+    st.returnQty = newQty;
+    const input = $(`refundQtyInput_${idx}`);
+    if (input) input.value = newQty;
+    const rowAmt = $(`refundRowAmount_${idx}`);
+    if (rowAmt) rowAmt.textContent = `${fmt(newQty * st.effectivePrice)} ج.م`;
+    updateRefundModalCalculation();
+}
+
+function onRefundQtyInput(idx) {
+    const st = refundItemsState[idx];
+    if (!st || st.maxRefundable <= 0) return;
+    const input = $(`refundQtyInput_${idx}`);
+    if (!input) return;
+    let val = parseInt(input.value, 10);
+    if (isNaN(val) || val < 0) val = 0;
+    if (val > st.maxRefundable) val = st.maxRefundable;
+    st.returnQty = val;
+    input.value = val;
+    const rowAmt = $(`refundRowAmount_${idx}`);
+    if (rowAmt) rowAmt.textContent = `${fmt(val * st.effectivePrice)} ج.م`;
+    updateRefundModalCalculation();
+}
+
+function selectAllForRefund() {
+    refundItemsState.forEach((st, idx) => {
+        if (st.maxRefundable > 0) {
+            st.returnQty = st.maxRefundable;
+            const input = $(`refundQtyInput_${idx}`);
+            if (input) input.value = st.maxRefundable;
+            const rowAmt = $(`refundRowAmount_${idx}`);
+            if (rowAmt) rowAmt.textContent = `${fmt(st.maxRefundable * st.effectivePrice)} ج.م`;
+        }
+    });
+    updateRefundModalCalculation();
+}
+
+function updateRefundModalCalculation() {
+    let totalRefund = 0;
+    let totalSelectedItems = 0;
+
+    refundItemsState.forEach(st => {
+        if (st.returnQty > 0) {
+            totalRefund += (st.returnQty * st.effectivePrice);
+            totalSelectedItems += st.returnQty;
+        }
+    });
+
+    totalRefund = Math.round(totalRefund * 100) / 100;
+
+    const totalEl = $('refundTotalAmountText');
+    if (totalEl) totalEl.textContent = `${fmt(totalRefund)} ج.م`;
+
+    const countEl = $('refundSelectedCount');
+    if (countEl) countEl.textContent = `${totalSelectedItems} قطعة`;
+
+    const confirmBtn = $('confirmRefundBtn');
+    if (confirmBtn) {
+        confirmBtn.disabled = totalSelectedItems <= 0;
+        confirmBtn.style.opacity = totalSelectedItems <= 0 ? '0.5' : '1';
+        confirmBtn.style.pointerEvents = totalSelectedItems <= 0 ? 'none' : 'auto';
+    }
+}
+
+function closeRefundModal() {
+    const modal = $('partialRefundModal');
+    if (modal) modal.classList.remove('open');
+    currentRefundingInvoice = null;
+    refundItemsState = [];
+}
+
+async function executePartialRefund() {
+    if (!currentRefundingInvoice) return;
+    const inv = currentRefundingInvoice;
+    const invId = inv.invoiceId;
+
+    const itemsToReturn = refundItemsState.filter(st => st.returnQty > 0);
+    if (!itemsToReturn.length) {
+        toast('يرجى تحديد كمية صنف واحد على الأقل للاسترجاع', 'warning');
+        return;
+    }
+
+    const totalRefundAmount = Math.round(itemsToReturn.reduce((sum, st) => sum + (st.returnQty * st.effectivePrice), 0) * 100) / 100;
+    const totalItemsCount = itemsToReturn.reduce((sum, st) => sum + st.returnQty, 0);
+
+    if (!confirm(`هل أنت متأكد من استرجاع ${totalItemsCount} قطعة بقيمة ${fmt(totalRefundAmount)} ج.م؟\nسيتم رد الأصناف إلى المخزون وتعديل حسابات الفاتورة فوراً.`)) {
+        return;
+    }
+
+    const confirmBtn = $('confirmRefundBtn');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الاسترجاع...';
+    }
 
     const tenant = getTenantKey();
     const isPermanent = currentUserSession?.offlineMode === 'permanent';
 
     try {
-        let itemsToRestore = [];
-        const cachedTarget = allInvoicesCache.find(i => i.invoiceId === invId);
-        if (cachedTarget && Array.isArray(cachedTarget.items)) {
-            itemsToRestore = cachedTarget.items;
+        // 1. تحديث كميات الاسترجاع للأصناف في كائن الفاتورة
+        itemsToReturn.forEach(st => {
+            const originalItem = inv.items[st.index];
+            if (originalItem) {
+                originalItem.refundedQty = (originalItem.refundedQty || 0) + st.returnQty;
+            }
+        });
+
+        const newRefundedAmount = Math.round(((inv.refundedAmount || 0) + totalRefundAmount) * 100) / 100;
+        inv.refundedAmount = newRefundedAmount;
+
+        // التحقق هل تم استرجاع كامل عناصر الفاتورة
+        const allItemsRefunded = inv.items.every(it => (it.refundedQty || 0) >= it.qty);
+        const newStatus = allItemsRefunded ? 'refunded' : 'partially_refunded';
+        inv.status = newStatus;
+        inv.lastRefundAt = new Date().toISOString();
+        if (allItemsRefunded) {
+            inv.refundedAt = inv.lastRefundAt;
         }
 
+        const refundLog = {
+            refundId: 'ref_' + Date.now(),
+            date: inv.lastRefundAt,
+            amount: totalRefundAmount,
+            items: itemsToReturn.map(st => ({
+                productId: st.item.productId || st.item.id,
+                name: st.item.name,
+                qty: st.returnQty,
+                unitPrice: st.unitPrice,
+                refundAmount: Math.round(st.returnQty * st.effectivePrice * 100) / 100
+            }))
+        };
+        inv.refundHistory = inv.refundHistory || [];
+        inv.refundHistory.push(refundLog);
+
+        // 2. المزامنة السحابية عبر Firebase
         if (!isPermanent && navigator.onLine && db && tenant !== 'global' && tenant !== 'DEMO-USER') {
-            const statusRef = db.ref(`sales/${tenant}/invoices/${invId}/status`);
-            const statusTx = await statusRef.transaction(currentStatus => {
-                if (currentStatus === 'refunded') {
-                    return;
-                }
-                return 'refunded';
+            await db.ref(`sales/${tenant}/invoices/${invId}`).update({
+                items: inv.items,
+                status: inv.status,
+                refundedAmount: inv.refundedAmount,
+                lastRefundAt: inv.lastRefundAt,
+                refundedAt: inv.refundedAt || null,
+                refundHistory: inv.refundHistory
             });
 
-            if (!statusTx || !statusTx.committed) {
-                toast('هذه الفاتورة تم استرجاعها بالفعل مسبقاً!', 'warning');
-                return;
-            }
-
-            await db.ref(`sales/${tenant}/invoices/${invId}/refundedAt`).set(new Date().toISOString());
-
-            const invSnap = await db.ref(`sales/${tenant}/invoices/${invId}`).once('value');
-            const inv = invSnap.val();
-            const invItems = (inv && Array.isArray(inv.items)) ? inv.items : itemsToRestore;
-            if (Array.isArray(invItems)) {
-                for (const item of invItems) {
-                    const pId = item.productId || item.id;
-                    if (!pId) continue;
-                    const qtyRef = db.ref(`users_data/${tenant}/products/${pId}/qty`);
-                    await qtyRef.transaction(curQ => {
-                        const current = (curQ !== null && curQ !== undefined && !isNaN(curQ)) ? parseInt(curQ, 10) : 0;
-                        return current + item.qty;
-                    });
-                }
+            // إعادة الكميات للمخزون سحابياً
+            for (const st of itemsToReturn) {
+                const pId = st.item.productId || st.item.id;
+                if (!pId) continue;
+                const qtyRef = db.ref(`users_data/${tenant}/products/${pId}/qty`);
+                await qtyRef.transaction(curQ => {
+                    const current = (curQ !== null && curQ !== undefined && !isNaN(curQ)) ? parseInt(curQ, 10) : 0;
+                    return current + st.returnQty;
+                });
             }
         } else {
-            // استرجاع محلي + إدراج في طابور الأوفلاين
+            // تحديث التخزين المحلي وطابور المزامنة عند عدم توفر اتصال
             const localInvsKey = `harpy_invoices_${tenant}`;
             let localInvs = JSON.parse(localStorage.getItem(localInvsKey)) || [];
-            const target = localInvs.find(i => i.invoiceId === invId);
-            if (target) {
-                if (target.status === 'refunded') {
-                    toast('تم استرجاع هذه الفاتورة مسبقاً', 'warning');
-                    return;
-                }
-                target.status = 'refunded';
-                target.refundedAt = new Date().toISOString();
+            const localTarget = localInvs.find(i => i.invoiceId === invId);
+            if (localTarget) {
+                localTarget.items = inv.items;
+                localTarget.status = inv.status;
+                localTarget.refundedAmount = inv.refundedAmount;
+                localTarget.lastRefundAt = inv.lastRefundAt;
+                localTarget.refundedAt = inv.refundedAt || null;
+                localTarget.refundHistory = inv.refundHistory;
                 localStorage.setItem(localInvsKey, JSON.stringify(localInvs));
-                if (Array.isArray(target.items)) itemsToRestore = target.items;
             }
 
             if (tenant !== 'global' && tenant !== 'DEMO-USER') {
-                enqueueOfflineAction(tenant, 'refund_invoice', { invoiceId: invId, items: itemsToRestore });
+                enqueueOfflineAction(tenant, 'refund_invoice_items', {
+                    invoiceId: invId,
+                    items: refundLog.items,
+                    status: inv.status,
+                    refundedAmount: inv.refundedAmount,
+                    refundHistory: inv.refundHistory
+                });
                 if (navigator.onLine && db) {
                     processOfflineSyncQueue(tenant);
                 }
             }
         }
 
-        if (cachedTarget) {
-            cachedTarget.status = 'refunded';
-            cachedTarget.refundedAt = new Date().toISOString();
-        }
-
-        // استعادة الكميات محلياً
-        for (const item of itemsToRestore) {
-            const pId = item.productId || item.id;
+        // 3. إعادة الكميات للمخزون محلياً وتحديث المتغيرات
+        for (const st of itemsToReturn) {
+            const pId = st.item.productId || st.item.id;
             const p = products.find(x => x.id === pId);
             if (p) {
                 const curQ = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 0;
-                p.qty = curQ + item.qty;
+                p.qty = curQ + st.returnQty;
             }
         }
         localStorage.setItem(getProdsStorageKey(), JSON.stringify(products));
 
+        // 4. تحديث الكاش المحلي للفاتورة
+        const cached = allInvoicesCache.find(i => i.invoiceId === invId);
+        if (cached) {
+            cached.items = inv.items;
+            cached.status = inv.status;
+            cached.refundedAmount = inv.refundedAmount;
+            cached.lastRefundAt = inv.lastRefundAt;
+            cached.refundedAt = inv.refundedAt || null;
+            cached.refundHistory = inv.refundHistory;
+        }
+
+        closeRefundModal();
         renderProducts();
         updateCatTabs();
         updateStats();
         renderPosQuickProducts();
-        loadInvoicesView();
-        toast(`تم استرجاع الفاتورة ${invId} وإعادة الأصناف للمخزون بنجاح`, 'success');
+        updateInvoicesKPIs(allInvoicesCache);
+        filterInvoicesTable();
+
+        const successMsg = allItemsRefunded 
+            ? `تم استرجاع الفاتورة ${invId} بالكامل وإعادة الأصناف للمخزون بنجاح`
+            : `تم استرجاع ${totalItemsCount} صنف بقيمة ${fmt(totalRefundAmount)} ج.م وتحديث المخزون بنجاح`;
+        toast(successMsg, 'success');
 
     } catch (err) {
         console.error(err);
-        toast('حدث خطأ أثناء استرجاع الفاتورة، تحقق من الاتصال', 'error');
+        toast('حدث خطأ أثناء تنفيذ عملية الاسترجاع، تحقق من الاتصال', 'error');
+    } finally {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> تأكيد الاسترجاع وإعادة للمخزون';
+        }
     }
+}
+
+async function refundInvoice(invId) {
+    openRefundModal(invId);
 }
 
 function exportSalesToExcel() {
@@ -9536,16 +9944,21 @@ function showInvoiceModal(inv) {
     const subTitleEl = $('invModalSubtitle');
     if (subTitleEl) subTitleEl.textContent = storeName;
 
-    const itemsRows = (inv.items || []).map(i => `
+    const itemsRows = (inv.items || []).map(i => {
+        const refundedBadge = (i.refundedQty && i.refundedQty > 0)
+            ? `<span style="display:inline-block;padding:1px 6px;border-radius:4px;background:rgba(239,68,68,0.12);color:var(--danger);font-size:0.7rem;font-weight:800;margin-right:4px;"><i class="fa-solid fa-rotate-left"></i> مسترجع ${i.refundedQty}</span>`
+            : '';
+        return `
         <tr>
             <td>
-                <div style="font-weight:700;line-height:1.25;word-break:break-word;overflow-wrap:anywhere;">${esc(i.name)}</div>
+                <div style="font-weight:700;line-height:1.25;word-break:break-word;overflow-wrap:anywhere;">${esc(i.name)} ${refundedBadge}</div>
                 <small style="color:#94a3b8;font-size:0.68rem;word-break:break-all;"># ${esc(i.serial)}</small>
             </td>
             <td style="text-align:center;font-weight:800;">${i.qty}</td>
             <td style="text-align:center;white-space:nowrap;">${fmt(i.unitPrice)}</td>
             <td style="text-align:left;white-space:nowrap;"><strong>${fmt(i.unitPrice * i.qty)}</strong></td>
-        </tr>`).join('');
+        </tr>`;
+    }).join('');
 
     const bodyEl = $('invModalBody');
     if (bodyEl) {
@@ -9571,6 +9984,10 @@ function showInvoiceModal(inv) {
                 <div class="inv-totals-row"><span>المجموع الفرعي</span><span>${fmt(inv.subtotal)} ج.م</span></div>
                 <div class="inv-totals-row" style="color:var(--danger)"><span>الخصم</span><span>${discLabel}</span></div>
                 <div class="inv-totals-row grand"><span>الإجمالي المستحق</span><span>${fmt(inv.total)} ج.م</span></div>
+                ${(inv.refundedAmount || 0) > 0 ? `
+                    <div class="inv-totals-row" style="color:var(--danger);font-weight:800;"><span>المبلغ المسترد (مرتجع)</span><span>- ${fmt(inv.refundedAmount)} ج.م</span></div>
+                    <div class="inv-totals-row grand" style="background:var(--card-bg);border:1.5px solid var(--border);color:var(--text);"><span>الصافي بعد الاسترجاع</span><span style="color:var(--primary);font-size:1.15rem;">${fmt(Math.max(0, inv.total - inv.refundedAmount))} ج.م</span></div>
+                ` : ''}
             </div>
             <div style="text-align:center;font-size:0.78rem;color:var(--muted);margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);">
                 ${esc(storeFooter)}
@@ -9622,13 +10039,16 @@ function buildPrintHTML(inv) {
         } catch {}
     }
 
-    const rows = (inv.items || []).map(i => `
+    const rows = (inv.items || []).map(i => {
+        const refundedText = (i.refundedQty && i.refundedQty > 0) ? ` (مسترجع: ${i.refundedQty})` : '';
+        return `
         <tr>
-            <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${esc(i.name)} (# ${esc(i.serial)})</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${esc(i.name)} (# ${esc(i.serial)})${refundedText}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${i.qty}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${fmt(i.unitPrice)}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;font-weight:800;text-align:left">${fmt(i.unitPrice * i.qty)}</td>
-        </tr>`).join('');
+        </tr>`;
+    }).join('');
 
     return `<!DOCTYPE html>
 <html dir="rtl">
@@ -9677,8 +10097,16 @@ function buildPrintHTML(inv) {
         <div class="row"><span>المجموع الفرعي:</span><span>${fmt(inv.subtotal)} ج.م</span></div>
         <div class="row"><span>الخصم:</span><span>${discLabel}</span></div>
         <div class="row bold" style="margin-top:4px;border-top:1px solid #000;padding-top:4px;">
-            <span>الإجمالي المستحق:</span><span>${fmt(inv.total)} ج.م</span>
+            <span>الإجمالي الأصلي:</span><span>${fmt(inv.total)} ج.م</span>
         </div>
+        ${(inv.refundedAmount || 0) > 0 ? `
+            <div class="row" style="color:#dc2626;font-weight:bold;margin-top:2px;">
+                <span>المبلغ المسترد:</span><span>- ${fmt(inv.refundedAmount)} ج.م</span>
+            </div>
+            <div class="row bold" style="margin-top:2px;border-top:1px dashed #000;padding-top:2px;">
+                <span>الصافي بعد الاسترجاع:</span><span>${fmt(Math.max(0, inv.total - inv.refundedAmount))} ج.م</span>
+            </div>
+        ` : ''}
     </div>
     <div class="ftr">
         <p>${esc(storeFooter)}</p>
@@ -9698,6 +10126,7 @@ window.addEventListener('keydown', e => {
         closeConfirm();
         closeDailyReportModal();
         closeInvModal();
+        closeRefundModal();
         closeReconciliationModal();
         closeParkedInvoicesModal();
         closePinUnlockModal();
