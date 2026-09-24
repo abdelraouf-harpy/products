@@ -288,11 +288,12 @@
         .hbtn.logout-btn:hover { background: var(--danger); border-color: var(--danger); }
 
         .app-body {
-            max-width: 1440px;
+            max-width: 100%;
             width: 100%;
             margin: 0 auto;
-            padding: 18px 16px 40px;
+            padding: 16px 28px 40px;
             flex: 1;
+            box-sizing: border-box;
         }
 
         /* Stats Bar (Responsive Layout) */
@@ -667,6 +668,8 @@
             flex-direction: column;
             gap: 14px;
             min-width: 0;
+            flex: 1 1 0% !important;
+            width: 100% !important;
         }
 
         /* Toolbar */
@@ -916,8 +919,9 @@
         /* Products Grid */
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 16px;
+            width: 100%;
         }
 
         .product-card {
@@ -1840,16 +1844,27 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.55);
-            backdrop-filter: blur(3px);
+            background: rgba(0,0,0,0.45);
             z-index: 400;
             opacity: 0;
             transition: opacity 0.25s ease;
         }
 
-        .sidebar-overlay.open {
-            display: block;
-            opacity: 1;
+        /* Never show overlay on desktop (prevents blurring/pixelation) */
+        @media (min-width: 961px) {
+            .sidebar-overlay,
+            .sidebar-overlay.open {
+                display: none !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
+        }
+
+        @media (max-width: 960px) {
+            .sidebar-overlay.open {
+                display: block;
+                opacity: 1;
+            }
         }
 
         /* Responsive Breakpoints & Mobile Polish */
@@ -2293,18 +2308,24 @@
             scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
         }
 
-        /* When POS view is active: maximize horizontal space, eliminate wasted margins, fit 100% of viewport */
+        /* When POS view is active: inset slightly from sides (28px) and stretch all the way to bottom of screen */
         body[data-active-view="pos"] .app-body,
         body:has(#view-pos.active) .app-body {
             max-width: 100% !important;
-            padding: 8px 14px 6px !important;
-            height: calc(100vh - 62px) !important;
-            max-height: calc(100vh - 62px) !important;
+            padding: 8px 28px 10px !important;
+            height: calc(100vh - 58px) !important;
+            max-height: calc(100vh - 58px) !important;
             box-sizing: border-box !important;
             overflow: hidden !important;
             margin: 0 !important;
             display: flex !important;
             flex-direction: column !important;
+        }
+
+        /* Hide website footer in POS view so panels stretch all the way to the screen edge */
+        body[data-active-view="pos"] footer,
+        body:has(#view-pos.active) footer {
+            display: none !important;
         }
 
         #view-pos.active {
@@ -7058,7 +7079,9 @@ function openSidebar() {
     if (!sb) return;
     sb.classList.add('open');
     $('mainLayout')?.classList.add('sidebar-active');
-    $('sidebarOverlay')?.classList.add('open');
+    if (window.innerWidth <= 960) {
+        $('sidebarOverlay')?.classList.add('open');
+    }
     $('fabBtn')?.classList.add('hide');
 
     const toggleBtn = $('toggleProductFormBtn');
