@@ -1937,10 +1937,12 @@
                 grid-template-areas:
                     "brand actions"
                     "nav nav";
-                gap: 6px 8px;
+                gap: 4px 8px;
                 align-items: center;
                 width: 100%;
                 max-width: 100%;
+                box-sizing: border-box;
+                padding: 0 4px;
             }
             .header-brand {
                 grid-area: brand;
@@ -1948,6 +1950,7 @@
                 align-items: center;
                 gap: 6px;
                 min-width: 0;
+                max-width: 100%;
                 overflow: hidden;
             }
             .header-brand .icon {
@@ -1958,11 +1961,12 @@
                 flex-shrink: 0;
             }
             .header-brand h1 {
-                font-size: 0.88rem;
+                font-size: 0.84rem;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 margin: 0;
+                max-width: 165px;
             }
             .header-brand p {
                 display: none;
@@ -1999,17 +2003,17 @@
             .user-badge span {
                 display: none;
             }
-            .hbtn {
+            .header-actions .hbtn {
                 padding: 4px 6px;
                 font-size: 0.72rem;
                 height: 28px;
                 border-radius: 7px;
                 flex-shrink: 0;
             }
-            .hbtn .btn-label {
+            .header-actions .hbtn .btn-label {
                 display: none;
             }
-            .hbtn.icon-only {
+            .header-actions .hbtn.icon-only {
                 width: 28px;
                 height: 28px;
                 border-radius: 7px;
@@ -2188,11 +2192,15 @@
             }
 
             /* منع الزوم التلقائي المزعج في متصفحات الموبايل والآيفون */
+            .cart-search-bar input,
+            #quickSearch,
             .search-box input,
+            #invoiceSearchInput,
             .fg input,
             .fg select,
             .fg textarea,
-            .auth-fg input {
+            .auth-fg input,
+            .report-date-input {
                 font-size: 16px !important;
             }
 
@@ -2542,22 +2550,31 @@
             #posCatalogPanel,
             #posInvoicePanel {
                 width: 100% !important;
+                max-width: 100% !important;
                 height: auto !important;
                 min-height: 0 !important;
                 flex: none !important;
+                box-sizing: border-box !important;
             }
 
             #posCatalogPanel .c-card,
             #posInvoicePanel .c-card {
+                width: 100% !important;
+                max-width: 100% !important;
                 height: auto !important;
                 flex: none !important;
+                box-sizing: border-box !important;
+                margin-bottom: 12px !important;
             }
 
             #posCatalogPanel .c-card-body,
             #posInvoicePanel .c-card-body {
+                width: 100% !important;
+                max-width: 100% !important;
                 height: auto !important;
                 overflow: visible !important;
                 flex: none !important;
+                box-sizing: border-box !important;
             }
 
             .pos-touch-grid {
@@ -2622,6 +2639,8 @@
             }
             body:not([data-pos-tab="ticket"]) #posCatalogPanel {
                 display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
             }
 
             body[data-pos-tab="ticket"] #posCatalogPanel {
@@ -2629,6 +2648,8 @@
             }
             body[data-pos-tab="ticket"] #posInvoicePanel {
                 display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
             }
 
             /* Mobile Quickbar at bottom */
@@ -2688,28 +2709,38 @@
                 display: none !important;
             }
             .c-card-body {
-                padding: 8px 10px 12px;
+                padding: 10px 12px 14px;
             }
             .cart-search-bar {
-                display: flex !important;
-                gap: 6px !important;
+                display: grid !important;
+                grid-template-columns: 1fr auto !important;
+                gap: 8px !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
+                margin-bottom: 8px !important;
+                align-items: stretch !important;
             }
             .cart-search-bar input {
-                flex: 1 1 0% !important;
+                width: 100% !important;
                 min-width: 0 !important;
-                width: 0 !important;
-                padding: 8px 10px !important;
-                font-size: 0.82rem !important;
+                padding: 8px 12px !important;
+                font-size: 16px !important;
                 box-sizing: border-box !important;
+                border-radius: 10px !important;
             }
             .cart-search-bar button {
                 flex-shrink: 0 !important;
-                padding: 0 12px !important;
-                font-size: 0.82rem !important;
+                width: auto !important;
+                padding: 0 14px !important;
+                font-size: 0.84rem !important;
                 white-space: nowrap !important;
                 box-sizing: border-box !important;
+                border-radius: 10px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 5px !important;
+                min-height: 38px !important;
             }
             .ticket-head-actions {
                 flex-wrap: wrap;
@@ -2755,16 +2786,17 @@
 
         /* Quick Barcode & Search Bar */
         .cart-search-bar {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr auto;
             gap: 8px;
             margin-bottom: 8px;
             width: 100%;
             box-sizing: border-box;
+            align-items: stretch;
         }
         .cart-search-bar input {
-            flex: 1 1 0%;
+            width: 100%;
             min-width: 0;
-            width: 0;
             background: var(--bg);
             border: 1.5px solid var(--border);
             border-radius: 10px;
@@ -3618,6 +3650,84 @@
             gap: 18px;
         }
 
+        .demo-store-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        @media (max-width: 540px) {
+            .demo-store-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .demo-store-btn {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 58px !important;
+            height: auto !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            padding: 12px 14px !important;
+            border: none !important;
+            border-radius: 12px !important;
+            cursor: pointer !important;
+            gap: 5px !important;
+            font-weight: 900 !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+        }
+        .demo-store-btn:hover {
+            transform: translateY(-2px);
+        }
+        .demo-store-btn:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .invoices-filter-bar {
+                padding: 10px 12px;
+                gap: 10px;
+            }
+            .inv-filter-right, .inv-filter-left {
+                width: 100%;
+            }
+            .inv-search {
+                width: 100%;
+                min-width: 0;
+            }
+            .inv-date-presets, .inv-status-tabs {
+                overflow-x: auto;
+                max-width: 100%;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .invoices-kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .kpi-card {
+                padding: 10px 12px;
+            }
+            .kpi-icon {
+                width: 38px;
+                height: 38px;
+                font-size: 1rem;
+            }
+            .kpi-val {
+                font-size: 1rem;
+            }
+            .kpi-label {
+                font-size: 0.72rem;
+            }
+            .kpi-sub {
+                font-size: 0.68rem;
+            }
+        }
+
         /* ── Invoice Print Modal ── */
         .inv-modal-overlay {
             display: none;
@@ -3711,7 +3821,7 @@
         <button type="button" class="auth-btn" id="retryCheckinBtn" onclick="handleManualCheckinRetry()">
             <i class="fa-solid fa-rotate-right"></i> <span id="retryCheckinBtnText">فحص الاتصال واستئناف العمل</span>
         </button>
-        <a id="checkinSupportBtn" href="https://wa.me/201012345678" target="_blank" class="hbtn" style="display:none;background:#25D366;color:#fff;text-decoration:none;padding:12px 18px;border-radius:12px;font-size:0.88rem;font-weight:800;margin-top:12px;width:100%;box-sizing:border-box;align-items:center;justify-content:center;gap:8px;">
+        <a id="checkinSupportBtn" href="https://wa.me/201012345678" target="_blank" class="tbl-act-btn" style="display:none;background:#25D366;color:#fff;text-decoration:none;padding:12px 18px;border-radius:12px;font-size:0.88rem;font-weight:800;margin-top:12px;width:100%;box-sizing:border-box;align-items:center;justify-content:center;gap:8px;min-height:44px;border:none;">
             <i class="fa-brands fa-whatsapp"></i> <span>تواصل مع الإدارة والدعم الفني</span>
         </a>
     </div>
@@ -4448,10 +4558,10 @@
                 </div>
                 <div class="report-modal-footer">
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <button type="button" class="hbtn" style="background:#10b981;color:#fff;border-color:#10b981;" onclick="exportCurrentDayInvoices()" title="تصدير إلى Excel">
+                        <button type="button" class="tbl-act-btn" style="background:#10b981;color:#fff;border-color:#10b981;padding:8px 16px;font-size:0.84rem;min-height:38px;" onclick="exportCurrentDayInvoices()" title="تصدير إلى Excel">
                             <i class="fa-solid fa-file-excel"></i> تصدير إكسيل
                         </button>
-                        <button type="button" class="hbtn" style="background:var(--primary);color:#fff;border-color:var(--primary);" onclick="triggerPrintZReport()" title="طباعة تقرير الإغلاق المالي">
+                        <button type="button" class="tbl-act-btn" style="background:var(--primary);color:#fff;border-color:var(--primary);padding:8px 16px;font-size:0.84rem;min-height:38px;" onclick="triggerPrintZReport()" title="طباعة تقرير الإغلاق المالي">
                             <i class="fa-solid fa-receipt"></i> طباعة تقرير الإغلاق (Z-Report)
                         </button>
                     </div>
@@ -4507,12 +4617,12 @@
                             </div>
                         </div>
 
-                        <div style="display:flex;gap:10px;flex-direction:column;">
-                            <button type="button" class="hbtn" style="background:#0284c7;color:#fff;border-color:#0284c7;justify-content:center;padding:12px;font-size:0.9rem;" onclick="enableCashierMode()">
+                        <div style="display:flex;gap:10px;flex-direction:column;width:100%;box-sizing:border-box;">
+                            <button type="button" class="cashier-lock-btn" style="background:#0284c7;color:#fff;border:none;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;font-size:0.9rem;font-weight:800;cursor:pointer;width:100%;box-sizing:border-box;" onclick="enableCashierMode()">
                                 <i class="fa-solid fa-lock"></i> قفل وتفعيل وضع الكاشير فقط
                             </button>
 
-                            <button type="button" class="hbtn" style="background:var(--card);color:var(--text);justify-content:center;padding:10px;" onclick="promptUnlockOwnerMode()">
+                            <button type="button" class="cashier-unlock-btn" style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;font-size:0.86rem;font-weight:700;cursor:pointer;width:100%;box-sizing:border-box;" onclick="promptUnlockOwnerMode()">
                                 <i class="fa-solid fa-crown" style="color:#f59e0b;"></i> التحقق وفتح وضع المالك
                             </button>
                         </div>
@@ -4525,14 +4635,14 @@
                             <div style="font-size:0.78rem;color:var(--muted);margin-bottom:10px;">
                                 للعرض والتسويق أمام العملاء: ضغطة زر واحدة لتحميل متجر كامل (20 صنف بصور حقيقية وأسعار وفواتير سابقة) لإظهار قوة النظام فوراً.
                             </div>
-                            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:10px;">
-                                <button type="button" class="hbtn" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;border:none;flex-direction:column;align-items:center;justify-content:center;padding:12px 10px;font-weight:900;border-radius:12px;box-shadow:0 3px 12px rgba(5,150,105,0.25);gap:5px;cursor:pointer;" onclick="loadClothingDemoStoreData()">
+                            <div class="demo-store-grid">
+                                <button type="button" class="demo-store-btn" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;box-shadow:0 3px 12px rgba(5,150,105,0.25);" onclick="loadClothingDemoStoreData()">
                                     <div style="display:flex;align-items:center;gap:7px;font-size:0.9rem;">
                                         <i class="fa-solid fa-shirt"></i> متجر ملابس وأزياء
                                     </div>
                                     <span style="font-size:0.72rem;opacity:0.92;font-weight:600;">20 صنف + صور ومقاسات واقعية</span>
                                 </button>
-                                <button type="button" class="hbtn" style="background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;flex-direction:column;align-items:center;justify-content:center;padding:12px 10px;font-weight:900;border-radius:12px;box-shadow:0 3px 12px rgba(67,97,238,0.25);gap:5px;cursor:pointer;" onclick="loadDemoStoreData()">
+                                <button type="button" class="demo-store-btn" style="background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;box-shadow:0 3px 12px rgba(67,97,238,0.25);" onclick="loadDemoStoreData()">
                                     <div style="display:flex;align-items:center;gap:7px;font-size:0.9rem;">
                                         <i class="fa-solid fa-basket-shopping"></i> سوبرماركت وبقالة
                                     </div>
@@ -4652,7 +4762,7 @@
         </div>
         <div class="report-modal-footer" style="display:flex;justify-content:space-between;gap:10px;">
             <button type="button" class="cbtn-cancel" onclick="closeRefundModal()">إلغاء</button>
-            <button type="button" id="confirmRefundBtn" class="hbtn" style="background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:none;padding:10px 20px;font-weight:900;border-radius:10px;cursor:pointer;" onclick="executePartialRefund()">
+            <button type="button" id="confirmRefundBtn" class="tbl-act-btn" style="background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:none;padding:10px 20px;font-weight:900;border-radius:10px;cursor:pointer;min-height:38px;" onclick="executePartialRefund()">
                 <i class="fa-solid fa-rotate-left"></i> تأكيد الاسترجاع وإعادة للمخزون
             </button>
         </div>
@@ -4732,10 +4842,10 @@
         </div>
         <div class="report-modal-footer">
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button type="button" class="hbtn" style="background:#10b981;color:#fff;border-color:#10b981;" onclick="exportCurrentDayInvoices()" title="تصدير إلى Excel">
+                <button type="button" class="tbl-act-btn" style="background:#10b981;color:#fff;border-color:#10b981;padding:8px 16px;font-size:0.84rem;min-height:38px;" onclick="exportCurrentDayInvoices()" title="تصدير إلى Excel">
                     <i class="fa-solid fa-file-excel"></i> تصدير إكسيل
                 </button>
-                <button type="button" class="hbtn" style="background:var(--primary);color:#fff;border-color:var(--primary);" onclick="triggerPrintZReport()" title="طباعة تقرير الإغلاق المالي">
+                <button type="button" class="tbl-act-btn" style="background:var(--primary);color:#fff;border-color:var(--primary);padding:8px 16px;font-size:0.84rem;min-height:38px;" onclick="triggerPrintZReport()" title="طباعة تقرير الإغلاق المالي">
                     <i class="fa-solid fa-receipt"></i> طباعة تقرير الإغلاق (Z-Report)
                 </button>
             </div>
@@ -5561,7 +5671,7 @@ function checkWeeklyCheckinStatus(cleanKey, offlineMode) {
                         <i class="fa-solid fa-triangle-exclamation" style="font-size:1.1rem;color:#d97706;"></i>
                         <span>تنبيه أمان: متبقي <strong>${remainingDays}</strong> ${remainingDays === 1 ? 'يوم' : 'أيام'} على موعد الفحص الدوري للاشتراك. يُرجى توصيل الجهاز بالإنترنت لتحديث الصلاحية تلقائياً.</span>
                     </div>
-                    <button type="button" onclick="performBackgroundWeeklyCheckin('${cleanKey}', true)" class="hbtn" style="background:#f59e0b;color:#fff;border:none;padding:5px 12px;font-size:0.78rem;font-weight:800;border-radius:8px;cursor:pointer;">
+                    <button type="button" onclick="performBackgroundWeeklyCheckin('${cleanKey}', true)" class="tbl-act-btn" style="background:#f59e0b;color:#fff;border:none;padding:6px 14px;font-size:0.78rem;font-weight:800;border-radius:8px;cursor:pointer;min-height:30px;white-space:nowrap;">
                         <i class="fa-solid fa-rotate-right"></i> فحص الآن
                     </button>
                 </div>`;
