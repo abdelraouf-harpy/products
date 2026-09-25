@@ -888,144 +888,7 @@
         .sort-opt.active i { color: var(--primary); }
         .sort-opt.active .check-ico { opacity: 1; }
 
-        /* Reorder Toggle Buttons */
-        .reorder-toggle-btn {
-            padding: 11px 14px;
-            background: var(--card);
-            border: 1.5px solid var(--border);
-            border-radius: 11px;
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: var(--text);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all var(--tr);
-            white-space: nowrap;
-            flex-shrink: 0;
-            font-family: inherit;
-        }
-        .reorder-toggle-btn:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(67,97,238,0.12);
-        }
-        .reorder-toggle-btn.active {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: #fff;
-            border-color: transparent;
-            box-shadow: 0 4px 14px rgba(67,97,238,0.35);
-        }
-
-        .pos-reorder-btn {
-            padding: 6px 12px;
-            background: var(--card);
-            border: 1.5px solid var(--border);
-            border-radius: 9px;
-            font-size: 0.82rem;
-            font-weight: 800;
-            color: var(--text);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all var(--tr);
-            white-space: nowrap;
-            flex-shrink: 0;
-            font-family: inherit;
-        }
-        .pos-reorder-btn:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-        .pos-reorder-btn.active {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: #fff;
-            border-color: transparent;
-            box-shadow: 0 3px 10px rgba(67,97,238,0.35);
-        }
-
-        /* Reorder Mode Banner */
-        .reorder-active-banner {
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            background: linear-gradient(135deg, rgba(67, 97, 238, 0.12), rgba(114, 9, 183, 0.1));
-            border: 1.5px dashed var(--primary);
-            border-radius: 12px;
-            padding: 10px 16px;
-            margin-bottom: 14px;
-            color: var(--text);
-            font-size: 0.88rem;
-            font-weight: 700;
-            animation: menuFade 0.22s ease;
-        }
-        body.reorder-mode-active .reorder-active-banner {
-            display: flex;
-        }
-        .btn-done-reorder {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 6px 14px;
-            font-weight: 800;
-            font-size: 0.82rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-            font-family: inherit;
-            white-space: nowrap;
-        }
-        .btn-done-reorder:hover {
-            filter: brightness(1.1);
-            transform: translateY(-1px);
-        }
-
-        /* Product Card Drag & Drop Elements */
-
-        .card-reorder-arrows {
-            display: none;
-            position: absolute;
-            bottom: 8px;
-            left: 8px;
-            right: 8px;
-            z-index: 8;
-            justify-content: space-between;
-            gap: 8px;
-        }
-        body.reorder-mode-active .card-reorder-arrows,
-        body.pos-reorder-active .card-reorder-arrows {
-            display: flex;
-        }
-        .reorder-arrow-btn {
-            flex: 1;
-            background: rgba(15, 23, 42, 0.88);
-            backdrop-filter: blur(6px);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            padding: 5px 4px;
-            font-size: 0.78rem;
-            font-weight: 800;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-        .reorder-arrow-btn:hover {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-
-        /* Drag Over & Dragging States */
+        /* Product Card Drag & Drop Feedback States */
         .product-card.dragging,
         .pos-touch-card.dragging,
         .product-card.touch-drag-source,
@@ -1051,15 +914,6 @@
         .pos-touch-card.drag-over-after {
             box-shadow: 0 0 0 3px var(--primary), var(--shadow-lg) !important;
             border-left: 4px solid var(--primary) !important;
-        }
-
-        /* While Reorder Mode is active */
-        body.reorder-mode-active .product-card {
-            border-color: rgba(67, 97, 238, 0.38);
-            cursor: grab;
-        }
-        body.reorder-mode-active .product-card:active {
-            cursor: grabbing;
         }
 
         /* Floating Touch Drag Avatar */
@@ -4297,13 +4151,7 @@
                         </div>
 
                         <!-- Touch Quick Categories & Items Selector -->
-                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
-                            <div class="pos-cat-bar" id="posCatBar" style="margin-bottom:0;flex:1;"></div>
-                            <button type="button" class="pos-reorder-btn" id="posReorderBtn" onclick="togglePosReorderMode()" title="ترتيب الأصناف بالسحب والإفلات">
-                                <i class="fa-solid fa-arrows-up-down-left-right"></i>
-                                <span id="posReorderBtnText">ترتيب</span>
-                            </button>
-                        </div>
+                        <div class="pos-cat-bar" id="posCatBar"></div>
                         <div class="pos-touch-grid" id="posTouchGrid"></div>
                     </div>
                 </div>
@@ -4664,25 +4512,10 @@
                     </div>
                 </div>
 
-                <button type="button" class="reorder-toggle-btn" id="reorderToggleBtn" onclick="toggleReorderMode()" title="ترتيب الأصناف بالسحب والإفلات">
-                    <i class="fa-solid fa-arrows-up-down-left-right"></i>
-                    <span class="reorder-btn-label">ترتيب الأصناف</span>
-                </button>
             </div>
 
             <div class="cat-tabs" id="catTabs"></div>
             <div class="results-info" id="resultsInfo"></div>
-
-            <!-- Reorder Mode Active Banner -->
-            <div class="reorder-active-banner" id="reorderActiveBanner">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <i class="fa-solid fa-arrows-up-down-left-right" style="color:var(--primary);font-size:1.15rem;"></i>
-                    <span>وضع الترتيب مفعّل — اسحب أي صنف لوضعه في مكانه المطلوب أو استخدم أزرار التقديم والتأخير.</span>
-                </div>
-                <button type="button" class="btn-done-reorder" onclick="toggleReorderMode()">
-                    <i class="fa-solid fa-check"></i> حفظ وإنهاء
-                </button>
-            </div>
             <div class="products-grid" id="productsGrid"></div>
 
             <div class="load-more-wrap" id="loadMoreWrap" style="display:none">
@@ -5469,9 +5302,7 @@ let pendingDel = null;
 let currentDetailProduct = null;
 let licenseWatcherUnsub = null;
 
-// Reordering & Drag-and-Drop State
-let isReorderMode = false;
-let isPosReorderMode = false;
+// Drag-and-Drop State
 let isDraggingCard = false;
 let isTouchDragging = false;
 let draggedProductId = null;
@@ -7245,64 +7076,8 @@ function reorderProduct(sourceId, targetId, place = 'before') {
     if (navigator.vibrate) navigator.vibrate(35);
 }
 
-function moveProductStep(id, direction) {
-    id = Number(id);
-    const idx = products.findIndex(p => p.id === id);
-    if (idx === -1) return;
-    const targetIdx = idx + direction;
-    if (targetIdx < 0 || targetIdx >= products.length) return;
-
-    const targetId = products[targetIdx].id;
-    const place = direction > 0 ? 'after' : 'before';
-    reorderProduct(id, targetId, place);
-}
-
-function toggleReorderMode() {
-    isReorderMode = !isReorderMode;
-    document.body.classList.toggle('reorder-mode-active', isReorderMode);
-    const btn = $('reorderToggleBtn');
-    if (btn) {
-        btn.classList.toggle('active', isReorderMode);
-        btn.innerHTML = isReorderMode 
-            ? '<i class="fa-solid fa-check"></i> <span>إنهاء الترتيب</span>'
-            : '<i class="fa-solid fa-arrows-up-down-left-right"></i> <span class="reorder-btn-label">ترتيب الأصناف</span>';
-    }
-    if (isReorderMode && sortBy !== 'custom') {
-        sortBy = 'custom';
-        localStorage.setItem('harpy_sort_by', 'custom');
-        if ($('currentSortLabel')) $('currentSortLabel').textContent = 'ترتيب يدوي مخصص';
-        document.querySelectorAll('.sort-opt').forEach(o => {
-            o.classList.toggle('active', o.getAttribute('data-val') === 'custom');
-        });
-        renderProducts();
-    }
-    if (isReorderMode) {
-        toast('وضع ترتيب الأصناف مفعّل: اسحب أي صنف لوضعه في مكانه، أو استخدم أزرار التقديم والتأخير', 'info');
-    } else {
-        toast('تم حفظ الترتيب بنجاح', 'success');
-    }
-}
-
-function togglePosReorderMode() {
-    isPosReorderMode = !isPosReorderMode;
-    document.body.classList.toggle('pos-reorder-active', isPosReorderMode);
-    const btn = $('posReorderBtn');
-    const txt = $('posReorderBtnText');
-    if (btn) btn.classList.toggle('active', isPosReorderMode);
-    if (txt) txt.textContent = isPosReorderMode ? 'إنهاء' : 'ترتيب';
-
-    renderPosQuickProducts();
-    if (isPosReorderMode) {
-        toast('وضع ترتيب الكاشير مفعّل — اسحب الأصناف لتغيير ترتيبها في الشاشة السريعة', 'info');
-    } else {
-        toast('تم حفظ ترتيب أصناف الكاشير بنجاح', 'success');
-    }
-}
-
 function handlePosCardClick(e, id) {
-    if (isPosReorderMode) return;
     if (isDraggingCard || isTouchDragging) return;
-    if (e.target.closest('.card-reorder-arrows')) return;
     addPosItemToCart(id);
 }
 
@@ -7389,13 +7164,22 @@ function attachCardDragListeners(card, p, viewType = 'inventory') {
         touchStartX = touch.clientX;
         touchStartY = touch.clientY;
 
-        const delay = (isReorderMode || isPosReorderMode) ? 80 : 350;
+        const delay = 250;
 
         touchTimer = setTimeout(() => {
             isTouchDragging = true;
             draggedProductId = p.id;
             card.classList.add('touch-drag-source');
             if (navigator.vibrate) navigator.vibrate(35);
+
+            if (sortBy !== 'custom') {
+                sortBy = 'custom';
+                localStorage.setItem('harpy_sort_by', 'custom');
+                if ($('currentSortLabel')) $('currentSortLabel').textContent = 'ترتيب يدوي مخصص';
+                document.querySelectorAll('.sort-opt').forEach(o => {
+                    o.classList.toggle('active', o.getAttribute('data-val') === 'custom');
+                });
+            }
 
             if (!dragAvatar) {
                 dragAvatar = document.createElement('div');
@@ -7604,19 +7388,7 @@ function makeCard(p) {
     img.referrerPolicy = 'no-referrer';
     img.onerror = () => { img.src = PLACEHOLDER; };
 
-    const reorderArrows = document.createElement('div');
-    reorderArrows.className = 'card-reorder-arrows';
-    reorderArrows.innerHTML = `
-        <button type="button" class="reorder-arrow-btn" onclick="event.stopPropagation(); moveProductStep(${p.id}, 1)" title="تحريك للأمام">
-            <i class="fa-solid fa-arrow-left"></i> تقديم
-        </button>
-        <button type="button" class="reorder-arrow-btn" onclick="event.stopPropagation(); moveProductStep(${p.id}, -1)" title="تحريك للخلف">
-            تأخير <i class="fa-solid fa-arrow-right"></i>
-        </button>
-    `;
-
     wrap.appendChild(badge);
-    wrap.appendChild(reorderArrows);
     wrap.appendChild(img);
 
     loadImg(p, img);
@@ -7704,9 +7476,7 @@ function makeCard(p) {
     card.appendChild(info);
 
     card.addEventListener('click', e => {
-        if (isReorderMode) return;
         if (isDraggingCard || isTouchDragging) return;
-        if (e.target.closest('.card-reorder-arrows')) return;
         if (!e.target.closest('.act-btn') && !e.target.closest('.prod-desc')) {
             openProductDetails(p);
         }
@@ -9450,14 +9220,6 @@ function renderPosQuickProducts() {
                     <img src="${p.imgData || PLACEHOLDER}" alt="${esc(p.name)}" onerror="this.src=PLACEHOLDER">
                     <span class="pos-touch-price">${fmt(p.sell)} ج.م</span>
                     ${inCart > 0 ? `<span class="pos-touch-badge">${inCart}</span>` : ''}
-                    <div class="card-reorder-arrows" style="bottom:4px;left:4px;right:4px;">
-                        <button type="button" class="reorder-arrow-btn" onclick="event.stopPropagation(); moveProductStep(${p.id}, 1)" style="padding:2px 4px;font-size:0.7rem;">
-                            <i class="fa-solid fa-arrow-left"></i>
-                        </button>
-                        <button type="button" class="reorder-arrow-btn" onclick="event.stopPropagation(); moveProductStep(${p.id}, -1)" style="padding:2px 4px;font-size:0.7rem;">
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                    </div>
                 </div>
                 <div class="pos-touch-info">
                     <div class="pos-touch-name" title="${esc(p.name)}">${esc(p.name)}</div>
