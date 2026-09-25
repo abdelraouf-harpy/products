@@ -1925,7 +1925,7 @@
 
         @media (max-width: 768px) {
             .app-header {
-                padding: 8px 12px 6px;
+                padding: 6px 10px 4px;
                 width: 100%;
                 max-width: 100vw;
                 overflow: visible;
@@ -1937,7 +1937,7 @@
                 grid-template-areas:
                     "brand actions"
                     "nav nav";
-                gap: 8px 10px;
+                gap: 6px 8px;
                 align-items: center;
                 width: 100%;
                 max-width: 100%;
@@ -1946,21 +1946,23 @@
                 grid-area: brand;
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                gap: 6px;
                 min-width: 0;
+                overflow: hidden;
             }
             .header-brand .icon {
-                width: 32px;
-                height: 32px;
-                font-size: 0.92rem;
-                border-radius: 8px;
+                width: 28px;
+                height: 28px;
+                font-size: 0.85rem;
+                border-radius: 7px;
                 flex-shrink: 0;
             }
             .header-brand h1 {
-                font-size: 0.95rem;
+                font-size: 0.88rem;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+                margin: 0;
             }
             .header-brand p {
                 display: none;
@@ -1969,16 +1971,16 @@
                 grid-area: actions;
                 display: flex;
                 align-items: center;
-                gap: 6px;
+                gap: 4px;
                 justify-self: end;
                 flex-shrink: 0;
                 position: relative;
                 overflow: visible;
             }
             .hbtn-dots {
-                width: 32px;
-                height: 32px;
-                font-size: 1rem;
+                width: 28px;
+                height: 28px;
+                font-size: 0.95rem;
             }
             .header-dropdown {
                 top: calc(100% + 8px);
@@ -1989,8 +1991,8 @@
             }
 
             .user-badge {
-                padding: 4px 6px;
-                font-size: 0.7rem;
+                padding: 3px 5px;
+                font-size: 0.68rem;
                 border-radius: 6px;
                 flex-shrink: 0;
             }
@@ -1998,25 +2000,45 @@
                 display: none;
             }
             .hbtn {
-                padding: 5px 8px;
+                padding: 4px 6px;
                 font-size: 0.72rem;
-                height: 30px;
-                border-radius: 8px;
+                height: 28px;
+                border-radius: 7px;
                 flex-shrink: 0;
             }
             .hbtn .btn-label {
                 display: none;
             }
             .hbtn.icon-only {
-                width: 30px;
-                height: 30px;
-                border-radius: 8px;
-                font-size: 0.8rem;
+                width: 28px;
+                height: 28px;
+                border-radius: 7px;
+                font-size: 0.78rem;
                 flex-shrink: 0;
             }
             .role-pill {
-                padding: 4px 9px;
+                padding: 3px 8px;
                 font-size: 0.72rem;
+                height: 28px;
+                box-sizing: border-box;
+            }
+
+            @media (max-width: 540px) {
+                .role-pill {
+                    padding: 0;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 7px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .role-pill span {
+                    display: none !important;
+                }
+                #soundBtn {
+                    display: none !important;
+                }
             }
 
             .header-nav {
@@ -2025,11 +2047,11 @@
                 max-width: 100%;
                 display: flex;
                 align-items: center;
-                gap: 6px;
+                gap: 4px;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: none;
-                padding: 3px 2px;
+                padding: 2px 0;
                 box-sizing: border-box;
             }
             .header-nav::-webkit-scrollbar {
@@ -2037,13 +2059,19 @@
             }
             .header-nav .nav-tab {
                 flex-shrink: 0;
-                padding: 6px 12px;
-                font-size: 0.8rem;
+                padding: 5px 9px;
+                font-size: 0.76rem;
                 border-radius: 8px;
                 white-space: nowrap;
+                gap: 4px;
             }
             .header-nav .nav-tab span {
                 display: inline !important;
+            }
+            .header-nav .nav-badge {
+                font-size: 0.62rem;
+                padding: 0 4px;
+                border-radius: 6px;
             }
 
             .cat-tabs {
@@ -2645,10 +2673,13 @@
                 cursor: pointer;
             }
 
+            #posCatalogPanel .c-card-head {
+                display: none !important;
+            }
             .c-card-head {
-                padding: 8px 12px;
+                padding: 8px 10px;
                 flex-wrap: wrap;
-                gap: 8px;
+                gap: 6px;
             }
             .c-card-head h2 {
                 font-size: 0.88rem;
@@ -2657,10 +2688,28 @@
                 display: none !important;
             }
             .c-card-body {
-                padding: 10px 12px;
+                padding: 8px 10px 12px;
+            }
+            .cart-search-bar {
+                display: flex !important;
+                gap: 6px !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
             }
             .cart-search-bar input {
-                min-width: 0;
+                flex: 1 1 0% !important;
+                min-width: 0 !important;
+                width: 0 !important;
+                padding: 8px 10px !important;
+                font-size: 0.82rem !important;
+                box-sizing: border-box !important;
+            }
+            .cart-search-bar button {
+                flex-shrink: 0 !important;
+                padding: 0 12px !important;
+                font-size: 0.82rem !important;
+                white-space: nowrap !important;
+                box-sizing: border-box !important;
             }
             .ticket-head-actions {
                 flex-wrap: wrap;
@@ -2709,10 +2758,13 @@
             display: flex;
             gap: 8px;
             margin-bottom: 8px;
-            flex-shrink: 0;
+            width: 100%;
+            box-sizing: border-box;
         }
         .cart-search-bar input {
-            flex: 1;
+            flex: 1 1 0%;
+            min-width: 0;
+            width: 0;
             background: var(--bg);
             border: 1.5px solid var(--border);
             border-radius: 10px;
@@ -2723,6 +2775,7 @@
             color: var(--text);
             outline: none;
             transition: all 0.2s ease;
+            box-sizing: border-box;
         }
         .cart-search-bar input:focus {
             border-color: var(--primary);
@@ -2730,6 +2783,8 @@
             box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
         }
         .cart-search-bar button {
+            flex-shrink: 0;
+            white-space: nowrap;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: #fff;
             border: none;
@@ -2744,6 +2799,7 @@
             gap: 6px;
             box-shadow: 0 3px 8px rgba(67, 97, 238, 0.25);
             transition: all 0.2s ease;
+            box-sizing: border-box;
         }
         .cart-search-bar button:hover {
             transform: translateY(-1px);
@@ -3894,7 +3950,7 @@
                     <div class="c-card-body">
                         <!-- Quick Search & Barcode -->
                         <div class="cart-search-bar">
-                            <input type="text" id="quickSearch" placeholder="امسح الباركود أو اكتب اسم الصنف / الرقم التسلسلي (اضغط Enter للإضافة)..." autocomplete="off">
+                            <input type="text" id="quickSearch" placeholder="بحث بالاسم أو الباركود..." autocomplete="off">
                             <button type="button" onclick="searchAndAdd()"><i class="fa-solid fa-plus"></i> إضافة</button>
                         </div>
 
@@ -8394,7 +8450,7 @@ async function handleUnlockOwnerSubmit(e) {
    ============================================================ */
 let currentView = 'pos';
 
-function setMobilePosTab(tab) {
+function setMobilePosTab(tab, userInitiated = false) {
     document.body.setAttribute('data-pos-tab', tab);
     const catalogBtn = $('posTabCatalogBtn');
     const ticketBtn = $('posTabTicketBtn');
@@ -8403,14 +8459,8 @@ function setMobilePosTab(tab) {
 
     updateMobilePosQuickBar();
 
-    if (window.innerWidth <= 960) {
-        if (tab === 'ticket') {
-            const panel = $('posInvoicePanel');
-            if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else {
-            const panel = $('posCatalogPanel');
-            if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+    if (userInitiated && window.innerWidth <= 960) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
