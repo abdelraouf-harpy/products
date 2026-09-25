@@ -1129,8 +1129,51 @@
         .stock-in  { background: var(--success-bg); color: var(--success); }
         .stock-low { background: #fef3c7; color: #b45309; }
         .stock-out { background: var(--danger-bg);  color: var(--danger);  }
+        .stock-unlimited { background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); }
 
         [data-theme="dark"] .stock-low { background: #451a03; color: #fde68a; }
+        [data-theme="dark"] .stock-unlimited { background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.35); }
+
+        /* Modern RTL Form Toggle Switch */
+        .form-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            margin: 0;
+            vertical-align: middle;
+        }
+        .form-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .form-switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--border);
+            transition: .25s ease;
+            border-radius: 24px;
+        }
+        .form-switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            right: 3px;
+            bottom: 3px;
+            background-color: #fff;
+            transition: .25s ease;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+        }
+        .form-switch input:checked + .form-switch-slider {
+            background-color: var(--primary);
+        }
+        .form-switch input:checked + .form-switch-slider:before {
+            transform: translateX(-20px);
+        }
 
         /* Cart Button on Product Card */
         .cart-btn {
@@ -4387,14 +4430,34 @@
                             <label>سعر البيع (ج.م) *</label>
                             <input type="number" step="0.01" min="0" id="inSell" required>
                         </div>
-                        <div class="fg">
-                            <label>الكمية المتاحة (اختياري)</label>
-                            <input type="number" step="1" min="0" id="inQty" autocomplete="off">
+                        <!-- خيار إلغاء تتبع الكمية (المطاعم والكافيهات والخدمات) -->
+                        <div class="fg" style="background:var(--bg);padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);margin-bottom:12px;">
+                            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:0;gap:10px;">
+                                <div>
+                                    <span style="font-weight:800;color:var(--text);font-size:0.86rem;display:flex;align-items:center;gap:6px;">
+                                        <i class="fa-solid fa-infinity" style="color:var(--primary);"></i> صنف بدون تحديد كمية (كمية غير محدودة)
+                                    </span>
+                                    <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">
+                                        مناسب للمطاعم والكافيهات والوجبات والخدمات
+                                    </div>
+                                </div>
+                                <label class="form-switch">
+                                    <input type="checkbox" id="inUnlimitedQty" onchange="toggleUnlimitedQtyFields()">
+                                    <span class="form-switch-slider"></span>
+                                </label>
+                            </label>
                         </div>
-                        <div class="fg">
-                            <label>حد التنبيه لنواقص المخزون</label>
-                            <input type="number" step="1" min="0" id="inLowStockThreshold" autocomplete="off">
-                            <small style="color:var(--muted);font-size:0.75rem;margin-top:2px;">يتم إظهار تنبيه نقص عند وصول الكمية لهذا الحد أو أقل</small>
+
+                        <div id="stockFieldsWrap">
+                            <div class="fg">
+                                <label>الكمية المتاحة (المخزون)</label>
+                                <input type="number" step="1" min="0" id="inQty" autocomplete="off">
+                            </div>
+                            <div class="fg">
+                                <label>حد التنبيه لنواقص المخزون</label>
+                                <input type="number" step="1" min="0" id="inLowStockThreshold" autocomplete="off">
+                                <small style="color:var(--muted);font-size:0.75rem;margin-top:2px;">يتم إظهار تنبيه نقص عند وصول الكمية لهذا الحد أو أقل</small>
+                            </div>
                         </div>
 
                         <div class="fg">
@@ -4689,7 +4752,26 @@
                                 <label>سياسة الاسترجاع ورسالة الفاتورة</label>
                                 <textarea id="stFooter" rows="3"></textarea>
                             </div>
-                            <button type="submit" class="btn-save" style="margin-top:10px;">
+
+                            <!-- نظام تتبع كميات المخزون والنواقص -->
+                            <div class="fg" style="background:var(--bg);padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);margin-top:12px;">
+                                <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:0;gap:12px;">
+                                    <div>
+                                        <span style="font-weight:800;color:var(--text);font-size:0.9rem;display:flex;align-items:center;gap:6px;">
+                                            <i class="fa-solid fa-boxes-stacked" style="color:var(--primary);"></i> نظام تتبع كميات المخزون
+                                        </span>
+                                        <div style="font-size:0.78rem;color:var(--muted);margin-top:3px;line-height:1.4;">
+                                            إلغاء التفعيل يوقف تتبع الكميات ويحول النظام فوراً لوضع <strong>المطاعم والكافيهات والخدمات</strong> (بيع غير محدود بدون تنبيهات نفاد).
+                                        </div>
+                                    </div>
+                                    <label class="form-switch" style="flex-shrink:0;">
+                                        <input type="checkbox" id="stTrackStock" onchange="handleStockTrackingSettingChange()" checked>
+                                        <span class="form-switch-slider"></span>
+                                    </label>
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn-save" style="margin-top:14px;">
                                 <i class="fa-solid fa-floppy-disk"></i> حفظ إعدادات المتجر
                             </button>
                         </form>
@@ -4739,6 +4821,12 @@
                                         <i class="fa-solid fa-basket-shopping"></i> سوبرماركت وبقالة
                                     </div>
                                     <span style="font-size:0.72rem;opacity:0.92;font-weight:600;">20 صنف + صور وباركودات وأسعار</span>
+                                </button>
+                                <button type="button" class="demo-store-btn" style="background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;box-shadow:0 3px 12px rgba(249,115,22,0.25);" onclick="loadRestaurantDemoStoreData()">
+                                    <div style="display:flex;align-items:center;gap:7px;font-size:0.9rem;">
+                                        <i class="fa-solid fa-utensils"></i> مطعم وكافيه وسندوتشات
+                                    </div>
+                                    <span style="font-size:0.72rem;opacity:0.92;font-weight:600;">وجبات ومشروبات بكميات مفتوحة</span>
                                 </button>
                             </div>
                         </div>
@@ -5346,9 +5434,43 @@ function validateAuthInputs(name, phone, key) {
     return null;
 }
 
+/* هل نظام تتبع المخزون مفعل على مستوى المتجر ككل؟ (افتراضي: مفعل للسوبرماركت والمحلات، معطل للمطاعم والكافيهات) */
+function isStockTrackingEnabled() {
+    try {
+        const raw = localStorage.getItem(getStoreSettingsKey());
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.trackStock !== undefined) return parsed.trackStock === true;
+        }
+    } catch {}
+    return true; // Default: ON (retail)
+}
+
+/* هل هذا الصنف تحديداً بدون كمية (كمية غير محدودة / وجبات مطعم / خدمات)؟ */
+function isProductUnlimited(p) {
+    if (!isStockTrackingEnabled()) return true; // إذا تم إيقاف تتبع المخزون عاماً، تصبح كل الأصناف مفتوحة
+    if (!p) return false;
+    return p.unlimitedQty === true || p.qty === null || p.qty === undefined || p.qty === '' || p.qty === 'unlimited';
+}
+
+function toggleUnlimitedQtyFields() {
+    const isUnlimited = $('inUnlimitedQty')?.checked;
+    const wrap = $('stockFieldsWrap');
+    if (wrap) {
+        wrap.style.display = isUnlimited ? 'none' : 'block';
+    }
+}
+
 /* شارة حالة الكمية والمخزون التفاعلية المباشرة (تخصم فورياً عند وضع أي كمية في السلة) */
 function getQtyBadge(p) {
     if (!p) return '';
+    if (isProductUnlimited(p)) {
+        if (!isStockTrackingEnabled()) {
+            return ''; // في وضع المطاعم العام، لا داعي لشارة كمية لتظل البطاقات أنيقة ونظيفة
+        }
+        return `<span class="stock-badge stock-unlimited"><i class="fa-solid fa-infinity"></i> كمية مفتوحة</span>`;
+    }
+
     const totalStock = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 1;
     const inCartQty = getCartItemQty(p.id);
     const available = Math.max(0, totalStock - inCartQty);
@@ -6864,6 +6986,7 @@ function updateStats() {
     const isLowStock = catFilter === '__LOW_STOCK__';
     const scope = isLowStock
         ? products.filter(p => {
+            if (isProductUnlimited(p)) return false;
             const q = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 1;
             const th = (p.lowStockThreshold !== undefined && p.lowStockThreshold !== null) ? parseInt(p.lowStockThreshold, 10) : LOW_STOCK_THRESHOLD;
             return q <= th;
@@ -6883,9 +7006,9 @@ function updateStats() {
         sumProfit += unitProfit;
         if (w > 0) { sumMargin += ((s-w)/w)*100; cnt++; }
 
-        const qty = (p.qty !== null && p.qty !== undefined && !isNaN(+p.qty))
-            ? Math.max(0, +p.qty)
-            : 1;
+        const qty = isProductUnlimited(p)
+            ? 1
+            : ((p.qty !== null && p.qty !== undefined && !isNaN(+p.qty)) ? Math.max(0, +p.qty) : 1);
         sumProfitByQty += unitProfit * qty;
     });
 
@@ -6903,12 +7026,13 @@ function updateStats() {
     if (sumProfitEl) sumProfitEl.textContent = sumProfitLabel;
     $('statSumProfit').textContent = n ? `${fmt(sumProfitByQty)} ج.م` : '—';
 
-    // تحديث شارة النواقص في الهيدر
-    const lowStockCount = products.filter(p => {
+    // تحديث شارة النواقص في الهيدر (مع استبعاد الأصناف غير المحدودة بالمخزون)
+    const lowStockCount = isStockTrackingEnabled() ? products.filter(p => {
+        if (isProductUnlimited(p)) return false;
         const q = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 1;
         const th = (p.lowStockThreshold !== undefined && p.lowStockThreshold !== null) ? parseInt(p.lowStockThreshold, 10) : LOW_STOCK_THRESHOLD;
         return q <= th;
-    }).length;
+    }).length : 0;
 
     const badgeEl = $('lowStockBadge');
     if (badgeEl) {
@@ -7755,17 +7879,21 @@ productForm.addEventListener('submit', async e => {
     const existId = $('editId').value ? Number($('editId').value) : null;
     const id      = existId || Date.now();
 
-    const qtyVal  = $('inQty').value.trim();
-    let qty = 1;
-    if (qtyVal !== '') {
-        const parsed = parseInt(qtyVal, 10);
-        qty = isNaN(parsed) ? 1 : Math.max(0, parsed);
-    } else {
-        qty = 1;
+    const isUnlimited = $('inUnlimitedQty')?.checked || (!isStockTrackingEnabled());
+    let qty = null;
+    let lowStockThreshold = null;
+    if (!isUnlimited) {
+        const qtyVal  = $('inQty').value.trim();
+        if (qtyVal !== '') {
+            const parsed = parseInt(qtyVal, 10);
+            qty = isNaN(parsed) ? 1 : Math.max(0, parsed);
+        } else {
+            qty = 1;
+        }
+        const threshVal = $('inLowStockThreshold') ? $('inLowStockThreshold').value.trim() : '';
+        lowStockThreshold = threshVal !== '' ? Math.max(0, parseInt(threshVal, 10) || 5) : 5;
     }
-
-    const threshVal = $('inLowStockThreshold') ? $('inLowStockThreshold').value.trim() : '';
-    const lowStockThreshold = threshVal !== '' ? Math.max(0, parseInt(threshVal, 10) || 5) : 5;
+    const unlimitedQty = isUnlimited;
 
     const err = validateProductInputs(serial, name, whole, sell);
     if (err) {
@@ -7806,7 +7934,7 @@ productForm.addEventListener('submit', async e => {
         }
     }
 
-    const prod = { id, serial, cat, name, whole, sell, qty, lowStockThreshold, imgType, imgData, desc, updatedAt: new Date().toISOString() };
+    const prod = { id, serial, cat, name, whole, sell, qty, unlimitedQty, lowStockThreshold, imgType, imgData, desc, updatedAt: new Date().toISOString() };
 
     try {
         await saveProductToCloud(prod);
@@ -7839,9 +7967,20 @@ function editProduct(id) {
     $('inName').value   = p.name    || '';
     $('inWhole').value  = p.whole   || '';
     $('inSell').value   = p.sell    || '';
-    $('inQty').value    = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? p.qty : 1;
-    if ($('inLowStockThreshold')) {
-        $('inLowStockThreshold').value = (p.lowStockThreshold !== null && p.lowStockThreshold !== undefined) ? p.lowStockThreshold : 5;
+
+    const isUnlimited = isProductUnlimited(p);
+    if ($('inUnlimitedQty')) {
+        $('inUnlimitedQty').checked = isUnlimited;
+    }
+    toggleUnlimitedQtyFields();
+
+    if (!isUnlimited) {
+        $('inQty').value = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? p.qty : 1;
+        if ($('inLowStockThreshold')) {
+            $('inLowStockThreshold').value = (p.lowStockThreshold !== null && p.lowStockThreshold !== undefined) ? p.lowStockThreshold : 5;
+        }
+    } else {
+        $('inQty').value = '';
     }
     $('inDesc').value   = p.desc    || '';
     inUrl.value         = p.imgType==='url' ? (p.imgData||'') : '';
@@ -7880,6 +8019,10 @@ async function previewEditImg(p) {
 function resetForm() {
     productForm.reset();
     $('editId').value       = '';
+    if ($('inUnlimitedQty')) {
+        $('inUnlimitedQty').checked = !isStockTrackingEnabled();
+    }
+    toggleUnlimitedQtyFields();
     $('inQty').value        = '1';
     if ($('inLowStockThreshold')) $('inLowStockThreshold').value = '5';
     previewImg.src          = '';
@@ -8190,8 +8333,9 @@ function saveCart(cart) {
 }
 
 function addToCart(product) {
-    const stock = (product.qty !== null && product.qty !== undefined && !isNaN(product.qty)) ? parseInt(product.qty) : 1;
-    if (stock <= 0) {
+    const unlimited = isProductUnlimited(product);
+    const stock = (!unlimited && product.qty !== null && product.qty !== undefined && !isNaN(product.qty)) ? parseInt(product.qty) : 1;
+    if (!unlimited && stock <= 0) {
         toast('عذراً، نفدت كمية هذا المنتج من المخزون تماماً!', 'warning');
         return;
     }
@@ -8199,7 +8343,7 @@ function addToCart(product) {
     let cart = getCart();
     const existing = cart.find(i => i.id === product.id);
     if (existing) {
-        if (existing.qty >= stock) {
+        if (!unlimited && existing.qty >= stock) {
             toast(`عذراً، أقصى كمية متاحة في المخزون هي (${stock} قطعة)`, 'warning');
             return;
         }
@@ -8215,7 +8359,8 @@ function addToCart(product) {
             imgData: product.imgData || '',
             imgType: product.imgType || 'none',
             qty: 1,
-            stockQty: stock  // الكمية المتاحة في المخزون
+            unlimited: unlimited,
+            stockQty: unlimited ? 99999 : stock
         });
     }
     saveCart(cart);
@@ -8237,11 +8382,12 @@ function changeCartQty(productId, delta, productRef) {
     }
     if (!item) return;
 
-    const stock = (productRef && productRef.qty !== null && productRef.qty !== undefined && !isNaN(productRef.qty))
+    const unlimited = isProductUnlimited(productRef);
+    const stock = (!unlimited && productRef && productRef.qty !== null && productRef.qty !== undefined && !isNaN(productRef.qty))
         ? parseInt(productRef.qty)
         : (item.stockQty !== undefined ? item.stockQty : 1);
 
-    if (delta > 0 && item.qty >= stock) {
+    if (!unlimited && delta > 0 && item.qty >= stock) {
         toast(`عذراً، وصلت للحد الأقصى المتاح (${stock} قطعة)`, 'warning');
         return;
     }
@@ -8257,10 +8403,11 @@ function changeCartQty(productId, delta, productRef) {
 
 function renderCardCartUI(container, product) {
     container.innerHTML = '';
-    const stock = (product.qty !== null && product.qty !== undefined && !isNaN(product.qty)) ? parseInt(product.qty) : 1;
+    const unlimited = isProductUnlimited(product);
+    const stock = (!unlimited && product.qty !== null && product.qty !== undefined && !isNaN(product.qty)) ? parseInt(product.qty) : 1;
     
-    // إذا نفدت الكمية تماماً، تعطيل الزر وإظهار حالة نفاد الكمية
-    if (stock <= 0) {
+    // إذا نفدت الكمية تماماً، تعطيل الزر وإظهار حالة نفاد الكمية (فقط للأصناف المحدودة)
+    if (!unlimited && stock <= 0) {
         const btn = document.createElement('button');
         btn.className = 'act-btn cart-btn';
         btn.disabled = true;
@@ -8308,7 +8455,7 @@ function renderCardCartUI(container, product) {
         plusBtn.className = 'c-step-btn plus';
         plusBtn.title = 'زيادة قطعة';
         plusBtn.textContent = '+';
-        if (qty >= stock) {
+        if (!unlimited && qty >= stock) {
             plusBtn.disabled = true;
             plusBtn.style.opacity = '0.4';
             plusBtn.style.cursor = 'not-allowed';
@@ -9159,11 +9306,12 @@ setInterval(updatePosCurrentTime, 15000);
 function updateLowStockNavBadge() {
     const badge = $('navLowStockBadge');
     if (!badge) return;
-    const lowCount = products.filter(p => {
+    const lowCount = isStockTrackingEnabled() ? products.filter(p => {
+        if (isProductUnlimited(p)) return false;
         const q = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 1;
         const th = (p.lowStockThreshold !== undefined && p.lowStockThreshold !== null) ? parseInt(p.lowStockThreshold, 10) : LOW_STOCK_THRESHOLD;
         return q <= th;
-    }).length;
+    }).length : 0;
 
     if (lowCount > 0) {
         badge.textContent = lowCount;
@@ -9207,9 +9355,21 @@ function renderPosQuickProducts() {
 
     touchGrid.innerHTML = filtered.slice(0, 60).map(p => {
         const inCart = getCartItemQty(p.id);
-        const totalStock = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 1;
-        const available = Math.max(0, totalStock - inCart);
-        const isOut = totalStock <= 0 || available <= 0;
+        const unlimited = isProductUnlimited(p);
+        const totalStock = (!unlimited && p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 1;
+        const available = unlimited ? 99999 : Math.max(0, totalStock - inCart);
+        const isOut = !unlimited && (totalStock <= 0 || available <= 0);
+
+        let stockText = '';
+        if (unlimited) {
+            stockText = isStockTrackingEnabled() ? '<span style="color:var(--green);font-weight:800;">مفتوح</span>' : '';
+        } else if (totalStock <= 0) {
+            stockText = 'نفدت';
+        } else if (available <= 0) {
+            stockText = 'بالسلة';
+        } else {
+            stockText = `متبقي ${available}`;
+        }
 
         return `
             <div class="pos-touch-card ${isOut ? 'out-of-stock' : ''}" 
@@ -9223,8 +9383,8 @@ function renderPosQuickProducts() {
                 </div>
                 <div class="pos-touch-info">
                     <div class="pos-touch-name" title="${esc(p.name)}">${esc(p.name)}</div>
-                    <div class="pos-touch-stock ${available <= 5 ? 'low' : ''}">
-                        ${totalStock <= 0 ? 'نفدت' : (available <= 0 ? 'بالسلة' : `متبقي ${available}`)}
+                    <div class="pos-touch-stock ${(!unlimited && available <= 5) ? 'low' : ''}" style="${!stockText ? 'visibility:hidden;' : ''}">
+                        ${stockText || '—'}
                     </div>
                 </div>
             </div>`;
@@ -9246,9 +9406,10 @@ function addPosItemToCart(productId) {
     const p = products.find(x => x.id === productId);
     if (!p) return;
 
+    const unlimited = isProductUnlimited(p);
     const inCart = getCartItemQty(p.id);
-    const totalStock = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 1;
-    if (inCart >= totalStock) {
+    const totalStock = (!unlimited && p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 1;
+    if (!unlimited && inCart >= totalStock) {
         playWarningSound();
         toast(`عذراً، أقصى كمية متاحة في المخزون هي (${totalStock} قطعة)`, 'warning');
         return;
@@ -9267,7 +9428,9 @@ function addPosItemToCart(productId) {
             unitPrice: +p.sell || 0,
             unitCost: +p.whole || 0,
             imgData: p.imgData || '',
-            qty: 1
+            qty: 1,
+            unlimited: unlimited,
+            stockQty: unlimited ? 99999 : totalStock
         });
     }
 
@@ -9377,11 +9540,12 @@ function changeQty(productId, delta) {
     if (!item) return;
 
     const prod = products.find(p => p.id === productId);
-    const stock = (prod && prod.qty !== null && prod.qty !== undefined && !isNaN(prod.qty))
+    const unlimited = isProductUnlimited(prod);
+    const stock = (!unlimited && prod && prod.qty !== null && prod.qty !== undefined && !isNaN(prod.qty))
         ? parseInt(prod.qty, 10)
         : (item.stockQty !== undefined ? item.stockQty : 9999);
 
-    if (delta > 0 && item.qty >= stock) {
+    if (!unlimited && delta > 0 && item.qty >= stock) {
         playWarningSound();
         toast(`عذراً، أقصى كمية متاحة في المخزون هي (${stock} قطعة)`, 'warning');
         return;
@@ -9709,10 +9873,11 @@ async function completeCheckout() {
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري حفظ الفاتورة وخصم المخزون...';
     }
 
-    // 0. فحص المخزون وتنبيه العجز
+    // 0. فحص المخزون وتنبيه العجز (للأصناف المحدودة فقط)
     const outOfStockItems = [];
     for (const item of cart) {
         const prod = products.find(p => p.id === item.id);
+        if (isProductUnlimited(prod)) continue;
         const availQ = (prod && prod.qty !== null && prod.qty !== undefined && !isNaN(prod.qty)) ? parseInt(prod.qty, 10) : 0;
         if (availQ < item.qty) {
             outOfStockItems.push({
@@ -9793,6 +9958,10 @@ async function completeCheckout() {
             const deductedItems = [];
 
             const deductionPromises = cart.map(async item => {
+                const prod = products.find(p => p.id === item.id);
+                if (isProductUnlimited(prod)) {
+                    return { id: item.id, success: true, unlimited: true };
+                }
                 const qtyRef = db.ref(`users_data/${tenant}/products/${item.id}/qty`);
                 const txResult = await qtyRef.transaction(currentQty => {
                     const curQ = (currentQty !== null && currentQty !== undefined && !isNaN(currentQty)) 
@@ -9872,10 +10041,10 @@ async function completeCheckout() {
             }
         }
 
-        // 3. تحديث الكميات محلياً
+        // 3. تحديث الكميات محلياً (للأصناف المحدودة بالمخزون فقط)
         for (const item of cart) {
             const p = products.find(x => x.id === item.id);
-            if (p) {
+            if (p && !isProductUnlimited(p)) {
                 const curQ = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 0;
                 p.qty = curQ - item.qty;
             }
@@ -10668,7 +10837,7 @@ async function executePartialRefund() {
         for (const st of itemsToReturn) {
             const pId = st.item.productId || st.item.id;
             const p = products.find(x => x.id === pId);
-            if (p) {
+            if (p && !isProductUnlimited(p)) {
                 const curQ = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 0;
                 p.qty = curQ + st.returnQty;
             }
@@ -10970,7 +11139,8 @@ function loadStoreSettings() {
         name: currentUserSession?.name || 'سوبرماركت البركة',
         phone: currentUserSession?.phone || '',
         address: 'شارع الجمهورية — المحل الرئيسي',
-        footer: 'البضاعة المباعة تستبدل وترد خلال 14 يوماً مع إحضار أصل الفاتورة. شكراً لثقتكم وزيارتكم!'
+        footer: 'البضاعة المباعة تستبدل وترد خلال 14 يوماً مع إحضار أصل الفاتورة. شكراً لثقتكم وزيارتكم!',
+        trackStock: true
     };
     if (raw) {
         try { Object.assign(settings, JSON.parse(raw)); } catch {}
@@ -10979,21 +11149,106 @@ function loadStoreSettings() {
     if ($('stPhone')) $('stPhone').value = settings.phone || '';
     if ($('stAddress')) $('stAddress').value = settings.address || '';
     if ($('stFooter')) $('stFooter').value = settings.footer || '';
+    if ($('stTrackStock')) $('stTrackStock').checked = settings.trackStock !== undefined ? settings.trackStock : true;
 
     if ($('headerStoreName')) $('headerStoreName').textContent = settings.name;
 }
 
+function handleStockTrackingSettingChange() {
+    const isChecked = $('stTrackStock') ? $('stTrackStock').checked : true;
+    toast(isChecked 
+        ? 'تم تفعيل نظام تتبع كميات المخزون والنواقص' 
+        : 'تم تفعيل وضع المطاعم والكافيهات (كميات مفتوحة بدون تتبع كميات)', 
+        'info'
+    );
+}
+
 function saveStoreSettings(e) {
     if (e) e.preventDefault();
+    const trackStock = $('stTrackStock') ? $('stTrackStock').checked : true;
     const settings = {
         name: $('stName')?.value.trim() || 'نظام هاربي',
         phone: $('stPhone')?.value.trim() || '',
         address: $('stAddress')?.value.trim() || '',
-        footer: $('stFooter')?.value.trim() || ''
+        footer: $('stFooter')?.value.trim() || '',
+        trackStock: trackStock
     };
     localStorage.setItem(getStoreSettingsKey(), JSON.stringify(settings));
     if ($('headerStoreName')) $('headerStoreName').textContent = settings.name;
+
+    renderProducts();
+    updateCatTabs();
+    updateStats();
+    if (typeof renderPosQuickProducts === 'function') renderPosQuickProducts();
+    if (typeof updateLowStockNavBadge === 'function') updateLowStockNavBadge();
+
     toast('تم حفظ إعدادات وهوية المتجر بنجاح', 'success');
+}
+
+async function loadRestaurantDemoStoreData() {
+    const ok = await showConfirmDialog({
+        title: 'تحميل مطعم وكافيه تجريبي',
+        text: 'هل تريد تحميل متجر المطاعم والكافيهات التجريبي؟ سيتم إضافة 20 وجبة وسندوتش ومشروب بدون كميات (كميات غير محدودة) مع تفعيل وضع المطاعم فوراً.',
+        icon: 'fa-utensils',
+        iconColor: '#f97316',
+        confirmText: 'تحميل مطعم تجريبي',
+        confirmColor: 'linear-gradient(135deg, #f97316, #ea580c)',
+        cancelText: 'إلغاء'
+    });
+    if (!ok) return;
+
+    const demoProducts = [
+        { id: 3001, serial: '6229001001', name: 'ساندوتش برجر دبل بيف تشيز بيكون', cat: 'برجر وسندوتشات', whole: 75, sell: 135, unlimitedQty: true, qty: null, desc: 'قطعتين لحم أنجوس مشوي على اللهب مع صوص الشيدر السائل وبيكون بقري مقرمش وخس وطماطم.', imgData: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300', imgType: 'url' },
+        { id: 3002, serial: '6229001002', name: 'ساندوتش برجر مشروم سويسري مدخن', cat: 'برجر وسندوتشات', whole: 80, sell: 140, unlimitedQty: true, qty: null, desc: 'لحم بقري فاخر مغطى بالمشروم الطازج السوتيه وصوص الجبنة السويسرية الغنية.', imgData: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=300', imgType: 'url' },
+        { id: 3003, serial: '6229001003', name: 'ساندوتش شاورما فراخ عربي سوبر', cat: 'شاورما وعربي', whole: 50, sell: 95, unlimitedQty: true, qty: null, desc: 'شاورما دجاج متبلة بالخلطة السورية مع تومية وخيار مخلل في خبز صاج محمص مقرمش.', imgData: 'https://images.unsplash.com/photo-1633321702518-7feccafb94d5?w=300', imgType: 'url' },
+        { id: 3004, serial: '6229001004', name: 'ساندوتش شاورما لحمة كيزر بالبقدونس والطحينة', cat: 'شاورما وعربي', whole: 55, sell: 105, unlimitedQty: true, qty: null, desc: 'شرائح لحم بلدي طري متبل مع صوص طحينة سمسم فاخرة وبصل وسماق وبقدونس.', imgData: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=300', imgType: 'url' },
+        { id: 3005, serial: '6229001005', name: 'ساندوتش تشيكن زنجر كرانشي سبايسي', cat: 'برجر وسندوتشات', whole: 45, sell: 85, unlimitedQty: true, qty: null, desc: 'صدر دجاج مقرمش حار مع صوص الرانش وصوص الجبنة والخس الطازج.', imgData: 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=300', imgType: 'url' },
+        { id: 3006, serial: '6229001006', name: 'حواوشي بلدي مخصوص بالسمن البلدي', cat: 'شاورما وعربي', whole: 35, sell: 65, unlimitedQty: true, qty: null, desc: 'لحم بلدي مفروم بالبصل والفلفل الأخضر والتوابل الشرقية مخبوز بالفرن بالسمن.', imgData: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=300', imgType: 'url' },
+        { id: 3007, serial: '6229002001', name: 'بيتزا بيبروني إيطاليانو فاخرة - Large', cat: 'بيتزا وفطائر', whole: 110, sell: 195, unlimitedQty: true, qty: null, desc: 'عجينة نابوليتان إيطالية رقيقة مع صلصة طماطم سان مارزانو، موتزاريلا وبيبروني بقري.', imgData: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=300', imgType: 'url' },
+        { id: 3008, serial: '6229002002', name: 'بيتزا كواترو فورماجي (4 أجبان) - Large', cat: 'بيتزا وفطائر', whole: 120, sell: 210, unlimitedQty: true, qty: null, desc: 'مزيج فاخر من جبن الموتزاريلا، البارميزان، الجودة، والريكوتا وصوص الريحان.', imgData: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300', imgType: 'url' },
+        { id: 3009, serial: '6229002003', name: 'بيتزا مارجريتا كلاسيك بالريحان - Medium', cat: 'بيتزا وفطائر', whole: 70, sell: 130, unlimitedQty: true, qty: null, desc: 'صلصة طماطم طازجة، جبنة موتزاريلا بيضاء، زيت زيتون بكر ممتاز وأوراق ريحان.', imgData: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=300', imgType: 'url' },
+        { id: 3010, serial: '6229002004', name: 'فطيرة سجق شرقي كيري وموتزاريلا - Large', cat: 'بيتزا وفطائر', whole: 95, sell: 175, unlimitedQty: true, qty: null, desc: 'فطير مشلتت مورق محشو سجق شرقي اسكندراني مع جبنة كيري وفلفل وزيتون وموتزاريلا.', imgData: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300', imgType: 'url' },
+        { id: 3011, serial: '6229003001', name: 'كريب شاورما ميكس كرانشي', cat: 'كريب ووافل', whole: 45, sell: 85, unlimitedQty: true, qty: null, desc: 'كريب مثلث مقرمش محشو قطع شاورما دجاج ولحم وستريبس مع صوصات مشكلة.', imgData: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=300', imgType: 'url' },
+        { id: 3012, serial: '6229003002', name: 'كريب نوتيلا بالموز والمكسرات والبندق', cat: 'كريب ووافل', whole: 35, sell: 70, unlimitedQty: true, qty: null, desc: 'شوكولاتة نوتيلا أصلية دافئة مع شرائح الموز الطازج ورشة بندق مفروم وصوص كراميل.', imgData: 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=300', imgType: 'url' },
+        { id: 3013, serial: '6229004001', name: 'وجبة نصف دجاجة مشوية تكا مع أرز بسمتي', cat: 'وجبات وأطباق', whole: 85, sell: 155, unlimitedQty: true, qty: null, desc: 'دجاج مشوي على الفحم متبل ببهارات التكا الهندية مع أرز بسمتي مبهر وتومية وبطاطس.', imgData: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=300', imgType: 'url' },
+        { id: 3014, serial: '6229004002', name: 'مكرونة فيتوتشيني وايت صوص دجاج ومشروم', cat: 'وجبات وأطباق', whole: 60, sell: 115, unlimitedQty: true, qty: null, desc: 'مكرونة إيطالية في صوص الكريمة اللباني الغنية مع صدور دجاج مشوية ومشروم وجبن بارميزان.', imgData: 'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=300', imgType: 'url' },
+        { id: 3015, serial: '6229005001', name: 'قهوة إسبريسو دوبل كولومبي فاخر', cat: 'مشروبات ساخنة', whole: 15, sell: 35, unlimitedQty: true, qty: null, desc: 'شوت مزدوج من حبوب بن كولومبي 100% أرابيكا محمص باحترافية مع كريمة ذهبية كثيفة.', imgData: 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=300', imgType: 'url' },
+        { id: 3016, serial: '6229005002', name: 'كابتشينو إيطاليانو رغوة حليب كريمي', cat: 'مشروبات ساخنة', whole: 22, sell: 50, unlimitedQty: true, qty: null, desc: 'إسبريسو مدمج مع حليب طازج مبخر برغوة ناعمة مخملية مع رشة كاكاو بلجيكي.', imgData: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=300', imgType: 'url' },
+        { id: 3017, serial: '6229006001', name: 'موخيتو ليمون ونعناع منعش مثلج', cat: 'مشروبات وعصائر باردة', whole: 18, sell: 45, unlimitedQty: true, qty: null, desc: 'ليمون طازج مع أوراق نعناع خضراء وصودا مثلجة ومجروشة وسيرب السكر الخفيف.', imgData: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=300', imgType: 'url' },
+        { id: 3018, serial: '6229006002', name: 'ميلك شيك لوتس كراميل بالكريمة', cat: 'مشروبات وعصائر باردة', whole: 28, sell: 65, unlimitedQty: true, qty: null, desc: 'آيس كريم فانيليا مخفوق مع بسكويت لوتس وزبدة اللوتس الأصلية وكريمة مخفوقة.', imgData: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=300', imgType: 'url' },
+        { id: 3019, serial: '6229006003', name: 'عصير مانجو فريش طبيعي 100%', cat: 'مشروبات وعصائر باردة', whole: 20, sell: 45, unlimitedQty: true, qty: null, desc: 'مانجو طبيعية طازجة مثلجة بدون إضافة مواد حافظة أو ألوان صناعية.', imgData: 'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=300', imgType: 'url' },
+        { id: 3020, serial: '6229006004', name: 'بطاطس مقلية كريسبي صوص شيدر', cat: 'برجر وسندوتشات', whole: 15, sell: 35, unlimitedQty: true, qty: null, desc: 'أصابع بطاطس ذهبية مقرمشة ساخنة مع رشة توابل باربيكيو وصوص شيدر كريمي.', imgData: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=300', imgType: 'url' }
+    ];
+
+    products = demoProducts;
+    localStorage.setItem(getProdsStorageKey(), JSON.stringify(products));
+
+    const tenant = getTenantKey();
+    if (db && tenant !== 'global' && tenant !== 'DEMO-USER' && navigator.onLine) {
+        try {
+            const mapData = {};
+            products.forEach(p => { mapData[p.id] = p; });
+            await db.ref(`users_data/${tenant}/products`).set(mapData);
+        } catch (e) { console.warn('Could not sync demo to firebase:', e); }
+    }
+
+    const demoSettings = {
+        name: 'مطعم وكافيه البركة',
+        phone: '01012345678',
+        address: 'القاهرة — التجمع الخامس — شارع التسعين',
+        footer: 'شكراً لزيارتكم مطعم وكافيه البركة! أهلاً بكم دائماً.',
+        trackStock: false
+    };
+    localStorage.setItem(getStoreSettingsKey(), JSON.stringify(demoSettings));
+    loadStoreSettings();
+
+    renderProducts();
+    updateCatTabs();
+    updateStats();
+    updateLowStockNavBadge();
+    switchView('pos');
+    playSuccessSound();
+    toast('تم تجهيز مطعم وكافيه تجريبي متكامل بدون كميات بنجاح — جاهز للطلبات والبيع الفوري!', 'success');
 }
 
 async function loadDemoStoreData() {
