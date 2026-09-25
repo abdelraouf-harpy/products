@@ -888,6 +888,253 @@
         .sort-opt.active i { color: var(--primary); }
         .sort-opt.active .check-ico { opacity: 1; }
 
+        /* Reorder Toggle Buttons */
+        .reorder-toggle-btn {
+            padding: 11px 14px;
+            background: var(--card);
+            border: 1.5px solid var(--border);
+            border-radius: 11px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all var(--tr);
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-family: inherit;
+        }
+        .reorder-toggle-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67,97,238,0.12);
+        }
+        .reorder-toggle-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 14px rgba(67,97,238,0.35);
+        }
+
+        .pos-reorder-btn {
+            padding: 6px 12px;
+            background: var(--card);
+            border: 1.5px solid var(--border);
+            border-radius: 9px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all var(--tr);
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-family: inherit;
+        }
+        .pos-reorder-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .pos-reorder-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 3px 10px rgba(67,97,238,0.35);
+        }
+
+        /* Reorder Mode Banner */
+        .reorder-active-banner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.12), rgba(114, 9, 183, 0.1));
+            border: 1.5px dashed var(--primary);
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-bottom: 14px;
+            color: var(--text);
+            font-size: 0.88rem;
+            font-weight: 700;
+            animation: menuFade 0.22s ease;
+        }
+        body.reorder-mode-active .reorder-active-banner {
+            display: flex;
+        }
+        .btn-done-reorder {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-weight: 800;
+            font-size: 0.82rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .btn-done-reorder:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        /* Product Card Drag & Drop Elements */
+        .card-drag-handle {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 8;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+            touch-action: none;
+        }
+        .card-drag-handle:hover {
+            background: var(--primary);
+            transform: scale(1.12);
+        }
+        .card-drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .card-reorder-arrows {
+            display: none;
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            right: 8px;
+            z-index: 8;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        body.reorder-mode-active .card-reorder-arrows,
+        body.pos-reorder-active .card-reorder-arrows {
+            display: flex;
+        }
+        .reorder-arrow-btn {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(6px);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 5px 4px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .reorder-arrow-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Drag Over & Dragging States */
+        .product-card.dragging,
+        .pos-touch-card.dragging,
+        .product-card.touch-drag-source,
+        .pos-touch-card.touch-drag-source {
+            opacity: 0.35 !important;
+            transform: scale(0.96) !important;
+            border: 2px dashed var(--primary) !important;
+            box-shadow: none !important;
+        }
+
+        .product-card.drag-over,
+        .pos-touch-card.drag-over {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.35), var(--shadow-lg) !important;
+            transform: scale(1.02) !important;
+        }
+        .product-card.drag-over-before,
+        .pos-touch-card.drag-over-before {
+            box-shadow: 0 0 0 3px var(--primary), var(--shadow-lg) !important;
+            border-right: 4px solid var(--primary) !important;
+        }
+        .product-card.drag-over-after,
+        .pos-touch-card.drag-over-after {
+            box-shadow: 0 0 0 3px var(--primary), var(--shadow-lg) !important;
+            border-left: 4px solid var(--primary) !important;
+        }
+
+        /* While Reorder Mode is active */
+        body.reorder-mode-active .product-card {
+            border-color: rgba(67, 97, 238, 0.38);
+            cursor: grab;
+        }
+        body.reorder-mode-active .product-card:active {
+            cursor: grabbing;
+        }
+        body.reorder-mode-active .card-drag-handle {
+            background: var(--primary);
+            color: #fff;
+            animation: pulseGrip 1.4s infinite;
+        }
+        @keyframes pulseGrip {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* Floating Touch Drag Avatar */
+        .touch-drag-avatar {
+            position: fixed;
+            z-index: 99999;
+            pointer-events: none;
+            width: 140px;
+            background: var(--card);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            opacity: 0.95;
+            transform: translate(-50%, -50%) scale(1.05);
+            transition: transform 0.05s linear;
+        }
+        .touch-drag-avatar img {
+            width: 100%;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .touch-drag-avatar .avatar-name {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: var(--text);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
         /* Category Tabs */
         .cat-tabs {
             display: flex;
@@ -4087,7 +4334,13 @@
                         </div>
 
                         <!-- Touch Quick Categories & Items Selector -->
-                        <div class="pos-cat-bar" id="posCatBar"></div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+                            <div class="pos-cat-bar" id="posCatBar" style="margin-bottom:0;flex:1;"></div>
+                            <button type="button" class="pos-reorder-btn" id="posReorderBtn" onclick="togglePosReorderMode()" title="ترتيب الأصناف بالسحب والإفلات">
+                                <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                                <span id="posReorderBtnText">ترتيب</span>
+                            </button>
+                        </div>
                         <div class="pos-touch-grid" id="posTouchGrid"></div>
                     </div>
                 </div>
@@ -4405,6 +4658,11 @@
                         <i class="fa-solid fa-chevron-down" style="font-size:0.72rem;color:var(--muted);"></i>
                     </button>
                     <div class="sort-menu" id="sortMenu">
+                        <div class="sort-opt" data-val="custom">
+                            <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                            <span>ترتيب يدوي مخصص</span>
+                            <i class="fa-solid fa-check check-ico"></i>
+                        </div>
                         <div class="sort-opt active" data-val="newest">
                             <i class="fa-solid fa-clock"></i>
                             <span>الأحدث</span>
@@ -4442,10 +4700,26 @@
                         </div>
                     </div>
                 </div>
+
+                <button type="button" class="reorder-toggle-btn" id="reorderToggleBtn" onclick="toggleReorderMode()" title="ترتيب الأصناف بالسحب والإفلات">
+                    <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                    <span class="reorder-btn-label">ترتيب الأصناف</span>
+                </button>
             </div>
 
             <div class="cat-tabs" id="catTabs"></div>
             <div class="results-info" id="resultsInfo"></div>
+
+            <!-- Reorder Mode Active Banner -->
+            <div class="reorder-active-banner" id="reorderActiveBanner">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <i class="fa-solid fa-arrows-up-down-left-right" style="color:var(--primary);font-size:1.15rem;"></i>
+                    <span>وضع الترتيب مفعّل — اسحب أي صنف لوضعه في مكانه المطلوب أو استخدم أزرار التقديم والتأخير.</span>
+                </div>
+                <button type="button" class="btn-done-reorder" onclick="toggleReorderMode()">
+                    <i class="fa-solid fa-check"></i> حفظ وإنهاء
+                </button>
+            </div>
             <div class="products-grid" id="productsGrid"></div>
 
             <div class="load-more-wrap" id="loadMoreWrap" style="display:none">
@@ -5225,12 +5499,20 @@ function compress(file, maxW=900, maxH=900, q=0.85) {
 
 let products = [];
 let catFilter  = 'الكل';
-let sortBy     = 'newest';
+let sortBy     = localStorage.getItem('harpy_sort_by') || 'custom';
 let page       = 1;
 const PER_PAGE = 12;
 let pendingDel = null;
 let currentDetailProduct = null;
 let licenseWatcherUnsub = null;
+
+// Reordering & Drag-and-Drop State
+let isReorderMode = false;
+let isPosReorderMode = false;
+let isDraggingCard = false;
+let isTouchDragging = false;
+let draggedProductId = null;
+let dragAvatar = null;
 
 const $  = id => document.getElementById(id);
 const productForm   = $('productForm');
@@ -6603,6 +6885,7 @@ function initUserProductsSync() {
             }
             return p;
         });
+        products = applySavedProductOrder(products);
     } catch {
         products = [];
     }
@@ -6642,6 +6925,9 @@ function initUserProductsSync() {
             }
             return p;
         });
+
+        // تطبيق الترتيب المخصص المحفوظ
+        products = applySavedProductOrder(products);
         
         localStorage.setItem(getProdsStorageKey(), JSON.stringify(products));
         renderProducts();
@@ -6649,6 +6935,17 @@ function initUserProductsSync() {
         updateCatTabs();
         if (typeof renderPosQuickProducts === 'function') renderPosQuickProducts();
         if (typeof updateLowStockNavBadge === 'function') updateLowStockNavBadge();
+    });
+
+    // مراقبة الترتيب المخصص السحابي للأصناف ومزامنته فورياً
+    db.ref(`users_data/${userKey}/products_order`).on('value', snap => {
+        const orderVal = snap.val();
+        if (Array.isArray(orderVal)) {
+            localStorage.setItem(`harpy_order_${userKey}`, JSON.stringify(orderVal));
+            products = applySavedProductOrder(products);
+            renderProducts();
+            if (typeof renderPosQuickProducts === 'function') renderPosQuickProducts();
+        }
     });
 }
 
@@ -6679,6 +6976,7 @@ async function deleteProductFromCloud(prodId) {
 
 /* Sort Dropdown Controls */
 const sortLabels = {
+    custom: 'ترتيب يدوي مخصص',
     newest: 'الأحدث',
     oldest: 'الأقدم',
     name_az: 'الاسم (أ - ي)',
@@ -6687,6 +6985,13 @@ const sortLabels = {
     price_desc: 'السعر: الأعلى أولاً',
     profit_desc: 'الأعلى ربحاً'
 };
+
+if (currentSortLabel) {
+    currentSortLabel.textContent = sortLabels[sortBy] || 'ترتيب يدوي مخصص';
+}
+document.querySelectorAll('.sort-opt').forEach(o => {
+    o.classList.toggle('active', o.getAttribute('data-val') === sortBy);
+});
 
 sortBtn.addEventListener('click', e => {
     e.stopPropagation();
@@ -6698,7 +7003,8 @@ document.querySelectorAll('.sort-opt').forEach(opt => {
     opt.addEventListener('click', () => {
         const val = opt.getAttribute('data-val');
         sortBy = val;
-        currentSortLabel.textContent = sortLabels[val] || 'الأحدث';
+        localStorage.setItem('harpy_sort_by', val);
+        currentSortLabel.textContent = sortLabels[val] || 'ترتيب يدوي مخصص';
         document.querySelectorAll('.sort-opt').forEach(o => o.classList.remove('active'));
         opt.classList.add('active');
         sortMenu.classList.remove('open');
@@ -6903,7 +7209,339 @@ inCat.addEventListener('focus', () => renderCatDrop(inCat.value));
 inCat.addEventListener('input', () => renderCatDrop(inCat.value));
 inCat.addEventListener('blur',  () => setTimeout(() => { catDrop.style.display = 'none'; }, 150));
 
+/* ============================================================
+   نظام سحب وإفلات وإعادة ترتيب الأصناف المخصص (Drag & Drop Reordering)
+   ============================================================ */
+
+function applySavedProductOrder(prods) {
+    if (!Array.isArray(prods) || prods.length <= 1) return prods;
+    const tenant = getTenantKey();
+    let orderIds = null;
+    try {
+        orderIds = JSON.parse(localStorage.getItem(`harpy_order_${tenant}`));
+    } catch (e) {}
+
+    if (Array.isArray(orderIds) && orderIds.length > 0) {
+        const orderMap = new Map();
+        orderIds.forEach((id, idx) => orderMap.set(Number(id), idx));
+        return [...prods].sort((a, b) => {
+            const idxA = orderMap.has(Number(a.id)) ? orderMap.get(Number(a.id)) : (a.sortOrder !== undefined ? a.sortOrder : 999999);
+            const idxB = orderMap.has(Number(b.id)) ? orderMap.get(Number(b.id)) : (b.sortOrder !== undefined ? b.sortOrder : 999999);
+            return idxA - idxB;
+        });
+    } else if (prods.some(p => p && p.sortOrder !== undefined)) {
+        return [...prods].sort((a, b) => (a.sortOrder ?? 999999) - (b.sortOrder ?? 999999));
+    }
+    return prods;
+}
+
+function reorderProduct(sourceId, targetId, place = 'before') {
+    sourceId = Number(sourceId);
+    targetId = Number(targetId);
+    if (!sourceId || !targetId || sourceId === targetId) return;
+
+    const fromIdx = products.findIndex(p => p.id === sourceId);
+    if (fromIdx === -1) return;
+
+    const [movedItem] = products.splice(fromIdx, 1);
+    let toIdx = products.findIndex(p => p.id === targetId);
+    if (toIdx === -1) {
+        products.push(movedItem);
+    } else {
+        if (place === 'after') toIdx++;
+        products.splice(toIdx, 0, movedItem);
+    }
+
+    // تعيين ترتيب رقمي متسلسل لكل منتج
+    products.forEach((p, idx) => {
+        p.sortOrder = idx;
+    });
+
+    // الحفظ المحلي
+    const tenant = getTenantKey();
+    localStorage.setItem(getProdsStorageKey(), JSON.stringify(products));
+    const orderIds = products.map(p => p.id);
+    localStorage.setItem(`harpy_order_${tenant}`, JSON.stringify(orderIds));
+
+    // الحفظ السحابي إذا كان المستخدم مسجلاً
+    if (db && currentUserSession && currentUserSession.key && tenant !== 'DEMO-USER' && tenant !== 'global') {
+        db.ref(`users_data/${currentUserSession.key}/products_order`).set(orderIds).catch(err => console.warn('Could not sync order to cloud:', err));
+    }
+
+    // التحويل فوراً لنمط الترتيب المخصص
+    sortBy = 'custom';
+    localStorage.setItem('harpy_sort_by', 'custom');
+    if ($('currentSortLabel')) $('currentSortLabel').textContent = 'ترتيب يدوي مخصص';
+    document.querySelectorAll('.sort-opt').forEach(o => {
+        o.classList.toggle('active', o.getAttribute('data-val') === 'custom');
+    });
+
+    renderProducts();
+    if (typeof renderPosQuickProducts === 'function') renderPosQuickProducts();
+
+    toast(`تم نقل "${movedItem.name}" وحفظ الترتيب بنجاح`, 'success');
+    if (navigator.vibrate) navigator.vibrate(35);
+}
+
+function moveProductStep(id, direction) {
+    id = Number(id);
+    const idx = products.findIndex(p => p.id === id);
+    if (idx === -1) return;
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= products.length) return;
+
+    const targetId = products[targetIdx].id;
+    const place = direction > 0 ? 'after' : 'before';
+    reorderProduct(id, targetId, place);
+}
+
+function toggleReorderMode() {
+    isReorderMode = !isReorderMode;
+    document.body.classList.toggle('reorder-mode-active', isReorderMode);
+    const btn = $('reorderToggleBtn');
+    if (btn) {
+        btn.classList.toggle('active', isReorderMode);
+        btn.innerHTML = isReorderMode 
+            ? '<i class="fa-solid fa-check"></i> <span>إنهاء الترتيب</span>'
+            : '<i class="fa-solid fa-arrows-up-down-left-right"></i> <span class="reorder-btn-label">ترتيب الأصناف</span>';
+    }
+    if (isReorderMode && sortBy !== 'custom') {
+        sortBy = 'custom';
+        localStorage.setItem('harpy_sort_by', 'custom');
+        if ($('currentSortLabel')) $('currentSortLabel').textContent = 'ترتيب يدوي مخصص';
+        document.querySelectorAll('.sort-opt').forEach(o => {
+            o.classList.toggle('active', o.getAttribute('data-val') === 'custom');
+        });
+        renderProducts();
+    }
+    if (isReorderMode) {
+        toast('وضع ترتيب الأصناف مفعّل: اسحب أي صنف لوضعه في مكانه، أو استخدم أزرار التقديم والتأخير', 'info');
+    } else {
+        toast('تم حفظ الترتيب بنجاح', 'success');
+    }
+}
+
+function togglePosReorderMode() {
+    isPosReorderMode = !isPosReorderMode;
+    document.body.classList.toggle('pos-reorder-active', isPosReorderMode);
+    const btn = $('posReorderBtn');
+    const txt = $('posReorderBtnText');
+    if (btn) btn.classList.toggle('active', isPosReorderMode);
+    if (txt) txt.textContent = isPosReorderMode ? 'إنهاء' : 'ترتيب';
+
+    renderPosQuickProducts();
+    if (isPosReorderMode) {
+        toast('وضع ترتيب الكاشير مفعّل — اسحب الأصناف لتغيير ترتيبها في الشاشة السريعة', 'info');
+    } else {
+        toast('تم حفظ ترتيب أصناف الكاشير بنجاح', 'success');
+    }
+}
+
+function handlePosCardClick(e, id) {
+    if (isPosReorderMode) return;
+    if (isDraggingCard || isTouchDragging) return;
+    if (e.target.closest('.card-drag-handle') || e.target.closest('.card-reorder-arrows')) return;
+    addPosItemToCart(id);
+}
+
+function attachCardDragListeners(card, p, viewType = 'inventory') {
+    card.draggable = true;
+    card.dataset.id = p.id;
+
+    // سحب وإفلات الفأرة (Desktop HTML5 Drag & Drop)
+    card.addEventListener('dragstart', (e) => {
+        if (e.target.closest('input, button, select, textarea')) {
+            e.preventDefault();
+            return;
+        }
+        isDraggingCard = true;
+        draggedProductId = p.id;
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(p.id));
+
+        if (sortBy !== 'custom') {
+            sortBy = 'custom';
+            localStorage.setItem('harpy_sort_by', 'custom');
+            if ($('currentSortLabel')) $('currentSortLabel').textContent = 'ترتيب يدوي مخصص';
+            document.querySelectorAll('.sort-opt').forEach(o => {
+                o.classList.toggle('active', o.getAttribute('data-val') === 'custom');
+            });
+        }
+    });
+
+    card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        const selector = viewType === 'inventory' ? '.product-card' : '.pos-touch-card';
+        document.querySelectorAll(selector).forEach(c => {
+            c.classList.remove('drag-over', 'drag-over-before', 'drag-over-after');
+        });
+        setTimeout(() => {
+            isDraggingCard = false;
+            draggedProductId = null;
+        }, 120);
+    });
+
+    card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!draggedProductId || Number(draggedProductId) === p.id) return;
+        e.dataTransfer.dropEffect = 'move';
+
+        const rect = card.getBoundingClientRect();
+        const midX = rect.left + rect.width / 2;
+        const isAfter = document.dir === 'rtl' ? (e.clientX < midX) : (e.clientX > midX);
+
+        card.classList.remove('drag-over-before', 'drag-over-after');
+        card.classList.add(isAfter ? 'drag-over-after' : 'drag-over-before');
+        card.classList.add('drag-over');
+    });
+
+    card.addEventListener('dragleave', (e) => {
+        if (!card.contains(e.relatedTarget)) {
+            card.classList.remove('drag-over', 'drag-over-before', 'drag-over-after');
+        }
+    });
+
+    card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        card.classList.remove('drag-over', 'drag-over-before', 'drag-over-after');
+        const sourceId = Number(e.dataTransfer.getData('text/plain') || draggedProductId);
+        if (!sourceId || sourceId === p.id) return;
+
+        const rect = card.getBoundingClientRect();
+        const midX = rect.left + rect.width / 2;
+        const isAfter = document.dir === 'rtl' ? (e.clientX < midX) : (e.clientX > midX);
+
+        reorderProduct(sourceId, p.id, isAfter ? 'after' : 'before');
+    });
+
+    // دعم السحب باللمس على الموبايل والتابلت (Mobile Touch Drag & Drop)
+    let touchTimer = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let activeTouchTarget = null;
+
+    card.addEventListener('touchstart', (e) => {
+        if (e.target.closest('button, input, select, textarea')) return;
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+
+        const isHandle = Boolean(e.target.closest('.card-drag-handle'));
+        const delay = (isHandle || isReorderMode || isPosReorderMode) ? 80 : 350;
+
+        touchTimer = setTimeout(() => {
+            isTouchDragging = true;
+            draggedProductId = p.id;
+            card.classList.add('touch-drag-source');
+            if (navigator.vibrate) navigator.vibrate(35);
+
+            if (!dragAvatar) {
+                dragAvatar = document.createElement('div');
+                dragAvatar.className = 'touch-drag-avatar';
+                dragAvatar.innerHTML = `
+                    <img src="${p.imgData || PLACEHOLDER}" alt="">
+                    <span class="avatar-name">${esc(p.name)}</span>
+                `;
+                document.body.appendChild(dragAvatar);
+            }
+            dragAvatar.style.left = `${touch.clientX}px`;
+            dragAvatar.style.top = `${touch.clientY}px`;
+        }, delay);
+    }, { passive: true });
+
+    card.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        const dist = Math.hypot(touch.clientX - touchStartX, touch.clientY - touchStartY);
+
+        if (!isTouchDragging && dist > 12) {
+            clearTimeout(touchTimer);
+            return;
+        }
+
+        if (isTouchDragging) {
+            e.preventDefault();
+            if (dragAvatar) {
+                dragAvatar.style.left = `${touch.clientX}px`;
+                dragAvatar.style.top = `${touch.clientY}px`;
+            }
+
+            if (dragAvatar) dragAvatar.style.display = 'none';
+            const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (dragAvatar) dragAvatar.style.display = 'flex';
+
+            const selector = viewType === 'inventory' ? '.product-card' : '.pos-touch-card';
+            const targetCard = elUnder?.closest(selector);
+
+            document.querySelectorAll(selector).forEach(c => {
+                if (c !== targetCard) c.classList.remove('drag-over', 'drag-over-before', 'drag-over-after');
+            });
+
+            if (targetCard && targetCard !== card) {
+                activeTouchTarget = targetCard;
+                const rect = targetCard.getBoundingClientRect();
+                const midX = rect.left + rect.width / 2;
+                const isAfter = document.dir === 'rtl' ? (touch.clientX < midX) : (touch.clientX > midX);
+                targetCard.classList.remove('drag-over-before', 'drag-over-after');
+                targetCard.classList.add(isAfter ? 'drag-over-after' : 'drag-over-before');
+                targetCard.classList.add('drag-over');
+            } else {
+                activeTouchTarget = null;
+            }
+        }
+    }, { passive: false });
+
+    card.addEventListener('touchend', (e) => {
+        clearTimeout(touchTimer);
+        if (isTouchDragging) {
+            if (dragAvatar) {
+                dragAvatar.remove();
+                dragAvatar = null;
+            }
+            card.classList.remove('touch-drag-source');
+
+            const selector = viewType === 'inventory' ? '.product-card' : '.pos-touch-card';
+            document.querySelectorAll(selector).forEach(c => {
+                c.classList.remove('drag-over', 'drag-over-before', 'drag-over-after');
+            });
+
+            if (activeTouchTarget) {
+                const targetId = Number(activeTouchTarget.dataset.id);
+                const rect = activeTouchTarget.getBoundingClientRect();
+                const midX = rect.left + rect.width / 2;
+                const touch = e.changedTouches[0];
+                const isAfter = document.dir === 'rtl' ? (touch.clientX < midX) : (touch.clientX > midX);
+
+                if (targetId && targetId !== p.id) {
+                    reorderProduct(p.id, targetId, isAfter ? 'after' : 'before');
+                }
+                activeTouchTarget = null;
+            }
+
+            setTimeout(() => {
+                isTouchDragging = false;
+                draggedProductId = null;
+            }, 150);
+        }
+    });
+
+    card.addEventListener('touchcancel', () => {
+        clearTimeout(touchTimer);
+        if (dragAvatar) {
+            dragAvatar.remove();
+            dragAvatar = null;
+        }
+        card.classList.remove('touch-drag-source');
+        isTouchDragging = false;
+        draggedProductId = null;
+        activeTouchTarget = null;
+    });
+}
+
 function sorted(arr) {
+    if (sortBy === 'custom') {
+        return [...arr];
+    }
     const a = [...arr];
     switch(sortBy) {
         case 'newest':     a.sort((x,y)=>y.id-x.id); break;
@@ -6913,6 +7551,7 @@ function sorted(arr) {
         case 'price_asc':  a.sort((x,y)=>(+x.sell||0)-(+y.sell||0)); break;
         case 'price_desc': a.sort((x,y)=>(+y.sell||0)-(+x.sell||0)); break;
         case 'profit_desc':a.sort((x,y)=>((+y.sell||0)-(+y.whole||0))-((+x.sell||0)-(+x.whole||0))); break;
+        default: return a;
     }
     return a;
 }
@@ -7004,7 +7643,25 @@ function makeCard(p) {
     img.referrerPolicy = 'no-referrer';
     img.onerror = () => { img.src = PLACEHOLDER; };
 
+    const dragHandle = document.createElement('div');
+    dragHandle.className = 'card-drag-handle';
+    dragHandle.title = 'اسحب لتحريك وترتيب الصنف';
+    dragHandle.innerHTML = '<i class="fa-solid fa-grip-vertical"></i>';
+
+    const reorderArrows = document.createElement('div');
+    reorderArrows.className = 'card-reorder-arrows';
+    reorderArrows.innerHTML = `
+        <button type="button" class="reorder-arrow-btn" onclick="event.stopPropagation(); moveProductStep(${p.id}, 1)" title="تحريك للأمام">
+            <i class="fa-solid fa-arrow-left"></i> تقديم
+        </button>
+        <button type="button" class="reorder-arrow-btn" onclick="event.stopPropagation(); moveProductStep(${p.id}, -1)" title="تحريك للخلف">
+            تأخير <i class="fa-solid fa-arrow-right"></i>
+        </button>
+    `;
+
     wrap.appendChild(badge);
+    wrap.appendChild(dragHandle);
+    wrap.appendChild(reorderArrows);
     wrap.appendChild(img);
 
     loadImg(p, img);
@@ -7081,8 +7738,6 @@ function makeCard(p) {
     renderCardCartUI(cartWrap, p);
     actions.appendChild(cartWrap);
 
-
-
     info.appendChild(catPill);
     info.appendChild(title);
     info.appendChild(prices);
@@ -7094,10 +7749,15 @@ function makeCard(p) {
     card.appendChild(info);
 
     card.addEventListener('click', e => {
+        if (isReorderMode) return;
+        if (isDraggingCard || isTouchDragging) return;
+        if (e.target.closest('.card-drag-handle') || e.target.closest('.card-reorder-arrows')) return;
         if (!e.target.closest('.act-btn') && !e.target.closest('.prod-desc')) {
             openProductDetails(p);
         }
     });
+
+    attachCardDragListeners(card, p, 'inventory');
 
     return card;
 }
@@ -7973,7 +8633,7 @@ window.addEventListener('pageshow', () => {
     try {
         const savedProds = JSON.parse(localStorage.getItem(getProdsStorageKey()));
         if (savedProds && Array.isArray(savedProds)) {
-            products = savedProds;
+            products = applySavedProductOrder(savedProds);
         }
     } catch {}
     renderProducts();
@@ -8820,18 +9480,32 @@ function renderPosQuickProducts() {
         return;
     }
 
-    touchGrid.innerHTML = filtered.slice(0, 48).map(p => {
+    touchGrid.innerHTML = filtered.slice(0, 60).map(p => {
         const inCart = getCartItemQty(p.id);
         const totalStock = (p.qty !== null && p.qty !== undefined && !isNaN(p.qty)) ? parseInt(p.qty, 10) : 1;
         const available = Math.max(0, totalStock - inCart);
         const isOut = totalStock <= 0 || available <= 0;
 
         return `
-            <div class="pos-touch-card ${isOut ? 'out-of-stock' : ''}" onclick="addPosItemToCart(${p.id})">
+            <div class="pos-touch-card ${isOut ? 'out-of-stock' : ''}" 
+                 draggable="true" 
+                 data-id="${p.id}" 
+                 onclick="handlePosCardClick(event, ${p.id})">
                 <div class="pos-touch-thumb">
                     <img src="${p.imgData || PLACEHOLDER}" alt="${esc(p.name)}" onerror="this.src=PLACEHOLDER">
                     <span class="pos-touch-price">${fmt(p.sell)} ج.م</span>
                     ${inCart > 0 ? `<span class="pos-touch-badge">${inCart}</span>` : ''}
+                    <div class="card-drag-handle" style="top:4px;left:4px;width:26px;height:26px;font-size:0.75rem;" title="اسحب لتحريك الصنف">
+                        <i class="fa-solid fa-grip-vertical"></i>
+                    </div>
+                    <div class="card-reorder-arrows" style="bottom:4px;left:4px;right:4px;">
+                        <button type="button" class="reorder-arrow-btn" onclick="event.stopPropagation(); moveProductStep(${p.id}, 1)" style="padding:2px 4px;font-size:0.7rem;">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <button type="button" class="reorder-arrow-btn" onclick="event.stopPropagation(); moveProductStep(${p.id}, -1)" style="padding:2px 4px;font-size:0.7rem;">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="pos-touch-info">
                     <div class="pos-touch-name" title="${esc(p.name)}">${esc(p.name)}</div>
@@ -8841,6 +9515,12 @@ function renderPosQuickProducts() {
                 </div>
             </div>`;
     }).join('');
+
+    touchGrid.querySelectorAll('.pos-touch-card').forEach(card => {
+        const id = Number(card.dataset.id);
+        const prod = products.find(x => x.id === id);
+        if (prod) attachCardDragListeners(card, prod, 'pos');
+    });
 }
 
 function selectPosCat(cat) {

@@ -1,5 +1,5 @@
-// Harpy POS - Service Worker v3.0
-const CACHE_NAME = 'harpy-pos-cache-v3';
+// Harpy POS - Service Worker v4.0
+const CACHE_NAME = 'harpy-pos-cache-v4';
 
 const STATIC_ASSETS = [
   './',
