@@ -1596,56 +1596,78 @@
 
         .confirm-box {
             background: var(--card);
-            border-radius: 16px;
-            padding: 28px 22px;
-            max-width: 350px;
-            width: 100%;
+            border-radius: 18px;
+            padding: 26px 20px;
+            max-width: 420px;
+            width: 92%;
             text-align: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: popIn 0.22s ease;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+            border: 1px solid var(--border);
+            animation: popIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            box-sizing: border-box;
         }
 
         @keyframes popIn {
-            from { transform: scale(0.82); opacity: 0; }
+            from { transform: scale(0.85); opacity: 0; }
             to   { transform: scale(1);    opacity: 1; }
         }
 
-        .confirm-box .ci { font-size: 2.6rem; color: var(--danger); margin-bottom: 10px; }
-        .confirm-box h3  { font-size: 1.1rem; margin-bottom: 7px; font-weight: 800; }
-        .confirm-box p   { font-size: 0.87rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+        .confirm-box .ci {
+            font-size: 2.2rem;
+            margin: 0 auto 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+        .confirm-box h3  { font-size: 1.15rem; margin-bottom: 8px; font-weight: 800; color: var(--text); }
+        .confirm-box p,
+        .confirm-box .c-desc { font-size: 0.88rem; color: var(--muted); margin-bottom: 20px; line-height: 1.6; word-break: break-word; }
 
-        .confirm-actions { display: flex; gap: 9px; }
+        .confirm-actions { display: flex; gap: 10px; justify-content: center; width: 100%; box-sizing: border-box; }
 
         .cbtn-del {
             flex: 1;
             background: var(--danger);
             color: white;
             border: none;
-            padding: 10px;
-            border-radius: 8px;
+            padding: 10px 16px;
+            border-radius: 10px;
             font-weight: 800;
             font-size: 0.9rem;
             cursor: pointer;
-            transition: background var(--tr);
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
+            min-height: 42px;
+            box-sizing: border-box;
         }
 
-        .cbtn-del:hover { background: #c0392b; }
+        .cbtn-del:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
         .cbtn-cancel {
             flex: 1;
             background: var(--bg);
             color: var(--text);
             border: 1.5px solid var(--border);
-            padding: 10px;
-            border-radius: 8px;
+            padding: 10px 16px;
+            border-radius: 10px;
             font-weight: 800;
             font-size: 0.9rem;
             cursor: pointer;
-            transition: background var(--tr);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 42px;
+            box-sizing: border-box;
         }
 
         .cbtn-cancel:hover { background: var(--border); }
@@ -4807,17 +4829,19 @@
     <img id="lbImg" src="" alt="">
 </div>
 
-<!-- Confirm Delete Modal -->
-<div class="overlay" id="confirmOverlay">
-    <div class="confirm-box">
-        <div class="ci"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <h3>تأكيد الحذف</h3>
-        <p>هل أنت متأكد من حذف هذا المنتج؟<br>لا يمكن التراجع عن هذا الإجراء.</p>
+<!-- Unified Modern Confirmation Modal -->
+<div class="overlay" id="confirmOverlay" style="z-index: 99999;">
+    <div class="confirm-box" onclick="event.stopPropagation()">
+        <div class="ci" id="confirmIcon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3 id="confirmTitle">تأكيد الإجراء</h3>
+        <div id="confirmText" class="c-desc">هل أنت متأكد من المتابعة؟</div>
         <div class="confirm-actions">
-            <button class="cbtn-del" id="doDeleteBtn">
-                <i class="fa-solid fa-trash-can"></i> نعم، احذف
+            <button type="button" class="cbtn-del" id="doConfirmBtn">
+                <i class="fa-solid fa-check"></i> <span>تأكيد</span>
             </button>
-            <button class="cbtn-cancel" onclick="closeConfirm()">إلغاء</button>
+            <button type="button" class="cbtn-cancel" id="cancelConfirmBtn" onclick="closeConfirm(false)">إلغاء</button>
         </div>
     </div>
 </div>
@@ -6539,21 +6563,31 @@ function updateUserUI() {
     }
 }
 
-function logout(confirmPrompt = true) {
-    if (!confirmPrompt || confirm('هل أنت متأكد من تسجيل الخروج؟')) {
-        if (licenseWatcherUnsub && db && currentUserSession) {
-            db.ref(`licenses/${currentUserSession.key}`).off('value', licenseWatcherUnsub);
-        }
-        localStorage.removeItem('harpy_auth_session');
-        currentUserSession = null;
-        products = [];
-        updateUserUI();
-        renderProducts();
-        updateStats();
-        updateCatTabs();
-        document.body.classList.add('auth-locked');
-        authOverlay.classList.add('open');
+async function logout(confirmPrompt = true) {
+    if (confirmPrompt) {
+        const ok = await showConfirmDialog({
+            title: 'تسجيل الخروج',
+            text: 'هل أنت متأكد من رغبتك في تسجيل الخروج من النظام؟',
+            icon: 'fa-right-from-bracket',
+            iconColor: '#ef4444',
+            confirmText: 'تسجيل الخروج',
+            confirmColor: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            cancelText: 'إلغاء'
+        });
+        if (!ok) return;
     }
+    if (licenseWatcherUnsub && db && currentUserSession) {
+        db.ref(`licenses/${currentUserSession.key}`).off('value', licenseWatcherUnsub);
+    }
+    localStorage.removeItem('harpy_auth_session');
+    currentUserSession = null;
+    products = [];
+    updateUserUI();
+    renderProducts();
+    updateStats();
+    updateCatTabs();
+    document.body.classList.add('auth-locked');
+    authOverlay.classList.add('open');
 }
 
 /* ============================================================
@@ -7482,24 +7516,107 @@ function handleFormDelete() {
     }
 }
 
-function openConfirm(id) {
-    pendingDel = id;
-    $('confirmOverlay').classList.add('open');
+/* ============================================================
+   نظام التأكيد التفاعلي الموحد (Modern Unified Confirmation System)
+   ============================================================ */
+let currentConfirmPromiseResolve = null;
+
+function showConfirmDialog(options = {}) {
+    return new Promise((resolve) => {
+        currentConfirmPromiseResolve = resolve;
+
+        const overlay = $('confirmOverlay');
+        const iconContainer = $('confirmIcon');
+        const titleEl = $('confirmTitle');
+        const textEl = $('confirmText');
+        const actionBtn = $('doConfirmBtn');
+        const cancelBtn = $('cancelConfirmBtn');
+
+        const title = options.title || 'تأكيد الإجراء';
+        const text = options.text || '';
+        const html = options.html || '';
+        const icon = options.icon || 'fa-triangle-exclamation';
+        const iconColor = options.iconColor || 'var(--danger)';
+        const confirmText = options.confirmText || 'تأكيد';
+        const cancelText = options.cancelText || 'إلغاء';
+        const confirmColor = options.confirmColor || 'linear-gradient(135deg, var(--danger), #b91c1c)';
+
+        if (titleEl) titleEl.textContent = title;
+        if (textEl) {
+            if (html) textEl.innerHTML = html;
+            else textEl.textContent = text;
+        }
+        if (iconContainer) {
+            iconContainer.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+            iconContainer.style.color = iconColor;
+        }
+        if (actionBtn) {
+            actionBtn.innerHTML = `<span>${confirmText}</span>`;
+            actionBtn.style.background = confirmColor;
+        }
+        if (cancelBtn) {
+            cancelBtn.textContent = cancelText;
+        }
+
+        if (overlay) {
+            overlay.classList.add('open');
+            setTimeout(() => actionBtn?.focus(), 50);
+        }
+    });
 }
 
-function closeConfirm() {
-    pendingDel = null;
-    $('confirmOverlay').classList.remove('open');
+function closeConfirm(result = false) {
+    const overlay = $('confirmOverlay');
+    if (overlay) overlay.classList.remove('open');
+    if (typeof currentConfirmPromiseResolve === 'function') {
+        const fn = currentConfirmPromiseResolve;
+        currentConfirmPromiseResolve = null;
+        fn(result);
+    }
 }
 
-$('doDeleteBtn').addEventListener('click', async () => {
-    if (pendingDel === null) return;
-    const targetId = pendingDel;
-    closeConfirm();
-    
+// Global safety fallback for native alert and confirm
+window.alert = function(msg) {
+    toast(String(msg), 'info');
+};
+window.confirm = function(msg) {
+    console.warn('Native window.confirm is disabled. Please use await showConfirmDialog() instead. Message:', msg);
+    return false;
+};
+
+$('confirmOverlay')?.addEventListener('click', (e) => {
+    if (e.target === $('confirmOverlay')) {
+        closeConfirm(false);
+    }
+});
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && $('confirmOverlay')?.classList.contains('open')) {
+        closeConfirm(false);
+    }
+});
+
+$('doConfirmBtn')?.addEventListener('click', () => {
+    closeConfirm(true);
+});
+
+async function openConfirm(id) {
+    const prod = products.find(p => p.id === id);
+    const prodName = prod ? prod.name : 'هذا المنتج';
+    const ok = await showConfirmDialog({
+        title: 'تأكيد حذف المنتج',
+        text: `هل أنت متأكد من حذف "${prodName}" نهائياً من المخزون؟ لا يمكن التراجع عن هذا الإجراء.`,
+        icon: 'fa-trash-can',
+        iconColor: '#ef4444',
+        confirmText: 'نعم، احذف',
+        confirmColor: 'linear-gradient(135deg, #ef4444, #dc2626)',
+        cancelText: 'إلغاء'
+    });
+    if (!ok) return;
+
     try {
-        await imgDB.del(targetId);
-        await deleteProductFromCloud(targetId);
+        await imgDB.del(id);
+        await deleteProductFromCloud(id);
         toast('تم حذف المنتج بنجاح', 'warning');
         updateStats();
         updateCatTabs();
@@ -7507,7 +7624,7 @@ $('doDeleteBtn').addEventListener('click', async () => {
     } catch (e) {
         toast('حدث خطأ أثناء الحذف', 'error');
     }
-});
+}
 
 let sTimer;
 searchInput.addEventListener('input', () => {
@@ -8827,10 +8944,19 @@ function renderCart() {
     updateSummary();
 }
 
-function clearCart() {
+async function clearCart() {
     const cart = getCart();
     if (!cart.length) return;
-    if (!confirm('هل تريد مسح جميع الأصناف من السلة؟')) return;
+    const ok = await showConfirmDialog({
+        title: 'إفراغ سلة الفاتورة',
+        text: 'هل أنت متأكد من مسح وإفراغ جميع الأصناف من السلة الحالية؟',
+        icon: 'fa-trash-can',
+        iconColor: '#ef4444',
+        confirmText: 'إفراغ السلة',
+        confirmColor: 'linear-gradient(135deg, #ef4444, #dc2626)',
+        cancelText: 'تراجع'
+    });
+    if (!ok) return;
     saveCart([]);
     renderCart();
     renderPosQuickProducts();
@@ -9118,14 +9244,23 @@ function closeParkedInvoicesModal() {
     $('parkedInvoicesModal')?.classList.remove('open');
 }
 
-function restoreParkedInvoice(idx) {
+async function restoreParkedInvoice(idx) {
     const list = getParkedInvoices();
     const item = list[idx];
     if (!item) return;
 
     const curCart = getCart();
     if (curCart.length > 0) {
-        if (!confirm('يوجد منتجات حالية بالسلة، هل تريد استبدالها بالفاتورة المعلقة؟')) return;
+        const ok = await showConfirmDialog({
+            title: 'استئناف الفاتورة المعلقة',
+            text: 'توجد أصناف حالية في السلة، هل تريد استبدالها بمحتويات الفاتورة المعلقة؟',
+            icon: 'fa-clock-rotate-left',
+            iconColor: 'var(--primary)',
+            confirmText: 'نعم، استبدل السلة',
+            confirmColor: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+            cancelText: 'إلغاء'
+        });
+        if (!ok) return;
     }
 
     saveCart(item.cart);
@@ -9145,8 +9280,17 @@ function restoreParkedInvoice(idx) {
     toast('تم استئناف الفاتورة بالسلة بنجاح', 'success');
 }
 
-function discardParkedInvoice(idx) {
-    if (!confirm('هل أنت متأكد من حذف هذه الفاتورة المعلقة؟')) return;
+async function discardParkedInvoice(idx) {
+    const ok = await showConfirmDialog({
+        title: 'حذف الفاتورة المعلقة',
+        text: 'هل أنت متأكد من حذف هذه الفاتورة المعلقة نهائياً؟ لا يمكن استعادتها.',
+        icon: 'fa-trash-can',
+        iconColor: '#ef4444',
+        confirmText: 'نعم، احذف',
+        confirmColor: 'linear-gradient(135deg, #ef4444, #dc2626)',
+        cancelText: 'إلغاء'
+    });
+    if (!ok) return;
     const list = getParkedInvoices();
     list.splice(idx, 1);
     saveParkedInvoices(list);
@@ -9188,10 +9332,21 @@ async function completeCheckout() {
 
     if (outOfStockItems.length > 0) {
         const warningLines = outOfStockItems.map(o => 
-            `• ${o.name}: المطلوب (${o.requested})، المتاح بالمخزن (${o.available})`
-        ).join('\n');
+            `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed var(--border);font-size:0.85rem;">
+                <span style="font-weight:700;color:var(--text);">${esc(o.name)}</span>
+                <span style="color:#ef4444;font-size:0.8rem;white-space:nowrap;margin-right:8px;">المطلوب: <b>${o.requested}</b> | بالمخزن: <b>${o.available}</b></span>
+            </div>`
+        ).join('');
         
-        const proceed = confirm(`تنبيه عجز مخزون:\n${warningLines}\n\nهل تريد المتابعة وإتمام الفاتورة؟`);
+        const proceed = await showConfirmDialog({
+            title: 'تنبيه عجز في المخزون',
+            html: `<div style="text-align:right;margin-bottom:8px;font-size:0.84rem;color:var(--muted);">الكميات المطلوبة لبعض الأصناف أكبر من رصيد المخزن الحالي:</div><div style="background:var(--bg);border-radius:10px;padding:8px 12px;margin-bottom:12px;max-height:160px;overflow-y:auto;text-align:right;border:1px solid var(--border);">${warningLines}</div><div style="font-weight:700;color:var(--text);font-size:0.9rem;">هل ترغب في المتابعة وإتمام الفاتورة بالرغم من العجز؟</div>`,
+            icon: 'fa-triangle-exclamation',
+            iconColor: '#f59e0b',
+            confirmText: 'نعم، متابعة البيع',
+            confirmColor: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            cancelText: 'تراجع وتعديل'
+        });
         if (!proceed) {
             if (btn) {
                 btn.disabled = false;
@@ -10009,9 +10164,16 @@ async function executePartialRefund() {
     const totalRefundAmount = Math.round(itemsToReturn.reduce((sum, st) => sum + (st.returnQty * st.effectivePrice), 0) * 100) / 100;
     const totalItemsCount = itemsToReturn.reduce((sum, st) => sum + st.returnQty, 0);
 
-    if (!confirm(`هل أنت متأكد من استرجاع ${totalItemsCount} قطعة بقيمة ${fmt(totalRefundAmount)} ج.م؟\nسيتم رد الأصناف إلى المخزون وتعديل حسابات الفاتورة فوراً.`)) {
-        return;
-    }
+    const ok = await showConfirmDialog({
+        title: 'تأكيد استرجاع الأصناف',
+        text: `هل أنت متأكد من استرجاع ${totalItemsCount} قطعة بقيمة ${fmt(totalRefundAmount)} ج.م؟ سيتم رد الأصناف إلى المخزون وتعديل حسابات الفاتورة فوراً.`,
+        icon: 'fa-rotate-left',
+        iconColor: '#dc2626',
+        confirmText: 'نعم، استرجاع الأصناف',
+        confirmColor: 'linear-gradient(135deg, #dc2626, #991b1b)',
+        cancelText: 'إلغاء'
+    });
+    if (!ok) return;
 
     const confirmBtn = $('confirmRefundBtn');
     if (confirmBtn) {
@@ -10441,7 +10603,16 @@ function saveStoreSettings(e) {
 }
 
 async function loadDemoStoreData() {
-    if (!confirm('هل تريد تحميل المتجر التجريبي المتكامل؟\nسيتم إضافة 20 صنف واقعي بتصنيفات وأسعار وكميات وفواتير جاهزة للعرض الفوري.')) return;
+    const ok = await showConfirmDialog({
+        title: 'تحميل سوبرماركت تجريبي',
+        text: 'هل تريد تحميل المتجر التجريبي المتكامل؟ سيتم إضافة 20 صنف واقعي بتصنيفات وأسعار وكميات وفواتير جاهزة للعرض الفوري.',
+        icon: 'fa-basket-shopping',
+        iconColor: 'var(--primary)',
+        confirmText: 'تحميل البيانات التجريبية',
+        confirmColor: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+        cancelText: 'إلغاء'
+    });
+    if (!ok) return;
 
     const demoProducts = [
         { id: 1001, serial: '6221001001', name: 'لبن جهينة كامل الدسم 1 لتر', cat: 'ألبان وأجبان', whole: 38, sell: 45, qty: 35, lowStockThreshold: 10, imgData: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=300', imgType: 'url' },
@@ -10537,7 +10708,16 @@ async function loadDemoStoreData() {
 }
 
 async function loadClothingDemoStoreData() {
-    if (!confirm('هل تريد تحميل متجر الملابس والأزياء التجريبي؟\nسيتم إضافة 20 صنف ملابس وأحذية وإكسسوارات بصور وأسعار ومقاسات واقعية وفواتير سابقة.')) return;
+    const ok = await showConfirmDialog({
+        title: 'تحميل متجر ملابس تجريبي',
+        text: 'هل تريد تحميل متجر الملابس والأزياء التجريبي؟ سيتم إضافة 20 صنف ملابس وأحذية وإكسسوارات بصور وأسعار ومقاسات واقعية وفواتير سابقة.',
+        icon: 'fa-shirt',
+        iconColor: '#8b5cf6',
+        confirmText: 'تحميل متجر الملابس',
+        confirmColor: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+        cancelText: 'إلغاء'
+    });
+    if (!ok) return;
 
     const demoProducts = [
         { id: 2001, serial: '622800100101', name: 'تيشيرت أوفر سايز بيسيك أسود - L', cat: 'تيشيرتات وبديهات', whole: 140, sell: 260, qty: 24, lowStockThreshold: 5, desc: 'قطن ميلتون مصري 100% معالج ضد الانكماش والوبرة، قصة مريحة مناسبة لجميع الأوقات.', imgData: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300', imgType: 'url' },
