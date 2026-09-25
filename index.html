@@ -987,34 +987,6 @@
         }
 
         /* Product Card Drag & Drop Elements */
-        .card-drag-handle {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            z-index: 8;
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(4px);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: grab;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-            touch-action: none;
-        }
-        .card-drag-handle:hover {
-            background: var(--primary);
-            transform: scale(1.12);
-        }
-        .card-drag-handle:active {
-            cursor: grabbing;
-        }
 
         .card-reorder-arrows {
             display: none;
@@ -1088,15 +1060,6 @@
         }
         body.reorder-mode-active .product-card:active {
             cursor: grabbing;
-        }
-        body.reorder-mode-active .card-drag-handle {
-            background: var(--primary);
-            color: #fff;
-            animation: pulseGrip 1.4s infinite;
-        }
-        @keyframes pulseGrip {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); }
         }
 
         /* Floating Touch Drag Avatar */
@@ -7279,7 +7242,6 @@ function reorderProduct(sourceId, targetId, place = 'before') {
     renderProducts();
     if (typeof renderPosQuickProducts === 'function') renderPosQuickProducts();
 
-    toast(`تم نقل "${movedItem.name}" وحفظ الترتيب بنجاح`, 'success');
     if (navigator.vibrate) navigator.vibrate(35);
 }
 
@@ -7340,7 +7302,7 @@ function togglePosReorderMode() {
 function handlePosCardClick(e, id) {
     if (isPosReorderMode) return;
     if (isDraggingCard || isTouchDragging) return;
-    if (e.target.closest('.card-drag-handle') || e.target.closest('.card-reorder-arrows')) return;
+    if (e.target.closest('.card-reorder-arrows')) return;
     addPosItemToCart(id);
 }
 
@@ -7427,8 +7389,7 @@ function attachCardDragListeners(card, p, viewType = 'inventory') {
         touchStartX = touch.clientX;
         touchStartY = touch.clientY;
 
-        const isHandle = Boolean(e.target.closest('.card-drag-handle'));
-        const delay = (isHandle || isReorderMode || isPosReorderMode) ? 80 : 350;
+        const delay = (isReorderMode || isPosReorderMode) ? 80 : 350;
 
         touchTimer = setTimeout(() => {
             isTouchDragging = true;
@@ -7643,11 +7604,6 @@ function makeCard(p) {
     img.referrerPolicy = 'no-referrer';
     img.onerror = () => { img.src = PLACEHOLDER; };
 
-    const dragHandle = document.createElement('div');
-    dragHandle.className = 'card-drag-handle';
-    dragHandle.title = 'اسحب لتحريك وترتيب الصنف';
-    dragHandle.innerHTML = '<i class="fa-solid fa-grip-vertical"></i>';
-
     const reorderArrows = document.createElement('div');
     reorderArrows.className = 'card-reorder-arrows';
     reorderArrows.innerHTML = `
@@ -7660,7 +7616,6 @@ function makeCard(p) {
     `;
 
     wrap.appendChild(badge);
-    wrap.appendChild(dragHandle);
     wrap.appendChild(reorderArrows);
     wrap.appendChild(img);
 
@@ -7751,7 +7706,7 @@ function makeCard(p) {
     card.addEventListener('click', e => {
         if (isReorderMode) return;
         if (isDraggingCard || isTouchDragging) return;
-        if (e.target.closest('.card-drag-handle') || e.target.closest('.card-reorder-arrows')) return;
+        if (e.target.closest('.card-reorder-arrows')) return;
         if (!e.target.closest('.act-btn') && !e.target.closest('.prod-desc')) {
             openProductDetails(p);
         }
@@ -9495,9 +9450,6 @@ function renderPosQuickProducts() {
                     <img src="${p.imgData || PLACEHOLDER}" alt="${esc(p.name)}" onerror="this.src=PLACEHOLDER">
                     <span class="pos-touch-price">${fmt(p.sell)} ج.م</span>
                     ${inCart > 0 ? `<span class="pos-touch-badge">${inCart}</span>` : ''}
-                    <div class="card-drag-handle" style="top:4px;left:4px;width:26px;height:26px;font-size:0.75rem;" title="اسحب لتحريك الصنف">
-                        <i class="fa-solid fa-grip-vertical"></i>
-                    </div>
                     <div class="card-reorder-arrows" style="bottom:4px;left:4px;right:4px;">
                         <button type="button" class="reorder-arrow-btn" onclick="event.stopPropagation(); moveProductStep(${p.id}, 1)" style="padding:2px 4px;font-size:0.7rem;">
                             <i class="fa-solid fa-arrow-left"></i>
