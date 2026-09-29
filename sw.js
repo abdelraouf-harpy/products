@@ -1,5 +1,5 @@
-// Harpy POS - Service Worker v7.0
-const CACHE_NAME = 'harpy-pos-cache-v7';
+// Harpy POS - Service Worker v8.0 (100% Offline Lifetime Edition)
+const CACHE_NAME = 'harpy-pos-cache-v8';
 
 const STATIC_ASSETS = [
   './',
@@ -8,7 +8,9 @@ const STATIC_ASSETS = [
   './icon-192.png',
   './icon-512.png',
   'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -44,7 +46,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for HTML pages (so updates deploy immediately)
+  // Network-first for HTML pages (so updates deploy immediately when online, fallback to cache when offline)
   if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
       fetch(req)
@@ -58,12 +60,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for images, fonts, and stylesheets
+  // Cache-first for images, fonts, and scripts
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
       return fetch(req).then((response) => {
-        if (response && response.status === 200 && response.type !== 'opaque') {
+        if (response && (response.status === 200 || response.type === 'opaque')) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
         }

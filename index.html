@@ -7,7 +7,22 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>نظام إدارة المنتجات</title>
+    <title>Harpy POS — نظام الكاشير السحابي وإدارة المخزون</title>
+    <meta name="description" content="نظام كاشير متطور ومخازن سحابية لنقاط البيع ومحلات التجزئة، يعمل أونلاين وأوفلاين مع دعم قارئ الباركود وطباعة الفواتير.">
+    
+    <!-- Open Graph / WhatsApp / Facebook Preview -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Harpy POS">
+    <meta property="og:title" content="Harpy POS — نظام الكاشير السحابي وإدارة المخزون">
+    <meta property="og:description" content="نظام كاشير متطور ومخازن سحابية لنقاط البيع ومحلات التجزئة، يعمل أونلاين وأوفلاين مع دعم قارئ الباركود وطباعة الفواتير.">
+    <meta property="og:image" content="https://harbymenu.com/assets/portfolio/pos_retail_showcase.jpg">
+    <meta property="og:url" content="https://harbymenu.com/products/">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Harpy POS — نظام الكاشير وإدارة المخزون">
+    <meta name="twitter:description" content="نظام كاشير متطور ومخازن سحابية لنقاط البيع ومحلات التجزئة.">
+    <meta name="twitter:image" content="https://harbymenu.com/assets/portfolio/pos_retail_showcase.jpg">
 
     <!-- PWA & Mobile Web App Meta Tags -->
     <link rel="manifest" href="manifest.json">
@@ -3961,7 +3976,11 @@
     <div class="auth-box">
         <div class="auth-icon"><i class="fa-solid fa-shield-halved"></i></div>
         <h2 id="authModalTitle">تفعيل واستخدام النظام</h2>
-        <p id="authModalSubtitle">أدخل كود التفعيل ورمز PIN الماستر للمتابعة ومزامنة حسابك.</p>
+        <p id="authModalSubtitle">ترخيص دائم مدى الحياة لجهاز واحد • يتطلب إنترنت للتفعيل الأول فقط ثم يعمل أوفلاين 100%.</p>
+        <div style="margin:-4px 0 16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.22);color:#065f46;border-radius:10px;padding:8px 12px;font-size:0.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <i class="fa-solid fa-shield-halved" style="color:#059669;"></i>
+            <span>حماية جهاز واحد • يعمل مدى الحياة بدون إنترنت بعد التفعيل</span>
+        </div>
         
         <form id="authForm" novalidate>
             <div class="auth-fg">
@@ -4071,6 +4090,11 @@
                 <i class="fa-solid fa-moon"></i>
             </button>
 
+            <!-- Return to Harpy Platform -->
+            <a href="../" class="hbtn icon-only" title="الرجوع لمنصة هاربي الرئيسية" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
+                <i class="fa-solid fa-house" style="font-size:13px;"></i>
+            </a>
+
             <!-- 3-Dots Menu Button -->
             <button class="hbtn-dots" id="headerMenuBtn" onclick="toggleHeaderMenu(event)" title="خيارات إضافية" aria-label="القائمة">
                 <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -4082,7 +4106,7 @@
                     <div class="u-avatar"><i class="fa-solid fa-user-check"></i></div>
                     <div class="u-info">
                         <strong id="menuUserName">المستخدم</strong>
-                        <span id="menuUserKey">الاشتراك: نشط</span>
+                        <span id="menuUserKey">الترخيص: مدى الحياة 🔒</span>
                     </div>
                 </div>
                 
@@ -5677,43 +5701,98 @@ const HarpySecurityVault = {
 };
 
 /* ============================================================
-   نظام التفعيل المزدوج: أوفلاين دائم (بصمة جهاز) وفحص أسبوعي
+   نظام حماية العتاد والترخيص الدائم (جهاز واحد فقط - أوفلاين 100%)
    ============================================================ */
 
-async function getOrCreateDeviceFingerprint(cleanKey) {
-    const storageKey = `device_fingerprint_${cleanKey}`;
+async function getHardwareDeviceFingerprint(explicitKey) {
+    const key = explicitKey || currentUserSession?.key || 'master';
+    const storageKey = `device_fingerprint_${key}`;
     let existingFp = await HarpySecurityVault.getItem(storageKey);
     if (existingFp) return existingFp;
 
-    const randomBytes = new Uint8Array(16);
-    if (window.crypto && window.crypto.getRandomValues) {
-        window.crypto.getRandomValues(randomBytes);
-    } else {
-        for (let i = 0; i < 16; i++) randomBytes[i] = Math.floor(Math.random() * 256);
+    // تجميع بصمة العتاد الحقيقية من مواصفات الجهاز والشاشة والرسوميات
+    const entropy = [];
+
+    // 1. أبعاد الشاشة ومعدل البكسل والعمق اللوني
+    entropy.push((screen.width || 0) + 'x' + (screen.height || 0) + 'x' + (screen.colorDepth || 24));
+    entropy.push((screen.availWidth || 0) + 'x' + (screen.availHeight || 0));
+    entropy.push(window.devicePixelRatio || 1);
+
+    // 2. أنوية المعالج والمنصة والمنطقة الزمنية واللغة
+    entropy.push(navigator.hardwareConcurrency || 4);
+    entropy.push(navigator.platform || navigator.userAgentData?.platform || 'desktop');
+    entropy.push(navigator.language || 'ar');
+    entropy.push(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+
+    // 3. بصمة كارت الشاشة والـ GPU (WebGL Unmasked Vendor & Renderer)
+    try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (debugInfo) {
+                entropy.push(gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || '');
+                entropy.push(gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || '');
+            }
+        }
+    } catch {}
+
+    // 4. بصمة ريندر الرسوميات الثنائية (2D Canvas Graphic Signature)
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 240;
+        canvas.height = 60;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.textBaseline = 'alphabetic';
+            ctx.font = "14px 'Arial', 'Cairo', sans-serif";
+            ctx.fillStyle = '#f60';
+            ctx.fillRect(12, 6, 60, 24);
+            ctx.fillStyle = '#069';
+            ctx.fillText('HarpyPOS#HardwareDeviceLock#2026', 15, 22);
+            ctx.strokeStyle = 'rgba(102, 204, 0, 0.7)';
+            ctx.strokeRect(5, 5, 80, 25);
+            entropy.push(canvas.toDataURL());
+        }
+    } catch {}
+
+    // 5. مولد عشوائي آمن محفوظ في خزنة العتاد المحلية IndexedDB
+    const seedKey = `harpy_device_seed_${key}`;
+    let deviceSeed = await HarpySecurityVault.getItem(seedKey);
+    if (!deviceSeed) {
+        const arr = new Uint8Array(24);
+        if (window.crypto && window.crypto.getRandomValues) {
+            window.crypto.getRandomValues(arr);
+        } else {
+            for (let i = 0; i < 24; i++) arr[i] = Math.floor(Math.random() * 256);
+        }
+        deviceSeed = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+        await HarpySecurityVault.setItem(seedKey, deviceSeed);
     }
-    const randomHex = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    entropy.push(deviceSeed);
 
-    const rawEntropy = [
-        navigator.userAgent || 'UnknownUA',
-        navigator.language || 'ar',
-        screen.colorDepth || 24,
-        (screen.width || 1024) + 'x' + (screen.height || 768),
-        navigator.hardwareConcurrency || 4,
-        randomHex
-    ].join('###');
-
+    // 6. تشفير البصمة الموحدة عبر SHA-256
+    const rawString = entropy.join('###');
     let fingerprint = '';
     if (window.crypto && window.crypto.subtle) {
         const encoder = new TextEncoder();
-        const hashBuf = await window.crypto.subtle.digest('SHA-256', encoder.encode(rawEntropy));
-        fingerprint = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        const hashBuf = await window.crypto.subtle.digest('SHA-256', encoder.encode(rawString));
+        fingerprint = 'hw_' + Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
     } else {
-        fingerprint = 'fp_' + randomHex + '_' + Date.now();
+        let hash = 0;
+        for (let i = 0; i < rawString.length; i++) {
+            hash = ((hash << 5) - hash) + rawString.charCodeAt(i);
+            hash |= 0;
+        }
+        fingerprint = 'hw_' + Math.abs(hash).toString(16) + '_' + deviceSeed.slice(0, 16);
     }
 
     await HarpySecurityVault.setItem(storageKey, fingerprint);
     return fingerprint;
 }
+
+// دالة متوافقة للاستدعاء القديم
+const getOrCreateDeviceFingerprint = getHardwareDeviceFingerprint;
 
 function enqueueOfflineAction(cleanKey, type, data) {
     if (!cleanKey || cleanKey === 'DEMO-USER' || cleanKey === 'global') return;
@@ -5865,51 +5944,16 @@ async function processOfflineSyncQueue(cleanKey) {
 }
 
 function checkWeeklyCheckinStatus(cleanKey, offlineMode) {
-    if (!cleanKey || cleanKey === 'DEMO-USER' || cleanKey === 'global') return { ok: true, mode: 'demo' };
-    if (offlineMode === 'permanent') return { ok: true, mode: 'permanent' };
-
-    const checkinKey = `last_successful_checkin_${cleanKey}`;
-    let lastCheckinStr = localStorage.getItem(checkinKey);
-    if (!lastCheckinStr) {
-        lastCheckinStr = new Date().toISOString();
-        localStorage.setItem(checkinKey, lastCheckinStr);
-    }
-
-    const lastCheckinTime = new Date(lastCheckinStr).getTime();
-    const daysSince = (Date.now() - lastCheckinTime) / (1000 * 60 * 60 * 24);
-
+    // نظام مدى الحياة: تشغيل كامل دون اتصال 100% بدون أي فحص دوري أو مهلة 7 أيام
     const banner = $('weeklyCheckinBanner');
-
-    if (daysSince >= 7) {
-        if (banner) banner.style.display = 'none';
-        showCheckinBlockingOverlay('network_required', 'انتهت مهلة العمل دون اتصال (7 أيام). يرجى توصيل هذا الجهاز بشبكة الإنترنت لمدة دقيقة واحدة للتحقق من صلاحية الاشتراك واستئناف العمل.');
-        return { ok: false, daysSince, status: 'locked' };
-    } else if (daysSince >= 5) {
-        const remainingDays = Math.max(1, Math.ceil(7 - daysSince));
-        if (banner) {
-            banner.innerHTML = `
-                <div style="background:#fef3c7;border:1.5px solid #f59e0b;color:#92400e;border-radius:12px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:0.86rem;font-weight:700;">
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <i class="fa-solid fa-triangle-exclamation" style="font-size:1.1rem;color:#d97706;"></i>
-                        <span>تنبيه أمان: متبقي <strong>${remainingDays}</strong> ${remainingDays === 1 ? 'يوم' : 'أيام'} على موعد الفحص الدوري للاشتراك. يُرجى توصيل الجهاز بالإنترنت لتحديث الصلاحية تلقائياً.</span>
-                    </div>
-                    <button type="button" onclick="performBackgroundWeeklyCheckin('${cleanKey}', true)" class="tbl-act-btn" style="background:#f59e0b;color:#fff;border:none;padding:6px 14px;font-size:0.78rem;font-weight:800;border-radius:8px;cursor:pointer;min-height:30px;white-space:nowrap;">
-                        <i class="fa-solid fa-rotate-right"></i> فحص الآن
-                    </button>
-                </div>`;
-            banner.style.display = 'block';
-        }
-        return { ok: true, daysSince, status: 'warning' };
-    } else {
-        if (banner) banner.style.display = 'none';
-        return { ok: true, daysSince, status: 'normal' };
-    }
+    if (banner) banner.style.display = 'none';
+    return { ok: true, mode: 'permanent', status: 'normal' };
 }
 
 async function performBackgroundWeeklyCheckin(cleanKey, isManual = false) {
     if (!cleanKey || cleanKey === 'DEMO-USER' || cleanKey === 'global' || !db) return;
     if (!navigator.onLine) {
-        if (isManual) toast('لا يتوفر اتصال بشبكة الإنترنت حالياً، تأكد من الاتصال بالشبكة.', 'warning');
+        if (isManual) toast('أنت في وضع العمل دون اتصال بالإنترنت.', 'info');
         return;
     }
 
@@ -5921,30 +5965,23 @@ async function performBackgroundWeeklyCheckin(cleanKey, isManual = false) {
             await HarpySecurityVault.removeItem(`harpy_offline_cred_${cleanKey}`);
             await HarpySecurityVault.removeItem(`harpy_failed_attempts_${cleanKey}`);
             await HarpySecurityVault.removeItem(`harpy_locked_until_${cleanKey}`);
-            localStorage.removeItem(`last_successful_checkin_${cleanKey}`);
             logout(false);
-            toast('تم إلغاء أو حذف هذا الحساب من قِبل إدارة النظام!', 'error');
+            toast('تم إلغاء أو حذف هذا الترخيص من قبل إدارة النظام!', 'error');
             return;
         }
 
         if (lic.status === 'blocked') {
-            showCheckinBlockingOverlay('blocked', 'تم تجميد هذا الحساب من قِبل إدارة النظام. يُرجى مراجعة الدعم الفني لفك التجميد.');
+            showCheckinBlockingOverlay('blocked', 'تم تجميد هذا الحساب من قِبل إدارة النظام. يُرجى مراجعة الإدارة لفك التجميد.');
             return;
         }
 
-        if (lic.expiresAt && Date.now() > new Date(lic.expiresAt).getTime()) {
-            const expFormatted = new Date(lic.expiresAt).toLocaleDateString('ar-EG');
-            showCheckinBlockingOverlay('expired', `انتهت فترة اشتراكك في النظام بتاريخ ${expFormatted}. يرجى التواصل مع الإدارة لتجديد الباقة وإعادة تشغيل الكاشير فوراً.`);
-            return;
-        }
-
-        localStorage.setItem(`last_successful_checkin_${cleanKey}`, new Date().toISOString());
-
-        // Sliding Session: تجديد صلاحية الجلسة تلقائياً طالما التاجر متصل واشتراكه سارٍ
-        if (currentUserSession && currentUserSession.key === cleanKey) {
-            if (currentUserSession.offlineMode !== 'permanent') {
-                currentUserSession.sessionExpiresAt = Date.now() + SESSION_LIFETIME_MS;
-                localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
+        // فحص مطابقة بصمة العتاد في الخلفية
+        if (lic.lockedDeviceFingerprint) {
+            const currentFp = await getHardwareDeviceFingerprint(cleanKey);
+            if (lic.lockedDeviceFingerprint !== currentFp) {
+                toast('⛔ عذراً، هذا الحساب مقترن بجهاز آخر ومحمي ببصمة العتاد!', 'error');
+                logout(false);
+                return;
             }
         }
 
@@ -5952,13 +5989,11 @@ async function performBackgroundWeeklyCheckin(cleanKey, isManual = false) {
         const banner = $('weeklyCheckinBanner');
         if (banner) banner.style.display = 'none';
 
-        if (isManual) toast('تم التحقق من صلاحية الاشتراك وتحديث مهلة التشغيل بنجاح', 'success');
-
+        if (isManual) toast('الترخيص سارٍ ومتصل بالسحابة بنجاح', 'success');
         processOfflineSyncQueue(cleanKey);
 
     } catch (err) {
-        console.warn('[Weekly Checkin Failed]:', err);
-        if (isManual) toast('تعذر الاتصال بالسيرفر، تحقق من اتصال الإنترنت وحاول مجدداً.', 'error');
+        console.warn('[Background Sync Notice]:', err);
     }
 }
 
@@ -5974,8 +6009,12 @@ function showCheckinBlockingOverlay(type, message) {
         if (title) title.textContent = 'الحساب مجمد وموقوف';
         if (icon) icon.innerHTML = '<i class="fa-solid fa-ban"></i>';
         if (supportBtn) supportBtn.style.display = 'inline-flex';
+    } else if (type === 'device_mismatch') {
+        if (title) title.textContent = 'الترخيص مقترن بجهاز آخر 🔒';
+        if (icon) icon.innerHTML = '<i class="fa-solid fa-shield-halved"></i>';
+        if (supportBtn) supportBtn.style.display = 'inline-flex';
     } else if (type === 'expired') {
-        if (title) title.textContent = 'انتهاء فترة الاشتراك';
+        if (title) title.textContent = 'انتهاء صلاحية الترخيص';
         if (icon) icon.innerHTML = '<i class="fa-solid fa-hourglass-end"></i>';
         if (supportBtn) supportBtn.style.display = 'inline-flex';
     } else {
@@ -6250,46 +6289,37 @@ authForm.addEventListener('submit', async e => {
             await HarpySecurityVault.removeItem(localAttemptsKey);
             await HarpySecurityVault.removeItem(localLockKey);
 
-            // التحقق من البصمة في باقة مدى الحياة
-            if (cachedCred.offlineMode === 'permanent') {
-                const fp = await getOrCreateDeviceFingerprint();
-                if (cachedCred.lockedDeviceFingerprint && cachedCred.lockedDeviceFingerprint !== fp) {
-                    toast('عذراً، بصمة هذا الجهاز لا تتطابق مع الحساب المقترن!', 'error');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
-                    return;
-                }
-            } else {
-                // فحص مهلة 7 أيام أوفلاين لباقي الباقات
-                const checkin = checkWeeklyCheckinStatus(cleanKey, cachedCred.offlineMode);
-                if (!checkin.ok) {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
-                    return;
-                }
+            // التحقق من بصمة العتاد في وضع الأوفلاين
+            const currentFp = await getHardwareDeviceFingerprint(cleanKey);
+            if (cachedCred.lockedDeviceFingerprint && cachedCred.lockedDeviceFingerprint !== currentFp) {
+                toast('⛔ عذراً، بصمة عتاد هذا الجهاز لا تتطابق مع الحساب المرخص له! الترخيص مقترن بجهاز واحد فقط ومحمي من النقل.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
+                return;
             }
 
             currentUserSession = {
                 name: cachedCred.userName || 'التاجر',
                 phone: cachedCred.userPhone || '',
                 key: cleanKey,
-                offlineMode: cachedCred.offlineMode,
-                lockedDeviceFingerprint: cachedCred.lockedDeviceFingerprint,
-                expiresAt: cachedCred.expiresAt,
-                sessionExpiresAt: (cachedCred.offlineMode === 'permanent') ? null : (Date.now() + SESSION_LIFETIME_MS)
+                offlineMode: 'permanent',
+                lockedDeviceFingerprint: cachedCred.lockedDeviceFingerprint || currentFp,
+                planId: 'lifetime',
+                expiresAt: null,
+                sessionExpiresAt: null
             };
             localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
             await migrateTenantData(cleanKey);
             authOverlay.classList.remove('open');
             document.body.classList.remove('auth-locked');
-            toast(`مرحباً بك يا ${currentUserSession.name} (وضع العمل دون اتصال)`, 'success');
+            toast(`مرحباً بك يا ${currentUserSession.name} (وضع العمل دون اتصال 100%)`, 'success');
             updateUserUI();
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
             return;
         }
 
-        toast('يتطلب التفعيل والدخول لأول مرة اتصالاً بالإنترنت لربط الحساب بالجهاز وتوثيقه.', 'warning');
+        toast('⚠️ يلزم الاتصال بالإنترنت لأول مرة فقط لتفعيل الترخيص وتوثيق هذا الجهاز. بعد التفعيل سيعمل النظام أوفلاين 100%.', 'warning');
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
     };
@@ -6301,21 +6331,14 @@ authForm.addEventListener('submit', async e => {
             const lic = snap.val();
 
             if (!lic) {
-                toast('كود التفعيل غير مسجل بالنظام!', 'error');
+                toast('كود الترخيص غير مسجل بالنظام!', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
                 return;
             }
 
             if (lic.status === 'blocked') {
-                toast('هذا الحساب تم إيقافه وتجميده من قبل الإدارة!', 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
-                return;
-            }
-
-            if (lic.expiresAt && Date.now() > new Date(lic.expiresAt).getTime()) {
-                toast('انتهت صلاحية هذا الاشتراك، يرجى التواصل مع الإدارة للتجديد.', 'error');
+                toast('هذا الترخيص تم إيقافه وتجميده من قبل إدارة النظام!', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
                 return;
@@ -6328,8 +6351,16 @@ authForm.addEventListener('submit', async e => {
                 return;
             }
 
-            const isLifetime = (lic.offlineMode === 'permanent' || lic.planId === 'lifetime' || lic.durationDays === null);
-            const offlineMode = isLifetime ? 'permanent' : (lic.offlineMode || 'weekly-checkin');
+            const currentDeviceFp = await getHardwareDeviceFingerprint(cleanKey);
+
+            // فحص حماية العتاد: الترخيص لجهاز واحد فقط
+            if (lic.lockedDeviceFingerprint && lic.lockedDeviceFingerprint !== currentDeviceFp) {
+                toast('⛔ عذراً، هذا الترخيص مفعّل بالفعل ومقترن بجهاز آخر ومحمي! الترخيص مخصص للعمل على جهاز واحد فقط ولا يمكن نقله أو مشاركته. إذا قمت بتغيير جهازك، يرجى التواصل مع الإدارة لإعادة التعيين.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
+                return;
+            }
+
             const isFirstTime = !lic.hasPin && !lic.pinHash;
 
             if (isFirstTime) {
@@ -6370,7 +6401,6 @@ authForm.addEventListener('submit', async e => {
 
                 const salt = cleanKey;
                 const pinHash = await hashPin(pin, salt);
-                let fp = null;
 
                 const updatePayload = {
                     userName: nameInput,
@@ -6378,15 +6408,17 @@ authForm.addEventListener('submit', async e => {
                     hasPin: true,
                     pinHash: pinHash,
                     pinSalt: salt,
+                    lockedDeviceFingerprint: currentDeviceFp,
+                    offlineMode: 'permanent',
+                    planId: 'lifetime',
+                    planName: 'ترخيص مدى الحياة',
+                    durationDays: null,
+                    expiresAt: null,
+                    activatedAt: new Date().toISOString(),
                     failedAttempts: 0,
                     lockedUntil: null,
                     pendingNotification: true
                 };
-
-                if (isLifetime) {
-                    fp = await getOrCreateDeviceFingerprint();
-                    updatePayload.lockedDeviceFingerprint = fp;
-                }
 
                 await db.ref(`licenses/${cleanKey}`).update(updatePayload);
 
@@ -6395,13 +6427,13 @@ authForm.addEventListener('submit', async e => {
                     name: nameInput,
                     phone: phoneInput,
                     key: cleanKey,
-                    offlineMode: offlineMode,
-                    lockedDeviceFingerprint: fp,
-                    expiresAt: lic.expiresAt,
-                    sessionExpiresAt: isLifetime ? null : (Date.now() + SESSION_LIFETIME_MS)
+                    offlineMode: 'permanent',
+                    lockedDeviceFingerprint: currentDeviceFp,
+                    planId: 'lifetime',
+                    expiresAt: null,
+                    sessionExpiresAt: null
                 };
                 localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
-                localStorage.setItem(`last_successful_checkin_${cleanKey}`, new Date().toISOString());
 
                 // حفظ بيانات الاعتماد محلياً في خزنة IndexedDB للأوفلاين
                 const offlineCred = {
@@ -6409,41 +6441,32 @@ authForm.addEventListener('submit', async e => {
                     userPhone: phoneInput,
                     pinHash: pinHash,
                     pinSalt: salt,
-                    offlineMode: offlineMode,
-                    lockedDeviceFingerprint: fp,
-                    expiresAt: lic.expiresAt
+                    offlineMode: 'permanent',
+                    lockedDeviceFingerprint: currentDeviceFp,
+                    planId: 'lifetime',
+                    expiresAt: null
                 };
                 await HarpySecurityVault.setItem(`harpy_offline_cred_${cleanKey}`, offlineCred);
 
                 await migrateTenantData(cleanKey);
                 authOverlay.classList.remove('open');
                 document.body.classList.remove('auth-locked');
-                toast(`مرحباً بك يا ${nameInput}، تم تفعيل وتأمين الحساب بنجاح`, 'success');
+                toast(`مرحباً بك يا ${nameInput}، تم تفعيل ترخيص مدى الحياة وتوثيق هذا الجهاز بنجاح`, 'success');
                 initUserProductsSync();
                 startLicenseWatcher(cleanKey);
                 updateUserUI();
 
             } else {
-                // حالة الدخول اللاحق: فحص بصمة الجهاز لباقة مدى الحياة أولاً
-                let currentDeviceFp = null;
-                if (isLifetime) {
-                    currentDeviceFp = await getOrCreateDeviceFingerprint();
-                    if (lic.lockedDeviceFingerprint && lic.lockedDeviceFingerprint !== currentDeviceFp) {
-                        toast('عذراً، هذا الحساب مقترن بجهاز آخر ومحمي ببصمة العتاد! لا يمكن تشغيله على أكثر من جهاز في نفس الوقت. تواصل مع الدعم الفني لفك الاقتران.', 'error');
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
-                        return;
-                    } else if (!lic.lockedDeviceFingerprint) {
-                        // الحساب تم فك قفله من البوت أو يحتاج ربط أولي بالجهاز
-                        await db.ref(`licenses/${cleanKey}`).update({ lockedDeviceFingerprint: currentDeviceFp });
-                    }
+                // حالة الدخول اللاحق: فحص بصمة الجهاز
+                if (!lic.lockedDeviceFingerprint) {
+                    // الحساب تم فك قفله من البوت أو يحتاج ربط أولي بالجهاز الجديد
+                    await db.ref(`licenses/${cleanKey}`).update({ lockedDeviceFingerprint: currentDeviceFp });
                 }
 
                 const salt = lic.pinSalt || cleanKey;
                 const enteredHash = await hashPin(pin, salt);
 
                 if (enteredHash !== lic.pinHash) {
-                    // تسجيل المحاولة الفاشلة سحابياً فقط في Firebase (المصدر الوحيد للحقيقة)
                     const newAttempts = (lic.failedAttempts || 0) + 1;
                     let newLockedUntil = null;
                     const isLocked = newAttempts >= MAX_ATTEMPTS;
@@ -6484,13 +6507,13 @@ authForm.addEventListener('submit', async e => {
                     name: userName,
                     phone: userPhone,
                     key: cleanKey,
-                    offlineMode: offlineMode,
-                    lockedDeviceFingerprint: isLifetime ? (lic.lockedDeviceFingerprint || currentDeviceFp) : null,
-                    expiresAt: lic.expiresAt,
-                    sessionExpiresAt: isLifetime ? null : (Date.now() + SESSION_LIFETIME_MS)
+                    offlineMode: 'permanent',
+                    lockedDeviceFingerprint: lic.lockedDeviceFingerprint || currentDeviceFp,
+                    planId: 'lifetime',
+                    expiresAt: null,
+                    sessionExpiresAt: null
                 };
                 localStorage.setItem('harpy_auth_session', JSON.stringify(currentUserSession));
-                localStorage.setItem(`last_successful_checkin_${cleanKey}`, new Date().toISOString());
 
                 // تحديث بيانات الاعتماد المحلية في خزنة IndexedDB للأوفلاين
                 const offlineCred = {
@@ -6498,9 +6521,10 @@ authForm.addEventListener('submit', async e => {
                     userPhone: userPhone,
                     pinHash: lic.pinHash,
                     pinSalt: salt,
-                    offlineMode: offlineMode,
+                    offlineMode: 'permanent',
                     lockedDeviceFingerprint: currentUserSession.lockedDeviceFingerprint,
-                    expiresAt: lic.expiresAt
+                    planId: 'lifetime',
+                    expiresAt: null
                 };
                 await HarpySecurityVault.setItem(`harpy_offline_cred_${cleanKey}`, offlineCred);
                 await HarpySecurityVault.removeItem(`harpy_failed_attempts_${cleanKey}`);
@@ -6542,47 +6566,13 @@ authForm.addEventListener('submit', async e => {
     btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى النظام';
 });
 
-/* فحص التنبيه بقرب انتهاء الاشتراك (قبل 3 أيام) */
+/* فحص التنبيه بالاشتراك (تم إلغاء الاشتراكات المؤقتة - مدى الحياة فقط) */
 function checkSubscriptionExpiry(lic) {
     const banner = $('subscriptionExpiryBanner');
-    if (!banner) return;
-
-    if (!lic || lic.planId === 'lifetime' || lic.durationDays === null || !lic.expiresAt) {
-        banner.style.display = 'none';
-        return;
-    }
-
-    const now = Date.now();
-    const expTime = new Date(lic.expiresAt).getTime();
-    const diffMs = expTime - now;
-    const diffDays = diffMs / (1000 * 60 * 60 * 24);
-
-    if (diffDays > 0 && diffDays <= 3.5) {
-        const daysLeft = Math.max(1, Math.ceil(diffDays));
-        const expDateFormatted = new Date(lic.expiresAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
-        banner.innerHTML = `
-            <div style="background:#fffbeb;border:1.5px solid #f59e0b;border-radius:var(--radius);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:var(--shadow-sm);color:#92400e;">
-                <div style="display:flex;align-items:center;gap:10px;font-weight:800;font-size:0.9rem;">
-                    <i class="fa-solid fa-clock-rotate-left" style="font-size:1.3rem;color:#d97706;"></i>
-                    <div>
-                        <span>تنبيه باقتراب انتهاء الاشتراك: ينتهي اشتراكك خلال <strong>${daysLeft} أيام</strong> (بتاريخ ${expDateFormatted}).</span>
-                        <div style="font-size:0.78rem;font-weight:600;opacity:0.9;margin-top:2px;">يرجى تجديد الاشتراك مع الإدارة لضمان استمرار الخدمة والمزامنة السحابية دون توقف.</div>
-                    </div>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <a href="https://wa.me/201012345678" target="_blank" style="background:#d97706;color:#fff;text-decoration:none;padding:7px 14px;border-radius:8px;font-size:0.82rem;font-weight:800;display:inline-flex;align-items:center;gap:6px;">
-                        <i class="fa-brands fa-whatsapp"></i> تواصل للتجديد
-                    </a>
-                </div>
-            </div>
-        `;
-        banner.style.display = 'block';
-    } else {
-        banner.style.display = 'none';
-    }
+    if (banner) banner.style.display = 'none';
 }
 
-/* مراقبة فورية لحالة الترخيص في الخلفية (إيقاف أو انتهاء الاشتراك) */
+/* مراقبة فورية لحالة الترخيص في الخلفية (إيقاف أو فك ارتباط الجهاز) */
 function startLicenseWatcher(key) {
     if (!db || !key || key === 'DEMO-USER' || key === 'global') return;
     if (licenseWatcherUnsub) db.ref(`licenses/${key}`).off('value', licenseWatcherUnsub);
@@ -6606,24 +6596,17 @@ function startLicenseWatcher(key) {
         
         if (lic.status === 'blocked') {
             toast('تم إيقاف حسابك من قبل الإدارة!', 'error');
-            showCheckinBlockingOverlay('blocked', 'تم تجميد هذا الحساب من قِبل إدارة النظام. يُرجى مراجعة الدعم الفني لفك التجميد.');
+            showCheckinBlockingOverlay('blocked', 'تم تجميد هذا الحساب من قِبل إدارة النظام. يُرجى مراجعة الإدارة لفك التجميد.');
             return;
         }
 
-        if (lic.expiresAt && Date.now() > new Date(lic.expiresAt).getTime()) {
-            const expFormatted = new Date(lic.expiresAt).toLocaleDateString('ar-EG');
-            showCheckinBlockingOverlay('expired', `انتهت فترة اشتراكك في النظام بتاريخ ${expFormatted}. يرجى التواصل مع الإدارة لتجديد الباقة وإعادة تشغيل الكاشير فوراً.`);
-            return;
-        }
-
-        // تحديث وضع التشغيل وبصمة الجهاز المحلية إذا تغيرت سحابياً
+        // فحص ومطابقة بصمة العتاد إذا تغيرت سحابياً
         if (currentUserSession && currentUserSession.key === key) {
-            const isLifetime = (lic.offlineMode === 'permanent' || lic.planId === 'lifetime' || lic.durationDays === null);
-            currentUserSession.offlineMode = isLifetime ? 'permanent' : (lic.offlineMode || 'weekly-checkin');
-            currentUserSession.expiresAt = lic.expiresAt;
-            if (isLifetime && lic.lockedDeviceFingerprint) {
+            currentUserSession.offlineMode = 'permanent';
+            currentUserSession.expiresAt = null;
+            if (lic.lockedDeviceFingerprint) {
                 currentUserSession.lockedDeviceFingerprint = lic.lockedDeviceFingerprint;
-                const fp = await getOrCreateDeviceFingerprint();
+                const fp = await getHardwareDeviceFingerprint(key);
                 if (lic.lockedDeviceFingerprint !== fp) {
                     toast('عذراً، هذا الحساب مقترن بجهاز آخر ومحمي ببصمة العتاد!', 'error');
                     logout(false);
@@ -6646,17 +6629,15 @@ async function checkAuthGuard() {
 
     const cleanKey = currentUserSession.key;
 
-    // فحص سحابي سريع طالما الجهاز متصل للتأكد أن الحساب لم يتم حذفه من بوت تليجرام
+    // فحص سحابي صامت وسريع طالما الجهاز متصل للتأكد أن الحساب لم يتم حظره
     if (navigator.onLine && db && cleanKey !== 'DEMO-USER' && cleanKey !== 'global') {
         try {
             const snap = await db.ref(`licenses/${cleanKey}`).once('value');
             const lic = snap.val();
             if (!lic) {
-                // الحساب تم حذفه من قِبل الإدارة في بوت تليجرام
                 await HarpySecurityVault.removeItem(`harpy_offline_cred_${cleanKey}`);
                 await HarpySecurityVault.removeItem(`harpy_failed_attempts_${cleanKey}`);
                 await HarpySecurityVault.removeItem(`harpy_locked_until_${cleanKey}`);
-                localStorage.removeItem(`last_successful_checkin_${cleanKey}`);
                 localStorage.removeItem('harpy_auth_session');
                 currentUserSession = null;
                 products = [];
@@ -6667,12 +6648,7 @@ async function checkAuthGuard() {
                 return;
             }
             if (lic.status === 'blocked') {
-                showCheckinBlockingOverlay('blocked', 'تم تجميد هذا الحساب من قِبل إدارة النظام. يُرجى مراجعة الدعم الفني لفك التجميد.');
-                return;
-            }
-            if (lic.expiresAt && Date.now() > new Date(lic.expiresAt).getTime()) {
-                const expFormatted = new Date(lic.expiresAt).toLocaleDateString('ar-EG');
-                showCheckinBlockingOverlay('expired', `انتهت فترة اشتراكك في النظام بتاريخ ${expFormatted}. يرجى التواصل مع الإدارة لتجديد الباقة وإعادة تشغيل الكاشير فوراً.`);
+                showCheckinBlockingOverlay('blocked', 'تم تجميد هذا الحساب من قِبل إدارة النظام. يُرجى مراجعة الإدارة لفك التجميد.');
                 return;
             }
         } catch (e) {
@@ -6680,44 +6656,21 @@ async function checkAuthGuard() {
         }
     }
 
-    // 1. تحقق من بصمة الجهاز في باقة مدى الحياة
-    if (currentUserSession.offlineMode === 'permanent') {
-        const fp = await getOrCreateDeviceFingerprint();
-        if (currentUserSession.lockedDeviceFingerprint && currentUserSession.lockedDeviceFingerprint !== fp) {
-            toast('عذراً، بصمة هذا الجهاز لا تتطابق مع الحساب المقترن!', 'error');
-            logout(false);
-            return;
-        }
-        // مدى الحياة: تشغيل كامل دون أي اشتراط للاتصال بالإنترنت
-        authOverlay.classList.remove('open');
-        document.body.classList.remove('auth-locked');
-        await migrateTenantData(cleanKey);
-        updateUserUI();
-
-        if (navigator.onLine && db) {
-            initUserProductsSync();
-            startLicenseWatcher(cleanKey);
-            processOfflineSyncQueue(cleanKey);
-        }
+    // التحقق الصارم من بصمة العتاد (جهاز واحد فقط)
+    const fp = await getHardwareDeviceFingerprint(cleanKey);
+    if (currentUserSession.lockedDeviceFingerprint && currentUserSession.lockedDeviceFingerprint !== fp) {
+        toast('⛔ عذراً، بصمة هذا الجهاز لا تتطابق مع الحساب المقترن! البرنامج مرخص لجهاز واحد فقط.', 'error');
+        logout(false);
         return;
     }
 
-    // 2. التحقق من وضع الفحص الأسبوعي (Weekly Check-in)
-    if (cleanKey !== 'DEMO-USER' && cleanKey !== 'global') {
-        const checkin = checkWeeklyCheckinStatus(cleanKey, currentUserSession.offlineMode);
-        if (!checkin.ok) {
-            // الشاشة مقفلة بالأوفرلاي الحاجب لحين الفحص
-            return;
-        }
-    }
-
+    // ترخيص مدى الحياة: تشغيل كامل 100% بدون أي اشتراط للاتصال بالإنترنت
     authOverlay.classList.remove('open');
     document.body.classList.remove('auth-locked');
     await migrateTenantData(cleanKey);
     updateUserUI();
 
     if (navigator.onLine && db && cleanKey !== 'DEMO-USER') {
-        performBackgroundWeeklyCheckin(cleanKey, false);
         initUserProductsSync();
         startLicenseWatcher(cleanKey);
         processOfflineSyncQueue(cleanKey);
@@ -6752,7 +6705,7 @@ function updateUserUI() {
         $('headerUserSubtitle').textContent = `التاجر: ${name}`;
         $('menuUserCard').style.display = 'flex';
         $('menuUserName').textContent = name;
-        $('menuUserKey').textContent = `كود التفعيل: ${key}`;
+        $('menuUserKey').textContent = `كود التفعيل: ${key} (مدى الحياة 🔒)`;
         $('menuLogoutBtn').style.display = 'flex';
     } else {
         $('headerUserSubtitle').textContent = 'نظام متكامل لإدارة ومتابعة منتجاتك';

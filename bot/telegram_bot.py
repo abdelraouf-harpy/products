@@ -83,37 +83,12 @@ if not BOT_TOKEN:
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# خطط وباقات الاشتراكات المعتمدة
+# خطة الترخيص المعتمدة (مدى الحياة فقط - ترخيص دائم لجهاز واحد)
 PLANS = {
-    "month": {
-        "name": "الاشتراك الشهري",
-        "days": 30,
-        "price": "550 ج.م",
-        "desc": "صلاحية 30 يوماً"
-    },
-    "6months": {
-        "name": "اشتراك 6 شهور",
-        "days": 180,
-        "price": "2400 ج.م",
-        "desc": "صلاحية 180 يوماً"
-    },
-    "year": {
-        "name": "الاشتراك السنوي",
-        "days": 365,
-        "price": "4000 ج.م",
-        "desc": "صلاحية 365 يوماً"
-    },
     "lifetime": {
-        "name": "اشتراك مدى الحياة",
-        "days": None,  # بدون تاريخ انتهاء
-        "price": "8000 ج.م",
-        "desc": "دائم لمدى الحياة بدون تجديد"
-    },
-    "trial": {
-        "name": "فترة تجريبية مجانية",
-        "days": 7,
-        "price": "مجاناً",
-        "desc": "صلاحية 7 أيام للتجربة"
+        "name": "ترخيص مدى الحياة",
+        "days": None,  # دائم بدون تاريخ انتهاء
+        "desc": "ترخيص دائم لجهاز واحد مدى الحياة بدون أي اشتراكات أو تجديد"
     }
 }
 
@@ -131,34 +106,26 @@ def generate_key():
 # ============================================================
 # دوال الاتصال بقاعدة البيانات (Firebase REST API)
 # ============================================================
-def save_license_to_firebase(key, plan_id="month", phone="غير محدد", custom_days=None, notes=""):
+def save_license_to_firebase(key, plan_id="lifetime", phone="غير محدد", custom_days=None, notes=""):
     url = get_fb_url(f"licenses/{key}.json")
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %I:%M %p")
     
-    plan = PLANS.get(plan_id, PLANS["month"])
-    duration_days = custom_days if custom_days is not None else plan["days"]
-    plan_name = plan["name"] if custom_days is None else f"مخصص ({custom_days} يوم)"
-    plan_price = plan["price"] if custom_days is None else "مخصص"
-
-    now_dt = datetime.datetime.now()
-    expires_at_str = (now_dt + datetime.timedelta(days=int(duration_days))).isoformat() if duration_days else None
-
-    offline_mode = "permanent" if plan_id == "lifetime" else "weekly-checkin"
+    plan_name = "ترخيص مدى الحياة"
 
     data = {
         "key": key,
         "phone": phone,
         "notes": notes,
         "status": "active",
-        "planId": plan_id,
+        "planId": "lifetime",
         "planName": plan_name,
-        "planPrice": plan_price,
-        "durationDays": duration_days,
-        "offlineMode": offline_mode,
+        "planPrice": None,
+        "durationDays": None,
+        "offlineMode": "permanent",
         "lockedDeviceFingerprint": None,
         "createdAt": now_str,
         "activatedAt": None,
-        "expiresAt": expires_at_str,
+        "expiresAt": None,
         "userName": None,
         "userPhone": None,
         "pendingNotification": False
@@ -218,55 +185,30 @@ def delete_account_completely(key):
         print("[Firebase Error - Delete Account]:", e)
         return False
 
-def renew_or_extend_license(key, plan_id):
+def renew_or_extend_license(key, plan_id="lifetime"):
     """
-    تجديد وتمديد اشتراك الحساب بالباقة المختارة
+    تثبيت / ترقية الترخيص لمدى الحياة (جهاز واحد دائم بدون اشتراك)
     """
     url = get_fb_url(f"licenses/{key}.json")
     try:
         lic = get_license(key)
         if not lic:
-            return False, "كود الاشتراك غير موجود."
-
-        plan = PLANS.get(plan_id)
-        if not plan:
-            return False, "خطة الاشتراك غير معروفة."
-
-        days = plan["days"]
-        now = datetime.datetime.now()
-
-        if days is None:
-            # مدى الحياة
-            new_exp_str = None
-            display_exp = "دائم مدى الحياة ∞"
-        else:
-            current_exp_str = lic.get("expiresAt")
-            base_time = now
-            if current_exp_str:
-                try:
-                    current_exp = datetime.datetime.fromisoformat(current_exp_str.replace("Z", ""))
-                    base_time = max(now, current_exp)
-                except:
-                    base_time = now
-            new_exp = base_time + datetime.timedelta(days=int(days))
-            new_exp_str = new_exp.isoformat()
-            display_exp = new_exp.strftime("%Y-%m-%d %I:%M %p")
+            return False, "كود الترخيص غير موجود."
 
         update_data = {
             "status": "active",
-            "planId": plan_id,
-            "planName": plan["name"],
-            "planPrice": plan["price"],
-            "expiresAt": new_exp_str,
-            "durationDays": (lic.get("durationDays") or 0) + (days if days else 99999)
+            "planId": "lifetime",
+            "planName": "ترخيص مدى الحياة",
+            "planPrice": None,
+            "expiresAt": None,
+            "durationDays": None,
+            "offlineMode": "permanent"
         }
-        if plan_id == "lifetime":
-            update_data["offlineMode"] = "permanent"
 
         ru = requests.patch(url, json=update_data, timeout=10)
         if ru.status_code == 200:
-            return True, display_exp
-        return False, "فشل في تحديث الاشتراك."
+            return True, "دائم مدى الحياة ∞"
+        return False, "فشل في تحديث الترخيص."
     except Exception as e:
         return False, str(e)
 
@@ -275,37 +217,31 @@ def renew_or_extend_license(key, plan_id):
 # ============================================================
 def main_menu_keyboard():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    btn_new   = types.KeyboardButton("➕ إنشاء كود تفعيل جديد")
-    btn_list  = types.KeyboardButton("📋 قائمة المشتركين")
+    btn_new   = types.KeyboardButton("➕ إصدار كود ترخيص (مدى الحياة)")
+    btn_list  = types.KeyboardButton("📋 قائمة التراخيص والأجهزة")
     btn_stats = types.KeyboardButton("📊 إحصائيات النظام")
-    btn_help  = types.KeyboardButton("ℹ️ الأسعار والمساعدة")
+    btn_help  = types.KeyboardButton("ℹ️ دليل النظام والحماية")
     markup.add(btn_new, btn_list)
     markup.add(btn_stats, btn_help)
     return markup
 
 def new_key_inline_keyboard():
     markup = types.InlineKeyboardMarkup(row_width=1)
-    b1 = types.InlineKeyboardButton("📅 باقة شهرية (30 يوم) — 550 ج.م", callback_data="gen_plan_month")
-    b2 = types.InlineKeyboardButton("🕒 باقة 6 شهور (180 يوم) — 2400 ج.م", callback_data="gen_plan_6months")
-    b3 = types.InlineKeyboardButton("⭐ باقة سنوية (365 يوم) — 4000 ج.م", callback_data="gen_plan_year")
-    b4 = types.InlineKeyboardButton("👑 باقة مدى الحياة (دائم) — 8000 ج.م", callback_data="gen_plan_lifetime")
-    b5 = types.InlineKeyboardButton("🎁 تجربة مجانية (7 أيام)", callback_data="gen_plan_trial")
-    b6 = types.InlineKeyboardButton("✍️ تخصيص برقم العميل ومدة مخصصة", callback_data="gen_plan_custom")
-    markup.add(b1, b2, b3, b4, b5, b6)
+    b1 = types.InlineKeyboardButton("👑 إصدار كود ترخيص مدى الحياة (جهاز واحد)", callback_data="gen_plan_lifetime")
+    b2 = types.InlineKeyboardButton("📱 إصدار برقم هاتف العميل", callback_data="gen_plan_custom")
+    markup.add(b1, b2)
     return markup
 
-def license_action_keyboard(key, status, has_pin=False, has_fingerprint=False, offline_mode="weekly-checkin"):
+def license_action_keyboard(key, status, has_pin=False, has_fingerprint=False, offline_mode="permanent"):
     markup = types.InlineKeyboardMarkup(row_width=2)
-    b_renew = types.InlineKeyboardButton("🔄 تمديد / تجديد الاشتراك", callback_data=f"opt_renew_{key}")
     
     if status == "blocked":
         b_toggle = types.InlineKeyboardButton("▶️ فك التجميد وتفعيل", callback_data=f"act_unblock_{key}")
     else:
-        b_toggle = types.InlineKeyboardButton("⏸️ إيقاف الحساب مؤقتاً", callback_data=f"act_block_{key}")
+        b_toggle = types.InlineKeyboardButton("⏸️ إيقاف الترخيص مؤقتاً", callback_data=f"act_block_{key}")
     
-    b_delete = types.InlineKeyboardButton("🗑️ حذف الحساب نهائياً", callback_data=f"ask_del_{key}")
+    b_delete = types.InlineKeyboardButton("🗑️ حذف الترخيص نهائياً", callback_data=f"ask_del_{key}")
     
-    markup.add(b_renew)
     if has_fingerprint or offline_mode == "permanent":
         b_unlock = types.InlineKeyboardButton("🔓 فك قفل الجهاز والـ PIN", callback_data=f"ask_unlock_dev_{key}")
         markup.add(b_toggle, b_unlock)
@@ -314,7 +250,9 @@ def license_action_keyboard(key, status, has_pin=False, has_fingerprint=False, o
         markup.add(b_toggle, b_reset_pin)
     else:
         markup.add(b_toggle)
-    markup.add(b_delete)
+
+    b_upgrade = types.InlineKeyboardButton("👑 تثبيت مدى الحياة", callback_data=f"do_renew_{key}_lifetime")
+    markup.add(b_upgrade, b_delete)
     return markup
 
 def confirm_unlock_device_keyboard(key):
@@ -382,31 +320,29 @@ def activation_notifications_worker():
                         pin_info = "🔒 تم تأمين الحساب بـ PIN مكوّن من 6 أرقام." if has_pin else "⚪ لم يُنشأ رمز PIN بعد."
 
                         text = (
-                            "🎉 *تم تفعيل حساب جديد للتو على الموقع!*\n\n"
+                            "🎉 *تم تفعيل ترخيص جديد وربط الجهاز بنجاح!*\n\n"
                             f"👤 *اسم المستخدم:* {name}\n"
                             f"📱 *رقم الموبايل:* `{phone}`\n"
                             f"🔑 *كود التفعيل:* `{key}`\n"
                             f"🛡️ *حماية الحساب:* {pin_info}\n"
-                            f"📦 *الباقة:* {plan_name}\n"
-                            f"⏳ *تاريخ انتهاء الاشتراك:* `{exp_formatted}`\n"
+                            f"👑 *نوع الترخيص:* ترخيص دائم مدى الحياة (جهاز واحد محمي)\n"
+                            f"⚡ *نمط التشغيل:* أوفلاين 100% (يعمل بدون إنترنت بعد التفعيل الأول)\n"
                             f"⏰ *وقت التفعيل:* {datetime.datetime.now().strftime('%Y-%m-%d %I:%M %p')}\n\n"
-                            "✅ الحساب متصل بالمزامنة السحابية وقاعدة البيانات بنجاح."
+                            "✅ الحساب مقترن بجهاز العميل ومحمي من النقل بنجاح."
                         )
                         try:
                             bot.send_message(
                                 ADMIN_CHAT_ID, 
                                 text, 
                                 parse_mode="Markdown",
-                                reply_markup=license_action_keyboard(key, data.get("status", "active"), has_pin=has_pin)
+                                reply_markup=license_action_keyboard(key, data.get("status", "active"), has_pin=has_pin, has_fingerprint=True, offline_mode="permanent")
                             )
                             now_act = datetime.datetime.now()
                             patch_payload = {
                                 "pendingNotification": False,
-                                "activatedAt": now_act.isoformat()
+                                "activatedAt": now_act.isoformat(),
+                                "offlineMode": "permanent"
                             }
-                            if not data.get("expiresAt") and data.get("durationDays"):
-                                patch_payload["expiresAt"] = (now_act + datetime.timedelta(days=int(data["durationDays"]))).isoformat()
-
                             requests.patch(get_fb_url(f"licenses/{key}.json"), json=patch_payload, timeout=5)
                             print(f"[إشعار]: تم إرسال تنبيه تفعيل الكود {key} للمدير بنجاح وتعيين تاريخ التفعيل.")
                         except Exception as ex:
@@ -429,27 +365,26 @@ def handle_start(message):
 
     user_states[message.chat.id] = None
     welcome_text = (
-        "👑 **مرحباً بك في لوحة تحكم إدارة الاشتراكات والكاشير (harpy)**\n\n"
-        "📊 **أسعار الباقات الرسمية المعتمدة:**\n"
-        "• 📅 **شهرية (30 يوم):** `550 ج.م`\n"
-        "• 🕒 **6 شهور (180 يوم):** `2400 ج.م`\n"
-        "• ⭐ **سنوية (365 يوم):** `4000 ج.م`\n"
-        "• 👑 **مدى الحياة:** `8000 ج.م`\n\n"
+        "👑 **مرحباً بك في لوحة تحكم تراخيص الكاشير وإدارة المنتجات (harpy)**\n\n"
+        "🛡️ **نظام التراخيص المعتمد: مدى الحياة (جهاز واحد فقط)**\n"
+        "• 👑 **نوع الترخيص:** دائم مدى الحياة (بدون أي اشتراكات دورية نهائياً)\n"
+        "• 🔒 **حماية العتاد:** يعمل على جهاز واحد فقط ومحمي من النقل أو التمرير\n"
+        "• ⚡ **التشغيل أوفلاين:** تفعيل أولي بالإنترنت لتوثيق الجهاز، ثم تشغيل 100% بدون إنترنت للأبد\n\n"
         "اختر الإجراء المطلوب من الأزرار بالأسفل 👇"
     )
     bot.send_message(message.chat.id, welcome_text, reply_markup=main_menu_keyboard(), parse_mode="Markdown")
 
-@bot.message_handler(func=lambda msg: msg.text == "➕ إنشاء كود تفعيل جديد")
+@bot.message_handler(func=lambda msg: msg.text in ["➕ إصدار كود ترخيص (مدى الحياة)", "➕ إنشاء كود تفعيل جديد"])
 def handle_btn_new(message):
     if not is_admin(message): return
     bot.send_message(
         message.chat.id, 
-        "🏷️ **اختر باقة ومدة الاشتراك للكود الجديد:**", 
+        "🏷️ **إصدار ترخيص دائم مدى الحياة (جهاز واحد محمي):**", 
         reply_markup=new_key_inline_keyboard(),
         parse_mode="Markdown"
     )
 
-@bot.message_handler(func=lambda msg: msg.text == "📋 قائمة المشتركين")
+@bot.message_handler(func=lambda msg: msg.text in ["📋 قائمة التراخيص والأجهزة", "📋 قائمة المشتركين"])
 def handle_btn_list(message):
     if not is_admin(message): return
     send_subscribers_list(message.chat.id)
@@ -459,21 +394,19 @@ def handle_btn_stats(message):
     if not is_admin(message): return
     send_system_stats(message.chat.id)
 
-@bot.message_handler(func=lambda msg: msg.text == "ℹ️ الأسعار والمساعدة")
+@bot.message_handler(func=lambda msg: msg.text in ["ℹ️ دليل النظام والحماية", "ℹ️ الأسعار والمساعدة"])
 def handle_btn_help(message):
     if not is_admin(message): return
     help_text = (
-        "📖 **دليل إدارة الاشتراكات والأسعار:**\n\n"
-        "💰 **قائمة أسعار الباقات:**\n"
-        "1️⃣ **الاشتراك الشهري:** `550 ج.م` (30 يوم)\n"
-        "2️⃣ **اشتراك 6 شهور:** `2400 ج.م` (180 يوم)\n"
-        "3️⃣ **الاشتراك السنوي:** `4000 ج.م` (365 يوم)\n"
-        "4️⃣ **اشتراك مدى الحياة:** `8000 ج.م` (دائم)\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        "⚙️ **التحكم في الحسابات:**\n"
-        "• ⏸️ **إيقاف مؤقت (تجميد):** يمنع العميل من الدخول مع الحفاظ الكامل على منتجاته وفواتيره ليعود إليها عند فك الحظر.\n"
-        "• 🗑️ **حذف نهائي:** يمسح كود الحساب وكل منتجاته وفواتيره بالكامل من السيرفر.\n"
-        "• 🔄 **تمديد / تجديد:** إضافة مدة جديدة لأي حساب منتهي أو نشط بسهولة."
+        "📖 **دليل نظام التراخيص وحماية الأجهزة:**\n\n"
+        "👑 **1. ترخيص مدى الحياة (Lifetime):**\n"
+        "تم إلغاء الاشتراكات الدورية بالكامل. كافة التراخيص الصادرة تعمل مدى الحياة بدون أي رسوم تجديد.\n\n"
+        "🔒 **2. حماية الجهاز الواحد (Hardware-Locked):**\n"
+        "عند تفعيل العميل للكود أول مرة، يربط النظام الترخيص ببصمة عتاد الجهاز (الشاشة، المعالج، الرسوميات، المتصفح). لا يمكن تشغيل الترخيص على أي جهاز آخر، ولا يمكن لأحد تمريره لأجهزة إضافية.\n\n"
+        "⚡ **3. العمل أوفلاين بنسبة 100%:**\n"
+        "يحتاج العميل للإنترنت في الدقيقة الأولى فقط لربط الحساب بالعتاد وتوثيق البصمة، وبعدها يعمل البرنامج أوفلاين بالكامل 100% دون الحاجة لأي اتصال بالإنترنت نهائياً.\n\n"
+        "🔓 **4. نقل الترخيص لجهاز بديل:**\n"
+        "في حال غير العميل جهازه أو حدث عطل بالكمبيوتر، اضغط على زر '🔓 فك قفل الجهاز' لمسح البصمة السابقة، وسيتمكن العميل من الدخول وربط جهازه الجديد فوراً."
     )
     bot.send_message(message.chat.id, help_text, parse_mode="Markdown")
 
@@ -488,21 +421,21 @@ def handle_callback_query(call):
 
     data = call.data
 
-    # توليد أكواد الباقات
-    if data.startswith("gen_plan_"):
+    # توليد أكواد التراخيص
+    if data == "gen_plan_lifetime" or data.startswith("gen_plan_"):
         plan_id = data.replace("gen_plan_", "")
         if plan_id == "custom":
             user_states[call.message.chat.id] = "waiting_for_custom_key"
             bot.send_message(
                 call.message.chat.id, 
-                "✍️ **أدخل رقم هاتف العميل ومدة الاشتراك بالأيام:**\n\n"
-                "مثال: `01012345678 45`",
+                "✍️ **أدخل رقم هاتف العميل للكود الجديد:**\n\n"
+                "مثال: `01012345678`",
                 parse_mode="Markdown"
             )
             bot.answer_callback_query(call.id)
-        elif plan_id in PLANS:
-            create_and_send_key(call.message.chat.id, plan_id=plan_id)
-            bot.answer_callback_query(call.id, f"تم إنشاء كود {PLANS[plan_id]['name']} بنجاح ✓")
+        else:
+            create_and_send_key(call.message.chat.id, plan_id="lifetime")
+            bot.answer_callback_query(call.id, "تم إصدار كود مدى الحياة بنجاح ✓")
 
     # خيارات التجديد
     elif data.startswith("opt_renew_"):
@@ -691,34 +624,32 @@ def handle_callback_query(call):
 @bot.message_handler(func=lambda msg: user_states.get(msg.chat.id) == "waiting_for_custom_key")
 def handle_custom_key_input(message):
     user_states[message.chat.id] = None
-    parts = message.text.strip().split()
-    phone = parts[0] if len(parts) > 0 else "غير محدد"
-    duration = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 30
-    create_and_send_key(message.chat.id, plan_id="custom", phone=phone, custom_days=duration)
+    phone = message.text.strip().split()[0] if message.text.strip() else "غير محدد"
+    create_and_send_key(message.chat.id, plan_id="lifetime", phone=phone)
 
-def create_and_send_key(chat_id, plan_id="month", phone="غير محدد", custom_days=None):
+def create_and_send_key(chat_id, plan_id="lifetime", phone="غير محدد", custom_days=None):
     key = generate_key()
-    ok = save_license_to_firebase(key, plan_id=plan_id, phone=phone, custom_days=custom_days)
+    ok = save_license_to_firebase(key, plan_id="lifetime", phone=phone)
     if ok:
-        plan = PLANS.get(plan_id, PLANS["month"])
-        plan_name = plan["name"] if custom_days is None else f"مخصص ({custom_days} يوم)"
-        plan_price = plan["price"] if custom_days is None else "مخصص"
-        duration_label = "دائم مدى الحياة ∞" if plan["days"] is None and custom_days is None else f"{custom_days or plan['days']} يوماً (تبدأ من أول تسجيل دخول)"
-
         client_message = (
-            "✅ **تم إنشاء كود تفعيل واشتراك جديد بنجاح!**\n\n"
+            "✅ **تم إصدار كود ترخيص مدى الحياة بنجاح!**\n\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
-            f"🔑 **كود التفعيل / كلمة السر:**\n`{key}`\n\n"
-            f"📦 **الباقة:** {plan_name} ({plan_price})\n"
-            f"⏳ **مدة الصلاحية:** `{duration_label}`\n"
+            f"🔑 **كود التفعيل:**\n`{key}`\n\n"
+            f"👑 **نوع الترخيص:** دائم مدى الحياة (بدون أي اشتراكات دورية)\n"
+            f"🔒 **حماية العتاد:** يعمل على جهاز واحد فقط ومحمي من النقل أو المشاركة\n"
+            f"⚡ **نمط التشغيل:** تفعيل أول مرة بالإنترنت، ثم 100% أوفلاين للأبد\n"
             f"📱 **رقم العميل:** `{phone}`\n"
             "━━━━━━━━━━━━━━━━━━━━\n\n"
-            "📌 **الرسالة الجاهزة للإرسال للعميل (انسخها وأرسلها له):**\n"
+            "📌 **رسالة التفعيل الجاهزة للعميل (انسخها وأرسلها له):**\n"
             "──────────────\n"
-            f"مرحباً بك! كود تفعيل نظام إدارة المنتجات والكاشير (harpy) الخاص بك هو:\n"
-            f"🔑 `{key}`\n"
-            f"📦 الباقة: {plan_name}\n"
-            f"⏳ الصلاحية: {duration_label}\n"
+            "مرحباً بك! كود ترخيص نظام الكاشير وإدارة المنتجات (harpy) الخاص بك هو:\n\n"
+            f"🔑 `{key}`\n\n"
+            "👑 **الترخيص:** دائم مدى الحياة (لجهاز واحد فقط)\n"
+            "⚡ **طريقة التفعيل:**\n"
+            "1️⃣ افتح البرنامج مع وجود اتصال بالإنترنت (للتفعيل الأول فقط لتوثيق الجهاز).\n"
+            "2️⃣ أدخل كود التفعيل أعلاه وأنشئ رمز PIN الماستر.\n"
+            "3️⃣ سيتم ربط الترخيص بجهازك تلقائياً وبشكل محمي دائم.\n"
+            "4️⃣ يمكنك بعد ذلك فصل الإنترنت واستخدام البرنامج 100% أوفلاين للأبد.\n"
             "──────────────"
         )
         bot.send_message(chat_id, client_message, parse_mode="Markdown")
@@ -728,124 +659,84 @@ def create_and_send_key(chat_id, plan_id="month", phone="غير محدد", custo
 def send_subscribers_list(chat_id):
     licenses = get_all_licenses()
     if not licenses:
-        bot.send_message(chat_id, "📭 لا توجد أي اشتراكات مسجلة حالياً.")
+        bot.send_message(chat_id, "📭 لا توجد أي تراخيص مسجلة حالياً.")
         return
 
-    bot.send_message(chat_id, f"📋 **قائمة المشتركين المسجلين (إجمالي: {len(licenses)}):**", parse_mode="Markdown")
-    now = datetime.datetime.now()
+    bot.send_message(chat_id, f"📋 **قائمة تراخيص الأجهزة المسجلة (إجمالي: {len(licenses)}):**", parse_mode="Markdown")
 
     for key, data in licenses.items():
         if not isinstance(data, dict):
             continue
 
         status = data.get("status", "active")
-        exp_str = data.get("expiresAt")
-        plan_name = data.get("planName") or "الاشتراك الشهري"
-        is_expired = False
-        
-        if data.get("durationDays") is None or data.get("planId") == "lifetime":
-            exp_display = "مدى الحياة (دائم) ∞"
-        elif exp_str:
-            try:
-                exp_dt = datetime.datetime.fromisoformat(exp_str.replace("Z", ""))
-                exp_display = exp_dt.strftime("%Y-%m-%d %I:%M %p")
-                if now > exp_dt:
-                    is_expired = True
-            except:
-                exp_display = exp_str
-        else:
-            exp_display = "لم يبدأ بعد (في انتظار أول دخول)"
+        exp_display = "دائم مدى الحياة ∞"
 
         if status == "blocked":
             status_text = "⏸️ موقوف ومجمد مؤقتاً"
-        elif is_expired:
-            status_text = "⏳ منتهي الصلاحية"
-        elif data.get("activatedAt"):
-            status_text = "🟢 نشط ومفعل"
+        elif data.get("lockedDeviceFingerprint") or data.get("activatedAt"):
+            status_text = "🟢 نشط ومقترن بجهاز"
         else:
-            status_text = "🟡 جديد (في انتظار التفعيل)"
+            status_text = "🟡 جديد (في انتظار أول تفعيل)"
 
         user_name = data.get("userName") or "غير مسجل بعد"
         user_phone = data.get("userPhone") or data.get("phone") or "غير محدد"
 
         has_pin = bool(data.get("hasPin") or data.get("pinHash"))
-        pin_badge = "🟢 مفعّل ومحمي بـ PIN" if has_pin else "⚪ لسه ما عملش PIN"
+        pin_badge = "🟢 تم إنشاء PIN" if has_pin else "⚪ في انتظار إنشاء PIN"
 
-        offline_mode = data.get("offlineMode", "permanent" if data.get("planId") == "lifetime" else "weekly-checkin")
         locked_fp = bool(data.get("lockedDeviceFingerprint"))
-        mode_badge = "🛡️ دائم أوفلاين (بصمة جهاز)" if offline_mode == "permanent" else "🔄 فحص دوري أسبوعي"
-        fp_badge = "🔒 مقفل بجهاز" if locked_fp else "🔓 غير مقفل بجهاز"
+        fp_badge = "🔒 مقترن بجهاز محمي" if locked_fp else "⏳ بانتظار الاقتران بالجهاز"
 
         card_text = (
             f"👤 **المستخدم:** {user_name}\n"
             f"📱 **الموبايل:** `{user_phone}`\n"
             f"🔑 **الكود:** `{key}`\n"
-            f"🔒 **حماية الحساب:** {pin_badge}\n"
-            f"⚙️ **نمط التشغيل:** {mode_badge} ({fp_badge})\n"
-            f"📦 **الباقة:** {plan_name}\n"
-            f"📊 **الحالة:** {status_text}\n"
-            f"📅 **الانتهاء:** `{exp_display}`"
+            f"🛡️ **حماية العتاد:** {fp_badge}\n"
+            f"🔒 **رمز PIN:** {pin_badge}\n"
+            f"👑 **الترخيص:** دائم مدى الحياة (100% أوفلاين)\n"
+            f"📊 **الحالة:** {status_text}"
         )
         
         bot.send_message(
             chat_id, 
             card_text, 
             parse_mode="Markdown",
-            reply_markup=license_action_keyboard(key, status, has_pin=has_pin, has_fingerprint=locked_fp, offline_mode=offline_mode)
+            reply_markup=license_action_keyboard(key, status, has_pin=has_pin, has_fingerprint=locked_fp, offline_mode="permanent")
         )
 
 def send_system_stats(chat_id):
     licenses = get_all_licenses()
     total = len(licenses)
-    now = datetime.datetime.now()
     active_cnt = 0
-    expired_cnt = 0
     blocked_cnt = 0
     pending_cnt = 0
-    lifetime_cnt = 0
 
     for k, v in licenses.items():
         if isinstance(v, dict):
             status = v.get("status")
-            exp_str = v.get("expiresAt")
-            is_lifetime = (v.get("planId") == "lifetime" or v.get("durationDays") is None)
-            
-            if is_lifetime:
-                lifetime_cnt += 1
-            
-            is_expired = False
-            if exp_str and not is_lifetime:
-                try:
-                    exp_dt = datetime.datetime.fromisoformat(exp_str.replace("Z", ""))
-                    if now > exp_dt:
-                        is_expired = True
-                except:
-                    pass
+            locked_fp = bool(v.get("lockedDeviceFingerprint"))
             
             if status == "blocked":
                 blocked_cnt += 1
-            elif is_expired:
-                expired_cnt += 1
-            elif v.get("activatedAt"):
+            elif locked_fp or v.get("activatedAt"):
                 active_cnt += 1
             else:
                 pending_cnt += 1
 
     stats_text = (
-        "📊 **إحصائيات نظام إدارة المنتجات وتراخيص المشتركين:**\n\n"
-        f"🏷️ إجمالي الأكواد: **{total}**\n"
-        f"🟢 الاشتراكات النشطة: **{active_cnt}**\n"
-        f"👑 باقات مدى الحياة: **{lifetime_cnt}**\n"
-        f"🟡 أكواد جديدة بانتظار التفعيل: **{pending_cnt}**\n"
-        f"⏳ الاشتراكات المنتهية: **{expired_cnt}**\n"
-        f"⏸️ الحسابات المجمدة مؤقتاً: **{blocked_cnt}**\n"
+        "📊 **إحصائيات نظام تراخيص الكاشير والأجهزة (مدى الحياة):**\n\n"
+        f"🏷️ إجمالي التراخيص: **{total}**\n"
+        f"🔒 التراخيص المقترنة والمفعلة بالأجهزة: **{active_cnt}**\n"
+        f"🟡 أكواد جديدة في انتظار أول تفعيل: **{pending_cnt}**\n"
+        f"⏸️ التراخيص المجمدة مؤقتاً: **{blocked_cnt}**\n\n"
+        "👑 **النظام:** ترخيص دائم مدى الحياة لجهاز واحد — أوفلاين 100%."
     )
     bot.send_message(chat_id, stats_text, parse_mode="Markdown")
 
 if __name__ == "__main__":
     print("=" * 60, flush=True)
-    print("🚀 تم تشغيل بوت تليجرام التفاعلي بنجاح!", flush=True)
+    print("🚀 تم تشغيل بوت تليجرام لإدارة تراخيص مدى الحياة بنجاح!", flush=True)
     print(f"👑 حساب المدير المعتمد: {ADMIN_CHAT_ID}", flush=True)
-    print("💰 تم ضبط باقات الأسعار المعتمدة (550 / 2400 / 4000 / 8000 ج.م)", flush=True)
+    print("🛡️ نظام التراخيص: مدى الحياة (جهاز واحد محمي - أوفلاين 100%)", flush=True)
     print("=" * 60, flush=True)
     bot.infinity_polling()
