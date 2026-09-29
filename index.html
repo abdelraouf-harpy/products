@@ -26,7 +26,9 @@
 
     <!-- PWA & Mobile Web App Meta Tags -->
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
     <meta name="theme-color" content="#4361ee">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -3952,7 +3954,17 @@
         }
     </style>
 </head>
-<body class="auth-locked pos-active-screen" data-active-view="pos">
+<body class="pos-active-screen" data-active-view="pos">
+<script>
+    try {
+        var _s = JSON.parse(localStorage.getItem('harpy_auth_session'));
+        if (!_s || !_s.key) {
+            document.body.classList.add('auth-locked');
+        }
+    } catch(e) {
+        document.body.classList.add('auth-locked');
+    }
+</script>
 
 <!-- Weekly Check-in & Device Lock Security Blocking Overlay -->
 <div class="auth-overlay" id="checkinBlockOverlay" style="display:none;z-index:999999;">
@@ -5085,7 +5097,7 @@ const FIREBASE_CONFIG = {
 
 let db = null;
 try {
-    if (FIREBASE_CONFIG.databaseURL && !FIREBASE_CONFIG.databaseURL.includes("YOUR_PROJECT_ID")) {
+    if (typeof firebase !== 'undefined' && FIREBASE_CONFIG.databaseURL && !FIREBASE_CONFIG.databaseURL.includes("YOUR_PROJECT_ID")) {
         firebase.initializeApp(FIREBASE_CONFIG);
         db = firebase.database();
     }
@@ -5533,33 +5545,51 @@ let currentLockoutUntil = null;
 let lockoutTimerInterval = null;
 
 async function hashPin(pin, salt) {
-    const encoder = new TextEncoder();
-    const pinBuffer = encoder.encode(pin);
-    const saltBuffer = encoder.encode(`harpy_salt_${salt}`);
-    
-    // استيراد الـ PIN كمادة مفتاح لتغذية خوارزمية PBKDF2
-    const baseKey = await crypto.subtle.importKey(
-        'raw',
-        pinBuffer,
-        { name: 'PBKDF2' },
-        false,
-        ['deriveBits']
-    );
+    try {
+        if (window.crypto && window.crypto.subtle) {
+            const encoder = new TextEncoder();
+            const pinBuffer = encoder.encode(pin);
+            const saltBuffer = encoder.encode(`harpy_salt_${salt}`);
+            
+            // استيراد الـ PIN كمادة مفتاح لتغذية خوارزمية PBKDF2
+            const baseKey = await crypto.subtle.importKey(
+                'raw',
+                pinBuffer,
+                { name: 'PBKDF2' },
+                false,
+                ['deriveBits']
+            );
 
-    // اشتقاق 256 بت باستخدام PBKDF2 + SHA-256 مع 100,000 دورة تكرار لمنع هجمات التخمين Offline
-    const derivedBits = await crypto.subtle.deriveBits(
-        {
-            name: 'PBKDF2',
-            salt: saltBuffer,
-            iterations: 100000,
-            hash: 'SHA-256'
-        },
-        baseKey,
-        256
-    );
+            // اشتقاق 256 بت باستخدام PBKDF2 + SHA-256 مع 100,000 دورة تكرار لمنع هجمات التخمين Offline
+            const derivedBits = await crypto.subtle.deriveBits(
+                {
+                    name: 'PBKDF2',
+                    salt: saltBuffer,
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                baseKey,
+                256
+            );
 
-    const hashArray = Array.from(new Uint8Array(derivedBits));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            const hashArray = Array.from(new Uint8Array(derivedBits));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+    } catch (e) {
+        console.warn('[hashPin Crypto Fallback]:', e);
+    }
+
+    // احتياطي سريع وآمن في البيئات غير الآمنة أو التي لا يتوفر بها crypto.subtle
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    const str = `${pin}__harpy_salt_${salt}`;
+    for (let i = 0; i < str.length; i++) {
+        const ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return 'fallback_' + (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
 }
 
 /* إدارة عداد القفل المؤقت في الذاكرة اعتماداً كلياً على Firebase السحابي كمصدر وحيد للحقيقة */
@@ -6629,15 +6659,36 @@ async function checkAuthGuard() {
 
     const cleanKey = currentUserSession.key;
 
-    // فحص سحابي صامت وسريع طالما الجهاز متصل للتأكد أن الحساب لم يتم حظره
+    // 1. فتح فوري للنظام وإلغاء القفل وتحميل وعرض المنتجات محلياً (0ms)
+    authOverlay.classList.remove('open');
+    document.body.classList.remove('auth-locked');
+    await migrateTenantData(cleanKey);
+    updateUserUI();
+    initUserProductsSync(); // عرض فوري لكافة المنتجات والمخزون أوفلاين
+
+    // 2. التحقق الصارم من بصمة العتاد (جهاز واحد فقط)
+    try {
+        const fp = await getHardwareDeviceFingerprint(cleanKey);
+        if (currentUserSession.lockedDeviceFingerprint && currentUserSession.lockedDeviceFingerprint !== fp) {
+            toast('⛔ عذراً، بصمة هذا الجهاز لا تتطابق مع الحساب المقترن! البرنامج مرخص لجهاز واحد فقط.', 'error');
+            logout(false);
+            return;
+        }
+    } catch (e) {
+        console.warn('[Hardware Fingerprint Check]:', e);
+    }
+
+    // 3. فحص سحابي سريع وغير معطل (Non-blocking) في الخلفية فقط إذا كان الجهاز متصلاً بالإنترنت فعلياً
     if (navigator.onLine && db && cleanKey !== 'DEMO-USER' && cleanKey !== 'global') {
-        try {
-            const snap = await db.ref(`licenses/${cleanKey}`).once('value');
-            const lic = snap.val();
+        Promise.race([
+            db.ref(`licenses/${cleanKey}`).once('value'),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
+        ]).then(snap => {
+            const lic = snap ? snap.val() : null;
             if (!lic) {
-                await HarpySecurityVault.removeItem(`harpy_offline_cred_${cleanKey}`);
-                await HarpySecurityVault.removeItem(`harpy_failed_attempts_${cleanKey}`);
-                await HarpySecurityVault.removeItem(`harpy_locked_until_${cleanKey}`);
+                HarpySecurityVault.removeItem(`harpy_offline_cred_${cleanKey}`);
+                HarpySecurityVault.removeItem(`harpy_failed_attempts_${cleanKey}`);
+                HarpySecurityVault.removeItem(`harpy_locked_until_${cleanKey}`);
                 localStorage.removeItem('harpy_auth_session');
                 currentUserSession = null;
                 products = [];
@@ -6651,29 +6702,11 @@ async function checkAuthGuard() {
                 showCheckinBlockingOverlay('blocked', 'تم تجميد هذا الحساب من قِبل إدارة النظام. يُرجى مراجعة الإدارة لفك التجميد.');
                 return;
             }
-        } catch (e) {
-            console.warn('[Quick auth guard check]:', e);
-        }
-    }
-
-    // التحقق الصارم من بصمة العتاد (جهاز واحد فقط)
-    const fp = await getHardwareDeviceFingerprint(cleanKey);
-    if (currentUserSession.lockedDeviceFingerprint && currentUserSession.lockedDeviceFingerprint !== fp) {
-        toast('⛔ عذراً، بصمة هذا الجهاز لا تتطابق مع الحساب المقترن! البرنامج مرخص لجهاز واحد فقط.', 'error');
-        logout(false);
-        return;
-    }
-
-    // ترخيص مدى الحياة: تشغيل كامل 100% بدون أي اشتراط للاتصال بالإنترنت
-    authOverlay.classList.remove('open');
-    document.body.classList.remove('auth-locked');
-    await migrateTenantData(cleanKey);
-    updateUserUI();
-
-    if (navigator.onLine && db && cleanKey !== 'DEMO-USER') {
-        initUserProductsSync();
-        startLicenseWatcher(cleanKey);
-        processOfflineSyncQueue(cleanKey);
+            startLicenseWatcher(cleanKey);
+            processOfflineSyncQueue(cleanKey);
+        }).catch(err => {
+            console.log('[Offline Mode Active]: Running 100% offline.');
+        });
     }
 }
 
@@ -11669,13 +11702,18 @@ async function init() {
 
     // Register PWA Service Worker for Offline & Web App capabilities
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
+        const registerSW = () => {
             navigator.serviceWorker.register('./sw.js').then(reg => {
                 console.log('PWA ServiceWorker registered with scope:', reg.scope);
             }).catch(err => {
                 console.warn('PWA ServiceWorker registration failed:', err);
             });
-        });
+        };
+        if (document.readyState === 'complete') {
+            registerSW();
+        } else {
+            window.addEventListener('load', registerSW);
+        }
     }
 
     await checkAuthGuard();

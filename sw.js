@@ -1,5 +1,5 @@
-// Harpy POS - Service Worker v8.0 (100% Offline Lifetime Edition)
-const CACHE_NAME = 'harpy-pos-cache-v8';
+// Harpy POS - Service Worker v9.0 (100% Offline Lifetime Edition)
+const CACHE_NAME = 'harpy-pos-cache-v9';
 
 const STATIC_ASSETS = [
   './',
@@ -7,6 +7,8 @@ const STATIC_ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './apple-touch-icon.png',
+  './favicon.png',
   'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
@@ -46,16 +48,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for HTML pages (so updates deploy immediately when online, fallback to cache when offline)
+  // Network-first for HTML navigation (so updates deploy immediately when online, fallback to cache when offline)
   if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
       fetch(req)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          }
           return response;
         })
-        .catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
+        .catch(async () => {
+          const cache = await caches.open(CACHE_NAME);
+          const cached = await cache.match(req);
+          if (cached) return cached;
+          const fallback = (await cache.match('./index.html')) || (await cache.match('index.html')) || (await cache.match('./'));
+          return fallback || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+        })
     );
     return;
   }
