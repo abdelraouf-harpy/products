@@ -1,5 +1,5 @@
-// Harpy POS - Service Worker v9.0 (100% Offline Lifetime Edition)
-const CACHE_NAME = 'harpy-pos-cache-v9';
+// Harpy POS - Service Worker v10.0 (100% Offline Lifetime Edition)
+const CACHE_NAME = 'harpy-pos-cache-v10';
 
 const STATIC_ASSETS = [
   './',
