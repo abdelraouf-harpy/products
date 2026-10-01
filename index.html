@@ -6856,8 +6856,10 @@ async function saveProductToCloud(prod) {
     }
     localStorage.setItem(getProdsStorageKey(), JSON.stringify(products));
 
-    if (db && currentUserSession && currentUserSession.key) {
-        await db.ref(`users_data/${currentUserSession.key}/products/${prod.id}`).set(prod);
+    if (navigator.onLine && db && currentUserSession && currentUserSession.key && currentUserSession.key !== 'DEMO-USER') {
+        db.ref(`users_data/${currentUserSession.key}/products/${prod.id}`).set(prod).catch(err => {
+            console.warn('[Offline Product Sync Warning]:', err);
+        });
     }
 }
 
@@ -6866,8 +6868,10 @@ async function deleteProductFromCloud(prodId) {
     products = products.filter(p => p.id !== prodId);
     localStorage.setItem(getProdsStorageKey(), JSON.stringify(products));
 
-    if (db && currentUserSession && currentUserSession.key) {
-        await db.ref(`users_data/${currentUserSession.key}/products/${prodId}`).remove();
+    if (navigator.onLine && db && currentUserSession && currentUserSession.key && currentUserSession.key !== 'DEMO-USER') {
+        db.ref(`users_data/${currentUserSession.key}/products/${prodId}`).remove().catch(err => {
+            console.warn('[Offline Delete Warning]:', err);
+        });
     }
 }
 
@@ -8623,20 +8627,38 @@ function updateReportDayButtons() {
 }
 
 async function fetchAndRenderDailyReport(dateStr) {
-    let invoices = [];
-    if (db && currentUserSession && currentUserSession.key && currentUserSession.key !== 'DEMO-USER') {
+    const tenant = getTenantKey();
+    let invoices = allInvoicesCache;
+    if (!invoices || !invoices.length) {
         try {
-            const snap = await db.ref(`sales/${currentUserSession.key}/invoices`).once('value');
-            const val = snap.val();
-            invoices = val ? Object.values(val) : [];
-        } catch (e) {
-            console.error('Failed to load invoices:', e);
-        }
+            invoices = JSON.parse(localStorage.getItem(`harpy_invoices_${tenant}`)) || [];
+            allInvoicesCache = invoices;
+        } catch {}
     }
+
     currentReportInvoices = invoices;
     const summary = getDailyDigestSummary(invoices, dateStr);
     currentReportSummary = summary;
     renderDailyReportView(summary);
+
+    // تحديث صامت وسريع في الخلفية إن توفر اتصال
+    if (navigator.onLine && db && tenant !== 'global' && tenant !== 'DEMO-USER') {
+        Promise.race([
+            db.ref(`sales/${tenant}/invoices`).once('value'),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+        ]).then(snap => {
+            const val = snap ? snap.val() : null;
+            if (val) {
+                const cloudInvs = Object.values(val);
+                localStorage.setItem(`harpy_invoices_${tenant}`, JSON.stringify(cloudInvs));
+                allInvoicesCache = cloudInvs;
+                currentReportInvoices = cloudInvs;
+                const freshSummary = getDailyDigestSummary(cloudInvs, dateStr);
+                currentReportSummary = freshSummary;
+                renderDailyReportView(freshSummary);
+            }
+        }).catch(() => {});
+    }
 }
 
 function getDailyDigestSummary(invoices, targetDateStr) {
@@ -10005,14 +10027,11 @@ async function completeCheckout() {
                 return;
             }
 
-            await db.ref(`sales/${tenant}/invoices/${invId}`).set(invoice);
+            db.ref(`sales/${tenant}/invoices/${invId}`).set(invoice).catch(err => {
+                console.warn('[Cloud Invoice Sync Warning, queued offline]:', err);
+                enqueueOfflineAction(tenant, 'checkout_invoice', invoice);
+            });
         } else {
-            // حفظ الفاتورة محلياً وإدراجها في طابور المزامنة الذرية
-            const localInvsKey = `harpy_invoices_${tenant}`;
-            const localInvs = JSON.parse(localStorage.getItem(localInvsKey)) || [];
-            localInvs.unshift(invoice);
-            localStorage.setItem(localInvsKey, JSON.stringify(localInvs));
-
             if (tenant !== 'global' && tenant !== 'DEMO-USER') {
                 enqueueOfflineAction(tenant, 'checkout_invoice', invoice);
                 savedOfflineQueue = true;
@@ -10020,6 +10039,15 @@ async function completeCheckout() {
                     processOfflineSyncQueue(tenant);
                 }
             }
+        }
+
+        // حفظ الفاتورة محلياً فوراً في ذاكرة التخزين وسجل الكاش لجميع الحالات (أوفلاين وأونلاين)
+        const localInvsKey = `harpy_invoices_${tenant}`;
+        const localInvs = JSON.parse(localStorage.getItem(localInvsKey)) || [];
+        localInvs.unshift(invoice);
+        localStorage.setItem(localInvsKey, JSON.stringify(localInvs));
+        if (Array.isArray(allInvoicesCache)) {
+            allInvoicesCache.unshift(invoice);
         }
 
         // 3. تحديث الكميات محلياً (للأصناف المحدودة بالمخزون فقط)
@@ -10263,27 +10291,36 @@ async function loadInvoicesView() {
     const tbody = $('invoicesViewTbody');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);font-weight:700;"><i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem;color:var(--primary);margin-bottom:8px;display:block;"></i> جاري تحميل سجل الفواتير...</td></tr>';
-
     const tenant = getTenantKey();
     let invoices = [];
-    if (db && tenant !== 'global' && tenant !== 'DEMO-USER') {
-        try {
-            const snap = await db.ref(`sales/${tenant}/invoices`).orderByChild('date').once('value');
-            const val = snap.val();
-            invoices = val ? Object.values(val).reverse() : [];
-        } catch (e) {
-            console.error('Failed to load invoices:', e);
-        }
-    } else {
-        try {
-            invoices = JSON.parse(localStorage.getItem(`harpy_invoices_${tenant}`)) || [];
-        } catch {}
-    }
+
+    // 1. قراءة فورية من الذاكرة المحلية (0ms) لعرض الفواتير فوراً أوفلاين
+    try {
+        invoices = JSON.parse(localStorage.getItem(`harpy_invoices_${tenant}`)) || [];
+    } catch {}
 
     allInvoicesCache = invoices;
     updateInvoicesKPIs(invoices);
     filterInvoicesTable();
+
+    // 2. تحديث صامت وسريع في الخلفية إن توفر اتصال دون تعطيل الواجهة
+    if (navigator.onLine && db && tenant !== 'global' && tenant !== 'DEMO-USER') {
+        Promise.race([
+            db.ref(`sales/${tenant}/invoices`).orderByChild('date').once('value'),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+        ]).then(snap => {
+            const val = snap ? snap.val() : null;
+            if (val) {
+                const cloudInvs = Object.values(val).reverse();
+                localStorage.setItem(`harpy_invoices_${tenant}`, JSON.stringify(cloudInvs));
+                allInvoicesCache = cloudInvs;
+                updateInvoicesKPIs(cloudInvs);
+                filterInvoicesTable();
+            }
+        }).catch(err => {
+            console.log('[Invoices Offline Mode]: Loaded 100% from local cache.');
+        });
+    }
 }
 
 function updateInvoicesKPIs(invoices) {
@@ -10764,43 +10801,31 @@ async function executePartialRefund() {
         inv.refundHistory = inv.refundHistory || [];
         inv.refundHistory.push(refundLog);
 
-        // 2. المزامنة السحابية عبر Firebase
+        // تحديث التخزين المحلي فوراً لجميع الحالات (أوفلاين وأونلاين)
+        const localInvsKey = `harpy_invoices_${tenant}`;
+        let localInvs = JSON.parse(localStorage.getItem(localInvsKey)) || [];
+        const localTarget = localInvs.find(i => i.invoiceId === invId);
+        if (localTarget) {
+            localTarget.items = inv.items;
+            localTarget.status = inv.status;
+            localTarget.refundedAmount = inv.refundedAmount;
+            localTarget.lastRefundAt = inv.lastRefundAt;
+            localTarget.refundedAt = inv.refundedAt || null;
+            localTarget.refundHistory = inv.refundHistory;
+            localStorage.setItem(localInvsKey, JSON.stringify(localInvs));
+        }
+
+        // 2. المزامنة السحابية عبر Firebase أو إدراجها في طابور المزامنة
         if (!isPermanent && navigator.onLine && db && tenant !== 'global' && tenant !== 'DEMO-USER') {
-            await db.ref(`sales/${tenant}/invoices/${invId}`).update({
+            db.ref(`sales/${tenant}/invoices/${invId}`).update({
                 items: inv.items,
                 status: inv.status,
                 refundedAmount: inv.refundedAmount,
                 lastRefundAt: inv.lastRefundAt,
                 refundedAt: inv.refundedAt || null,
                 refundHistory: inv.refundHistory
-            });
-
-            // إعادة الكميات للمخزون سحابياً
-            for (const st of itemsToReturn) {
-                const pId = st.item.productId || st.item.id;
-                if (!pId) continue;
-                const qtyRef = db.ref(`users_data/${tenant}/products/${pId}/qty`);
-                await qtyRef.transaction(curQ => {
-                    const current = (curQ !== null && curQ !== undefined && !isNaN(curQ)) ? parseInt(curQ, 10) : 0;
-                    return current + st.returnQty;
-                });
-            }
-        } else {
-            // تحديث التخزين المحلي وطابور المزامنة عند عدم توفر اتصال
-            const localInvsKey = `harpy_invoices_${tenant}`;
-            let localInvs = JSON.parse(localStorage.getItem(localInvsKey)) || [];
-            const localTarget = localInvs.find(i => i.invoiceId === invId);
-            if (localTarget) {
-                localTarget.items = inv.items;
-                localTarget.status = inv.status;
-                localTarget.refundedAmount = inv.refundedAmount;
-                localTarget.lastRefundAt = inv.lastRefundAt;
-                localTarget.refundedAt = inv.refundedAt || null;
-                localTarget.refundHistory = inv.refundHistory;
-                localStorage.setItem(localInvsKey, JSON.stringify(localInvs));
-            }
-
-            if (tenant !== 'global' && tenant !== 'DEMO-USER') {
+            }).catch(e => {
+                console.warn('[Cloud Refund Warning, queued offline]:', e);
                 enqueueOfflineAction(tenant, 'refund_invoice_items', {
                     invoiceId: invId,
                     items: refundLog.items,
@@ -10808,9 +10833,28 @@ async function executePartialRefund() {
                     refundedAmount: inv.refundedAmount,
                     refundHistory: inv.refundHistory
                 });
-                if (navigator.onLine && db) {
-                    processOfflineSyncQueue(tenant);
-                }
+            });
+
+            // إعادة الكميات للمخزون سحابياً
+            for (const st of itemsToReturn) {
+                const pId = st.item.productId || st.item.id;
+                if (!pId) continue;
+                const qtyRef = db.ref(`users_data/${tenant}/products/${pId}/qty`);
+                qtyRef.transaction(curQ => {
+                    const current = (curQ !== null && curQ !== undefined && !isNaN(curQ)) ? parseInt(curQ, 10) : 0;
+                    return current + st.returnQty;
+                }).catch(e => console.warn('Could not sync restored qty to cloud:', e));
+            }
+        } else if (tenant !== 'global' && tenant !== 'DEMO-USER') {
+            enqueueOfflineAction(tenant, 'refund_invoice_items', {
+                invoiceId: invId,
+                items: refundLog.items,
+                status: inv.status,
+                refundedAmount: inv.refundedAmount,
+                refundHistory: inv.refundHistory
+            });
+            if (navigator.onLine && db) {
+                processOfflineSyncQueue(tenant);
             }
         }
 
@@ -10931,32 +10975,36 @@ async function loadInlineReportsView(targetDateStr) {
     if (dateInput) dateInput.value = inlineSelectedReportDate;
     updateInlineReportDayButtons();
 
-    const body = $('dailyReportInlineBody');
-    if (body) {
-        body.innerHTML = `
-            <div style="text-align:center;padding:40px;color:var(--muted);">
-                <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--primary);margin-bottom:12px;"></i>
-                <div>جاري جلب وتحليل بيانات المبيعات...</div>
-            </div>`;
-    }
-
     let invoices = allInvoicesCache;
     const tenant = getTenantKey();
-    if (!invoices.length && db && tenant !== 'global' && tenant !== 'DEMO-USER') {
-        try {
-            const snap = await db.ref(`sales/${tenant}/invoices`).once('value');
-            const val = snap.val();
-            invoices = val ? Object.values(val) : [];
-        } catch {}
-    } else if (!invoices.length) {
+    if (!invoices || !invoices.length) {
         try {
             invoices = JSON.parse(localStorage.getItem(`harpy_invoices_${tenant}`)) || [];
+            allInvoicesCache = invoices;
         } catch {}
     }
 
     const summary = getDailyDigestSummary(invoices, inlineSelectedReportDate);
     currentReportSummary = summary;
     renderDailyReportViewInto(summary, 'dailyReportInlineBody');
+
+    // تحديث صامت وسريع في الخلفية إن توفر اتصال دون تعطيل الواجهة
+    if (navigator.onLine && db && tenant !== 'global' && tenant !== 'DEMO-USER') {
+        Promise.race([
+            db.ref(`sales/${tenant}/invoices`).once('value'),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+        ]).then(snap => {
+            const val = snap ? snap.val() : null;
+            if (val) {
+                const cloudInvs = Object.values(val);
+                localStorage.setItem(`harpy_invoices_${tenant}`, JSON.stringify(cloudInvs));
+                allInvoicesCache = cloudInvs;
+                const freshSummary = getDailyDigestSummary(cloudInvs, inlineSelectedReportDate);
+                currentReportSummary = freshSummary;
+                renderDailyReportViewInto(freshSummary, 'dailyReportInlineBody');
+            }
+        }).catch(() => {});
+    }
 }
 
 function selectInlineReportDay(type) {

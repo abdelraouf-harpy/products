@@ -1,5 +1,5 @@
-// Harpy POS - Service Worker v10.0 (100% Offline Lifetime Edition)
-const CACHE_NAME = 'harpy-pos-cache-v10';
+// Harpy POS - Service Worker v11.0 (100% Offline Lifetime Edition)
+const CACHE_NAME = 'harpy-pos-cache-v11';
 
 const STATIC_ASSETS = [
   './',
@@ -11,6 +11,8 @@ const STATIC_ASSETS = [
   './favicon.png',
   'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-brands-400.woff2',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'
 ];
